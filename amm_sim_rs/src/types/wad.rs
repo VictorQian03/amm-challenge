@@ -5,7 +5,7 @@
 //! - Fees: 30 bps = 0.003 = 30e14 WAD
 //! - Max fee: 10% = 0.1 = 1e17 WAD
 
-use std::ops::{Add, Sub, Mul, Div, Neg};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 /// WAD precision constant (1e18)
 pub const WAD: i128 = 1_000_000_000_000_000_000;
@@ -69,7 +69,7 @@ impl Wad {
     /// Clamp fee to valid range [0, MAX_FEE].
     #[inline]
     pub fn clamp_fee(self) -> Wad {
-        Wad(self.0.max(0).min(MAX_FEE))
+        Wad(self.0.clamp(0, MAX_FEE))
     }
 
     /// Clamp to arbitrary range.
@@ -249,7 +249,7 @@ mod tests {
 
         let a = Wad::from_f64(2.0);
         let s = a.sqrt();
-        assert!((s.to_f64() - 1.414213562).abs() < 1e-6);
+        assert!((s.to_f64() - std::f64::consts::SQRT_2).abs() < 1e-6);
     }
 
     #[test]

@@ -19,9 +19,7 @@ fn benchmark_wad_operations(c: &mut Criterion) {
         bench.iter(|| black_box(a).wdiv(black_box(b)))
     });
 
-    c.bench_function("wad_sqrt", |bench| {
-        bench.iter(|| black_box(a).sqrt())
-    });
+    c.bench_function("wad_sqrt", |bench| bench.iter(|| black_box(a).sqrt()));
 }
 
 fn benchmark_price_process(c: &mut Criterion) {
@@ -29,9 +27,7 @@ fn benchmark_price_process(c: &mut Criterion) {
 
     let mut process = GBMPriceProcess::new(100.0, 0.0, 0.001, 1.0, Some(42));
 
-    c.bench_function("gbm_step", |bench| {
-        bench.iter(|| process.step())
-    });
+    c.bench_function("gbm_step", |bench| bench.iter(|| process.step()));
 }
 
 fn benchmark_trade_info_encoding(c: &mut Criterion) {
@@ -52,7 +48,7 @@ fn benchmark_trade_info_encoding(c: &mut Criterion) {
     c.bench_function("trade_info_encode", |bench| {
         bench.iter(|| {
             trade.encode_calldata(&mut buffer);
-            black_box(&buffer)
+            black_box(buffer)
         })
     });
 }
@@ -60,7 +56,7 @@ fn benchmark_trade_info_encoding(c: &mut Criterion) {
 fn benchmark_retail_trader(c: &mut Criterion) {
     use amm_sim_rs::market::RetailTrader;
 
-    let mut trader = RetailTrader::new(5.0, 2.0, 0.5, Some(42));
+    let mut trader = RetailTrader::new(5.0, 2.0, 0.5, 0.5, Some(42));
 
     c.bench_function("retail_generate_orders", |bench| {
         bench.iter(|| black_box(trader.generate_orders()))

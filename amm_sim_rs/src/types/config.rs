@@ -72,6 +72,7 @@ impl SimulationConfig {
         retail_buy_prob,
         seed
     ))]
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         n_steps: u32,
         initial_price: f64,
@@ -129,8 +130,8 @@ pub struct HyperparameterVariance {
 impl HyperparameterVariance {
     /// Apply variance to create a new config based on seed.
     pub fn apply(&self, base: &SimulationConfig, seed: u64) -> SimulationConfig {
-        use rand::SeedableRng;
         use rand::Rng;
+        use rand::SeedableRng;
         use rand_pcg::Pcg64;
 
         let mut rng = Pcg64::seed_from_u64(seed);

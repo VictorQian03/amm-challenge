@@ -3,18 +3,19 @@
 //! High-performance simulation engine for AMM fee algorithm competition.
 //! Eliminates Python interpreter overhead in the hot path by implementing
 //! the simulation loop, AMM math, and market actors in Rust.
+#![allow(clippy::useless_conversion)]
 
-pub mod types;
-pub mod evm;
 pub mod amm;
+pub mod evm;
 pub mod market;
 pub mod simulation;
+pub mod types;
 
 use pyo3::prelude::*;
 
 use crate::simulation::runner::{run_simulations_parallel, SimulationBatchConfig};
 use crate::types::config::SimulationConfig;
-use crate::types::result::{BatchSimulationResult, LightweightSimResult};
+use crate::types::result::{BatchSimulationResult, LightweightSimResult, LightweightStepResult};
 
 /// Run multiple simulations in parallel using Rust engine.
 ///
@@ -38,7 +39,11 @@ fn run_batch(
         submission_bytecode,
         baseline_bytecode,
         configs,
-        n_workers: if n_workers == 0 { None } else { Some(n_workers) },
+        n_workers: if n_workers == 0 {
+            None
+        } else {
+            Some(n_workers)
+        },
     };
 
     run_simulations_parallel(batch_config)
@@ -52,8 +57,8 @@ fn run_single(
     baseline_bytecode: Vec<u8>,
     config: SimulationConfig,
 ) -> PyResult<LightweightSimResult> {
-    use crate::simulation::engine::SimulationEngine;
     use crate::evm::strategy::EVMStrategy;
+    use crate::simulation::engine::SimulationEngine;
 
     let submission = EVMStrategy::new(submission_bytecode, "Submission".to_string())
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
@@ -61,7 +66,8 @@ fn run_single(
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 
     let mut engine = SimulationEngine::new(config);
-    engine.run(submission, baseline)
+    engine
+        .run(submission, baseline)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
 }
 
@@ -71,6 +77,7 @@ fn amm_sim_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(run_batch, m)?)?;
     m.add_function(wrap_pyfunction!(run_single, m)?)?;
     m.add_class::<SimulationConfig>()?;
+    m.add_class::<LightweightStepResult>()?;
     m.add_class::<LightweightSimResult>()?;
     m.add_class::<BatchSimulationResult>()?;
     Ok(())

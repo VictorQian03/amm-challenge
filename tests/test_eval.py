@@ -133,8 +133,8 @@ def test_compute_scorecard_is_deterministic_and_json_ready():
     assert first["scorecard_version"] == "1.2"
     assert first["run_metadata"]["telemetry_version"] == "1.1"
     assert first["overall"]["mean_edge"] == pytest.approx(3.5)
-    assert "benchmark_mean_edge" not in first["overall"]
-    assert "mean_edge_delta" not in first["overall"]
+    assert first["overall"]["benchmark_mean_edge"] == pytest.approx(2.5)
+    assert first["overall"]["mean_edge_delta"] == pytest.approx(1.0)
     assert first["overall"]["retail_volume_share"] == pytest.approx(2 / 3)
     assert first["overall"]["arb_to_retail_volume_ratio"] == pytest.approx(0.2)
     assert first["overall"]["retail_edge"] == pytest.approx(4.0)
@@ -166,6 +166,15 @@ def test_compute_scorecard_is_deterministic_and_json_ready():
         )
         == 6
     )
+    empty_deciles = [
+        bucket
+        for bucket in first["by_slice"]["mean_edge_deciles"].values()
+        if bucket["simulation_count"] == 0
+    ]
+    assert empty_deciles
+    for bucket in empty_deciles:
+        assert bucket["benchmark_mean_edge"] is None
+        assert bucket["mean_edge_delta"] is None
 
 
 def test_compute_scorecard_rejects_missing_required_diagnostics():
@@ -252,3 +261,55 @@ def test_compute_scorecard_rejects_missing_required_fields():
 
     with pytest.raises(ValueError, match="gbm_sigma"):
         compute_scorecard(_make_match_result([broken_result]))
+
+
+def test_compute_scorecard_enforces_same_seed_delta_threshold() -> None:
+    sim_results = [
+        _make_sim_result(
+            seed=seed,
+            submission_edge=str(seed),
+            normalizer_edge=str(seed),
+            gbm_sigma=0.1,
+            retail_arrival_rate=1.0,
+            retail_mean_size=2.0,
+            submission_retail_volume=10.0,
+            normalizer_retail_volume=5.0,
+            submission_arb_volume=2.0,
+        )
+        for seed in range(4)
+    ]
+
+    scorecard = compute_scorecard(
+        _make_match_result(sim_results), stage="final_confidence"
+    )
+
+    assert scorecard["overall"]["mean_edge_delta"] == pytest.approx(0.0)
+    assert scorecard["gate"]["thresholds"] == {
+        "mean_edge": 0.0,
+        "mean_edge_delta": 0.0,
+    }
+    assert scorecard["gate"]["passed"] is True
+
+    worse = compute_scorecard(
+        _make_match_result(
+            [
+                _make_sim_result(
+                    seed=seed,
+                    submission_edge=str(seed),
+                    normalizer_edge=str(seed + 0.5),
+                    gbm_sigma=0.1,
+                    retail_arrival_rate=1.0,
+                    retail_mean_size=2.0,
+                    submission_retail_volume=10.0,
+                    normalizer_retail_volume=5.0,
+                    submission_arb_volume=2.0,
+                )
+                for seed in range(4)
+            ]
+        ),
+        stage="final_confidence",
+    )
+
+    assert worse["overall"]["mean_edge_delta"] == pytest.approx(-0.5)
+    assert worse["gate"]["passed"] is False
+    assert "mean_edge_delta" in worse["gate"]["failures"][0]

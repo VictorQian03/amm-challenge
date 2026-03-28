@@ -32,7 +32,12 @@ impl Arbitrageur {
     }
 
     /// Find and execute the optimal arbitrage trade.
-    pub fn execute_arb(&self, amm: &mut CFMM, fair_price: f64, timestamp: u64) -> Option<ArbResult> {
+    pub fn execute_arb(
+        &self,
+        amm: &mut CFMM,
+        fair_price: f64,
+        timestamp: u64,
+    ) -> Option<ArbResult> {
         let (rx, ry) = amm.reserves();
         let spot_price = ry / rx;
 
@@ -51,7 +56,12 @@ impl Arbitrageur {
     ///
     /// Maximize profit = Δx * p - Y_paid
     /// Closed-form (fee-on-input): Δx_out = x - sqrt(k / (γ·p))
-    fn compute_buy_arb(&self, amm: &mut CFMM, fair_price: f64, timestamp: u64) -> Option<ArbResult> {
+    fn compute_buy_arb(
+        &self,
+        amm: &mut CFMM,
+        fair_price: f64,
+        timestamp: u64,
+    ) -> Option<ArbResult> {
         let (rx, ry) = amm.reserves();
         let k = rx * ry;
         let fee = amm.fees().ask_fee.to_f64();
@@ -101,7 +111,12 @@ impl Arbitrageur {
     ///
     /// Maximize profit = Y_received - Δx * p
     /// Closed-form (fee-on-input): Δx_in = (sqrt(k·γ / p) - x) / γ
-    fn compute_sell_arb(&self, amm: &mut CFMM, fair_price: f64, timestamp: u64) -> Option<ArbResult> {
+    fn compute_sell_arb(
+        &self,
+        amm: &mut CFMM,
+        fair_price: f64,
+        timestamp: u64,
+    ) -> Option<ArbResult> {
         let (rx, ry) = amm.reserves();
         let k = rx * ry;
         let fee = amm.fees().bid_fee.to_f64();
@@ -147,7 +162,12 @@ impl Arbitrageur {
     }
 
     /// Execute arbitrage on multiple AMMs.
-    pub fn arbitrage_all(&self, amms: &mut [CFMM], fair_price: f64, timestamp: u64) -> Vec<ArbResult> {
+    pub fn arbitrage_all(
+        &self,
+        amms: &mut [CFMM],
+        fair_price: f64,
+        timestamp: u64,
+    ) -> Vec<ArbResult> {
         amms.iter_mut()
             .filter_map(|amm| self.execute_arb(amm, fair_price, timestamp))
             .collect()
@@ -162,8 +182,6 @@ impl Default for Arbitrageur {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     fn quote_buy_x(reserve_x: f64, reserve_y: f64, fee: f64, amount_x_in: f64) -> f64 {
         if amount_x_in <= 0.0 {
             return 0.0;
@@ -199,11 +217,11 @@ mod tests {
     #[test]
     fn test_arb_formulas() {
         // Test the closed-form formulas without EVM
-        let rx = 1000.0;
-        let ry = 1000.0;
-        let k = rx * ry;
-        let fee = 0.0025; // 25 bps
-        let gamma = 1.0 - fee;
+        let rx: f64 = 1000.0;
+        let ry: f64 = 1000.0;
+        let k: f64 = rx * ry;
+        let fee: f64 = 0.0025; // 25 bps
+        let gamma: f64 = 1.0 - fee;
 
         // If fair price > spot price, buy X from AMM
         let fair_price = 1.1; // Above spot of 1.0
@@ -220,11 +238,11 @@ mod tests {
 
     #[test]
     fn test_arb_sizes_maximize_profit() {
-        let rx = 1000.0;
-        let ry = 1000.0;
-        let k = rx * ry;
-        let fee = 0.05; // 5%
-        let gamma = 1.0 - fee;
+        let rx: f64 = 1000.0;
+        let ry: f64 = 1000.0;
+        let k: f64 = rx * ry;
+        let fee: f64 = 0.05; // 5%
+        let gamma: f64 = 1.0 - fee;
 
         // Buy X from AMM (AMM sells X): optimize in terms of X out
         let fair_price = 1.2;
@@ -233,8 +251,10 @@ mod tests {
         let y_in_opt = quote_sell_x(rx, ry, fee, x_out_opt);
         let profit_opt = x_out_opt * fair_price - y_in_opt;
 
-        let profit_lo = (x_out_opt * 0.999) * fair_price - quote_sell_x(rx, ry, fee, x_out_opt * 0.999);
-        let profit_hi = (x_out_opt * 1.001) * fair_price - quote_sell_x(rx, ry, fee, x_out_opt * 1.001);
+        let profit_lo =
+            (x_out_opt * 0.999) * fair_price - quote_sell_x(rx, ry, fee, x_out_opt * 0.999);
+        let profit_hi =
+            (x_out_opt * 1.001) * fair_price - quote_sell_x(rx, ry, fee, x_out_opt * 1.001);
         assert!(profit_opt >= profit_lo - 1e-9);
         assert!(profit_opt >= profit_hi - 1e-9);
 
@@ -256,14 +276,14 @@ mod tests {
 
     #[test]
     fn test_arb_moves_price_into_no_arb_band() {
-        let rx = 1000.0;
-        let ry = 1000.0;
-        let fee = 0.05; // 5%
-        let gamma = 1.0 - fee;
+        let rx: f64 = 1000.0;
+        let ry: f64 = 1000.0;
+        let fee: f64 = 0.05; // 5%
+        let gamma: f64 = 1.0 - fee;
 
         // Underpriced: spot < fair -> buy X from AMM (AMM sells X)
         let fair_price = 1.2;
-        let k = rx * ry;
+        let k: f64 = rx * ry;
         let x_out = rx - (k / (gamma * fair_price)).sqrt();
         let y_in = quote_sell_x(rx, ry, fee, x_out);
         let rx2 = rx - x_out;
@@ -273,7 +293,7 @@ mod tests {
 
         // Overpriced: spot > fair -> sell X to AMM (AMM buys X)
         let fair_price = 0.9;
-        let k = rx * ry;
+        let k: f64 = rx * ry;
         let x_virtual = (k * gamma / fair_price).sqrt();
         let x_in = (x_virtual - rx) / gamma;
         let y_out = quote_buy_x(rx, ry, fee, x_in);

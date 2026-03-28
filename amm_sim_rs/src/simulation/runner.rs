@@ -24,15 +24,17 @@ pub fn run_simulations_parallel(
     batch_config: SimulationBatchConfig,
 ) -> Result<BatchSimulationResult, SimulationError> {
     // Configure thread pool
-    let n_workers = batch_config.n_workers.unwrap_or_else(|| {
-        rayon::current_num_threads().min(8)
-    });
+    let n_workers = batch_config
+        .n_workers
+        .unwrap_or_else(|| rayon::current_num_threads().min(8));
 
     // Build custom thread pool if needed
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(n_workers)
         .build()
-        .map_err(|e| SimulationError::InvalidConfig(format!("Failed to create thread pool: {}", e)))?;
+        .map_err(|e| {
+            SimulationError::InvalidConfig(format!("Failed to create thread pool: {}", e))
+        })?;
 
     // Clone bytecodes for each worker (they need their own EVM instances)
     let submission_bytecode = batch_config.submission_bytecode;
@@ -40,19 +42,17 @@ pub fn run_simulations_parallel(
 
     // Run simulations in parallel
     let results: Result<Vec<LightweightSimResult>, SimulationError> = pool.install(|| {
-        batch_config.configs
+        batch_config
+            .configs
             .into_par_iter()
             .map(|config| {
                 // Create fresh EVM strategies for this worker
-                let submission = EVMStrategy::new(
-                    submission_bytecode.clone(),
-                    "Submission".to_string(),
-                ).map_err(|e| SimulationError::EVMError(e.to_string()))?;
+                let submission =
+                    EVMStrategy::new(submission_bytecode.clone(), "Submission".to_string())
+                        .map_err(|e| SimulationError::EVMError(e.to_string()))?;
 
-                let baseline = EVMStrategy::new(
-                    baseline_bytecode.clone(),
-                    "Baseline".to_string(),
-                ).map_err(|e| SimulationError::EVMError(e.to_string()))?;
+                let baseline = EVMStrategy::new(baseline_bytecode.clone(), "Baseline".to_string())
+                    .map_err(|e| SimulationError::EVMError(e.to_string()))?;
 
                 let mut engine = SimulationEngine::new(config);
                 engine.run(submission, baseline)
@@ -69,7 +69,10 @@ pub fn run_simulations_parallel(
         Vec::new()
     };
 
-    Ok(BatchSimulationResult { results, strategies })
+    Ok(BatchSimulationResult {
+        results,
+        strategies,
+    })
 }
 
 /// Run a single simulation (non-parallel).
@@ -90,7 +93,5 @@ pub fn run_simulation(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     // Full tests require EVM bytecode - see integration tests
 }

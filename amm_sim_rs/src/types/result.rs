@@ -118,16 +118,8 @@ impl LightweightSimResult {
 
         let pnl_a = self.pnl.get(names[0]).copied().unwrap_or(0.0);
         let pnl_b = self.pnl.get(names[1]).copied().unwrap_or(0.0);
-        let edge_a = self
-            .edges
-            .get(names[0])
-            .copied()
-            .unwrap_or(pnl_a);
-        let edge_b = self
-            .edges
-            .get(names[1])
-            .copied()
-            .unwrap_or(pnl_b);
+        let edge_a = self.edges.get(names[0]).copied().unwrap_or(pnl_a);
+        let edge_b = self.edges.get(names[1]).copied().unwrap_or(pnl_b);
 
         if edge_a > edge_b {
             Some(names[0].clone())
@@ -177,16 +169,8 @@ impl BatchSimulationResult {
         for result in &self.results {
             let pnl_a = result.pnl.get(name_a).copied().unwrap_or(0.0);
             let pnl_b = result.pnl.get(name_b).copied().unwrap_or(0.0);
-            let edge_a = result
-                .edges
-                .get(name_a)
-                .copied()
-                .unwrap_or(pnl_a);
-            let edge_b = result
-                .edges
-                .get(name_b)
-                .copied()
-                .unwrap_or(pnl_b);
+            let edge_a = result.edges.get(name_a).copied().unwrap_or(pnl_a);
+            let edge_b = result.edges.get(name_b).copied().unwrap_or(pnl_b);
 
             if edge_a > edge_b {
                 wins_a += 1;
@@ -236,7 +220,10 @@ impl BatchSimulationResult {
         let (wins_a, wins_b, draws) = self.win_counts();
         format!(
             "BatchSimulationResult(n={}, wins=({}, {}, {}))",
-            self.results.len(), wins_a, wins_b, draws
+            self.results.len(),
+            wins_a,
+            wins_b,
+            draws
         )
     }
 

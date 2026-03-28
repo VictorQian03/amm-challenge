@@ -21,7 +21,10 @@ impl FeeQuote {
     }
 
     pub fn symmetric(fee: Wad) -> Self {
-        Self { bid_fee: fee, ask_fee: fee }
+        Self {
+            bid_fee: fee,
+            ask_fee: fee,
+        }
     }
 }
 
@@ -298,7 +301,11 @@ impl CFMM {
     }
 
     /// Reset the AMM for a new simulation.
-    pub fn reset(&mut self, reserve_x: f64, reserve_y: f64) -> Result<(), crate::evm::strategy::EVMError> {
+    pub fn reset(
+        &mut self,
+        reserve_x: f64,
+        reserve_y: f64,
+    ) -> Result<(), crate::evm::strategy::EVMError> {
         self.reserve_x = reserve_x;
         self.reserve_y = reserve_y;
         self.accumulated_fees_x = 0.0;
@@ -310,17 +317,12 @@ impl CFMM {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::types::wad::WAD;
-
     // Note: Full tests require EVM bytecode, which is complex to embed.
     // The Python integration tests will verify correctness.
 
     #[test]
     fn test_quote_formulas() {
         // Test the math without EVM - use fixed fees
-        let fee_quote = FeeQuote::symmetric(Wad::from_bps(25)); // 0.25%
-
         // Manual calculation for buy X
         let rx = 1000.0;
         let ry = 1000.0;

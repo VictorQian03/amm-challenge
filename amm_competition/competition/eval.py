@@ -23,6 +23,8 @@ REQUIRED_GATE_METRIC_FIELDS = (
 )
 
 OPTIONAL_DIAGNOSTIC_METRIC_FIELDS = (
+    "benchmark_mean_edge",
+    "mean_edge_delta",
     "retail_edge",
     "arb_edge",
     "retail_flow_share",
@@ -66,6 +68,8 @@ REQUIRED_SIMULATION_RESULT_MAP_FIELDS = {
 class ScorecardRecord:
     seed: int
     mean_edge: float
+    benchmark_mean_edge: float
+    mean_edge_delta: float
     gbm_sigma: float
     retail_intensity: float
     submission_retail_volume: float
@@ -141,6 +145,9 @@ def _extract_records(match_result: MatchResult) -> list[ScorecardRecord]:
         submission_edge = _required_float(
             result.edges, SUBMISSION_KEY, field_name="edges"
         )
+        benchmark_edge = _required_float(
+            result.edges, NORMALIZER_KEY, field_name="edges"
+        )
         submission_retail_volume = _required_float(
             result.retail_volume_y,
             SUBMISSION_KEY,
@@ -161,6 +168,8 @@ def _extract_records(match_result: MatchResult) -> list[ScorecardRecord]:
             ScorecardRecord(
                 seed=seed,
                 mean_edge=submission_edge,
+                benchmark_mean_edge=benchmark_edge,
+                mean_edge_delta=submission_edge - benchmark_edge,
                 gbm_sigma=float(result.gbm_sigma),
                 retail_intensity=float(
                     result.retail_arrival_rate * result.retail_mean_size
@@ -347,6 +356,10 @@ def _summarize_records(records: list[ScorecardRecord]) -> dict[str, float | int 
     return {
         "simulation_count": len(records),
         "mean_edge": _mean(mean_edges),
+        "benchmark_mean_edge": _mean(
+            [record.benchmark_mean_edge for record in records]
+        ),
+        "mean_edge_delta": _mean([record.mean_edge_delta for record in records]),
         "retail_volume_share": retail_volume_share,
         "arb_to_retail_volume_ratio": arb_to_retail_volume_ratio,
         "retail_edge": retail_edge,
@@ -425,6 +438,7 @@ def _build_gate_summary(
             for key, value in {
                 "mean_edge": preset.gate.min_mean_edge,
                 "retail_volume_share": preset.gate.min_retail_volume_share,
+                "mean_edge_delta": preset.gate.min_same_seed_mean_edge_delta,
             }.items()
             if value is not None
         }

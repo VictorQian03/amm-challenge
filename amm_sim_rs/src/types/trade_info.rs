@@ -149,13 +149,13 @@ fn decode_u256(data: &[u8]) -> Option<u128> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::wad::{WAD, MAX_FEE};
+    use crate::types::wad::{MAX_FEE, WAD};
 
     #[test]
     fn test_encode_trade_info() {
         let trade = TradeInfo {
             is_buy: true,
-            amount_x: Wad::new(WAD), // 1.0
+            amount_x: Wad::new(WAD),     // 1.0
             amount_y: Wad::new(WAD * 2), // 2.0
             timestamp: 100,
             reserve_x: Wad::new(WAD * 1000),
@@ -178,10 +178,7 @@ mod tests {
 
     #[test]
     fn test_encode_after_initialize() {
-        let calldata = encode_after_initialize(
-            Wad::new(WAD * 1000),
-            Wad::new(WAD * 1000),
-        );
+        let calldata = encode_after_initialize(Wad::new(WAD * 1000), Wad::new(WAD * 1000));
 
         assert_eq!(&calldata[0..4], &SELECTOR_AFTER_INITIALIZE);
         assert_eq!(calldata.len(), 68);
