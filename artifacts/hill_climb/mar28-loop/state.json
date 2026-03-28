@@ -1,0 +1,19 @@
+{
+  "artifact_version": "hill_climb.state.v1",
+  "baseline_eval_id": "smoke_0001",
+  "current_target_stage": "smoke",
+  "incumbent_eval_ids": {
+    "screen": "screen_0005",
+    "smoke": "smoke_0001"
+  },
+  "last_completed_iteration": 6,
+  "next_hypothesis": null,
+  "run_id": "mar28-loop",
+  "run_mode": "foreground",
+  "stop_rules": {
+    "pivot_after_non_improving_iterations": 5,
+    "refine_after_non_improving_iterations": 3,
+    "stop_after_non_improving_iterations": 8
+  },
+  "updated_at": "2026-03-28T16:00:01+00:00"
+}

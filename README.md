@@ -90,7 +90,7 @@ The normalizer also means there's no "free lunch"—you can't beat 30 bps just b
 
 ## Writing a Strategy
 
-**Start with `contracts/src/StarterStrategy.sol`** — a simple 50 bps fixed-fee strategy. Copy it, rename `getName()`, and modify the fee logic.
+**Start with `contracts/src/candidates/StarterCandidate.sol`** and copy it into `contracts/src/Strategy.sol`. The hill-climb harness treats `contracts/src/Strategy.sol` as the active edit path for a run, while `contracts/src/candidates/` is the library of starter and archived variants.
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -169,20 +169,66 @@ contract Strategy is AMMStrategyBase {
 ## CLI
 
 ```bash
-# Build the Rust engine
-cd amm_sim_rs && pip install maturin && maturin develop --release && cd ..
+# One-shot local setup
+./scripts/setup_local.sh
 
-# Install
-pip install -e .
+# Run a candidate directly
+amm-match run contracts/src/Strategy.sol
 
-# Run 1000 simulations (default)
-amm-match run my_strategy.sol
-
-# Quick test
-amm-match run my_strategy.sol --simulations 10
+# Quick direct test
+amm-match run contracts/src/Strategy.sol --simulations 10
 
 # Validate without running
-amm-match validate my_strategy.sol
+amm-match validate contracts/src/Strategy.sol
+
+# Record a hill-climb eval
+amm-match hill-climb eval contracts/src/Strategy.sol --run-id mar26 --stage screen --label baseline
+
+# Inspect the current stage incumbent
+amm-match hill-climb status --run-id mar26 --stage screen
+
+# Restore the current stage incumbent into the active file
+amm-match hill-climb pull-best --run-id mar26 --stage screen --destination contracts/src/Strategy.sol
+
 ```
 
 Output is your average edge across simulations. The 30 bps normalizer typically scores around 250-350 edge depending on market conditions.
+
+## Hill-Climb Loop
+
+This repo now uses a formal hill-climbing harness inspired by single-file autoresearch loops:
+
+- the competition mechanics and evaluator stay fixed,
+- agents mutate one active strategy file at a time at `contracts/src/Strategy.sol`,
+- every eval runs against the built-in 30 bps normalizer,
+- the deciding metric is `mean_edge` subject to stage gates and an uncertainty-aware promotion margin,
+- every stage keeps competition-length simulations (`10000` steps),
+- only the number of simulations changes by stage.
+
+Stage presets:
+
+- `smoke`: 8 sims
+- `screen`: 32 sims
+- `climb`: 128 sims
+- `confirm`: 512 sims
+- `final`: 1000 sims
+
+Artifacts are written to `artifacts/hill_climb/<run_id>/` with a versioned `run.json`, resumable `state.json`, append-only results, shared content-addressed source snapshots under `snapshots/`, and stage incumbents. Keep one active run under `artifacts/hill_climb/` and one smoke sanity run under `artifacts/hill_climb_smoke/`; delete probe, compare, and superseded baseline runs after their conclusions are folded back into the active lane. Legacy `evaluations/` trees, stale manifests, duplicate eval IDs, and obsolete continuity files are unsupported in active runs and should not be retained there.
+
+Decision rule:
+
+- a stage must clear its gate before it can seed or replace an incumbent,
+- the first gate-passing result for a stage is `seed`,
+- later results are `keep` only if `delta_vs_incumbent` clears the promotion margin derived from candidate and incumbent uncertainty,
+- otherwise the result is `discard`.
+
+See `docs/hill_climb_loop.md` for the canonical artifact schema, progression policy, and stop rules.
+
+## Protected Mechanics Hooks
+
+This repo ships with versioned git hooks under `.githooks/` and a protected-path manifest in `.competition-protected-paths`.
+
+- `./scripts/setup_local.sh` installs the local environment and sets `core.hooksPath=.githooks`
+- `pre-commit` and `pre-push` block protected mechanics edits whether they are staged or still dirty in the working tree
+- `amm-match hill-climb eval` also refuses to run against a dirty protected surface, and retained runs pin a protected-surface fingerprint in `run.json`
+- intentional edits can still be made by setting `ALLOW_COMPETITION_MECHANICS_EDIT=1`

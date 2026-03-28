@@ -16,7 +16,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0.0"]
+dev = [
+    "pytest>=7.0.0",
+    "ruff>=0.15.8",
+    "ty>=0.0.26",
+]
 
 [project.scripts]
 amm-match = "amm_competition.cli:main"
@@ -24,3 +28,9 @@ amm-match = "amm_competition.cli:main"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["amm_competition*"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.8",
+    "ty>=0.0.26",
+]

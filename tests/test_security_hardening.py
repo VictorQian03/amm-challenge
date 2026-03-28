@@ -20,12 +20,7 @@ import {IAMMStrategy, TradeInfo} from "./IAMMStrategy.sol";
 
 
 def _strategy_body(body: str) -> str:
-    return (
-        BASE_IMPORTS
-        + "\ncontract Strategy is AMMStrategyBase {\n"
-        + body
-        + "\n}\n"
-    )
+    return BASE_IMPORTS + "\ncontract Strategy is AMMStrategyBase {\n" + body + "\n}\n"
 
 
 def _minimal_functions() -> str:
@@ -88,7 +83,9 @@ def _baseline_bytecode() -> bytes:
     vanilla_source = Path("contracts/src/VanillaStrategy.sol").read_text()
     result = compiler.compile(vanilla_source, contract_name="VanillaStrategy")
     assert result.success, result.errors
-    return result.bytecode
+    bytecode = result.bytecode
+    assert bytecode is not None
+    return bytecode
 
 
 def test_validator_blocks_dot_call_syntax() -> None:
@@ -214,7 +211,10 @@ def test_compiler_rejects_forbidden_creation_opcodes() -> None:
     )
     result = SolidityCompiler().compile(source)
     assert not result.success
-    assert any("creation bytecode contains forbidden opcodes" in err.lower() for err in (result.errors or []))
+    assert any(
+        "creation bytecode contains forbidden opcodes" in err.lower()
+        for err in (result.errors or [])
+    )
 
 
 def test_compiler_rejects_storage_outside_slots() -> None:
@@ -249,10 +249,12 @@ def test_rust_engine_rejects_out_of_range_fee_returns() -> None:
     compiler = SolidityCompiler()
     submission = compiler.compile(source)
     assert submission.success, submission.errors
+    bytecode = submission.bytecode
+    assert bytecode is not None
 
     with pytest.raises(Exception):
         amm_sim_rs.run_single(
-            list(submission.bytecode),
+            list(bytecode),
             list(_baseline_bytecode()),
             _sim_config(),
         )

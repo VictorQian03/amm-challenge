@@ -1,0 +1,2 @@
+eval_id	stage	status	mean_edge	incumbent_mean_edge	delta_vs_incumbent	strategy_name	label	description	snapshot_path
+smoke_0001	smoke	seed	417.840863			LatentStateEWMA	probe		artifacts/hill_climb/frozen-eval-probe/snapshots/da78a6d398aa9d8887d3d3fcd20f17116a1e625cb215083d9045975850c118dc.sol

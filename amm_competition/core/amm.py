@@ -11,6 +11,7 @@ from amm_competition.core.trade import FeeQuote, TradeInfo, TradeSide
 @dataclass
 class Quote:
     """A quote for a potential trade."""
+
     side: TradeSide
     amount_in: Decimal
     amount_out: Decimal
@@ -30,6 +31,7 @@ class AMM:
     - Fee portion goes to accumulated_fees, NOT reserves
     - Result: k stays constant; fees count toward PnL separately
     """
+
     strategy: AMMStrategy
     reserve_x: Decimal
     reserve_y: Decimal
@@ -51,7 +53,9 @@ class AMM:
 
     def initialize(self) -> None:
         """Initialize the AMM and get starting fees from strategy."""
-        self.current_fees = self.strategy.after_initialize(self.reserve_x, self.reserve_y)
+        self.current_fees = self.strategy.after_initialize(
+            self.reserve_x, self.reserve_y
+        )
         self._initialized = True
         self._trade_count = 0
         self._pending_trade = None
@@ -326,7 +330,9 @@ class AMM:
         self._maybe_update_fees(trade_info)
         return trade_info
 
-    def execute_buy_x_with_y(self, amount_y: Decimal, timestamp: int) -> Optional[TradeInfo]:
+    def execute_buy_x_with_y(
+        self, amount_y: Decimal, timestamp: int
+    ) -> Optional[TradeInfo]:
         """Execute trade where trader pays Y to receive X."""
         # Use fast float math
         amount_y_f = float(amount_y)

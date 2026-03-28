@@ -3,7 +3,6 @@
 import math
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Optional
 
 from amm_competition.core.amm import AMM
 from amm_competition.core.trade import TradeInfo
@@ -13,6 +12,7 @@ from amm_competition.market.retail import RetailOrder
 @dataclass
 class RoutedTrade:
     """Result of routing a trade to an AMM."""
+
     amm: AMM
     trade_info: TradeInfo
     amount_y: Decimal  # Y spent (buy) or received (sell)
@@ -228,11 +228,13 @@ class OrderRouter:
 
                 trade_info = amm.execute_buy_x_with_y(y_amount, timestamp)
                 if trade_info is not None:
-                    trades.append(RoutedTrade(
-                        amm=amm,
-                        trade_info=trade_info,
-                        amount_y=y_amount,
-                    ))
+                    trades.append(
+                        RoutedTrade(
+                            amm=amm,
+                            trade_info=trade_info,
+                            amount_y=y_amount,
+                        )
+                    )
 
         else:
             # Trader wants to sell X, receiving Y
@@ -246,11 +248,13 @@ class OrderRouter:
 
                 trade_info = amm.execute_buy_x(x_amount, timestamp)
                 if trade_info is not None:
-                    trades.append(RoutedTrade(
-                        amm=amm,
-                        trade_info=trade_info,
-                        amount_y=trade_info.amount_y,
-                    ))
+                    trades.append(
+                        RoutedTrade(
+                            amm=amm,
+                            trade_info=trade_info,
+                            amount_y=trade_info.amount_y,
+                        )
+                    )
 
         return trades
 

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Optional, Tuple
+from typing import Optional, Protocol, Tuple, cast
 
 from pyrevm import EVM
 
@@ -23,6 +23,12 @@ class EVMExecutionResult:
 # Pre-computed constants for fast path
 _WAD = 10**18
 _WAD_DECIMAL = Decimal(_WAD)
+
+
+class SupportsMessageCall(Protocol):
+    """Minimal runtime EVM surface used after deployment."""
+
+    def message_call(self, *args: object, **kwargs: object) -> bytes: ...
 
 
 class EVMStrategyExecutor:
@@ -63,7 +69,7 @@ class EVMStrategyExecutor:
         """
         self.bytecode = bytecode
         self.abi = abi
-        self.evm: Optional[EVM] = None
+        self.evm: object | None = None
         self.deployed_address: Optional[str] = None
 
         # Pre-allocated calldata buffer for after_swap (reused across calls)
@@ -85,6 +91,11 @@ class EVMStrategyExecutor:
             value=0,
             gas=self.GAS_LIMIT_DEPLOY,
         )
+
+    def _runtime_handle(self) -> tuple[SupportsMessageCall, str]:
+        if self.evm is None or self.deployed_address is None:
+            raise RuntimeError("Executor is not deployed")
+        return cast(SupportsMessageCall, self.evm), self.deployed_address
 
     def _encode_uint256(self, value: int) -> bytes:
         """Encode a uint256 value as 32 bytes."""
@@ -108,7 +119,9 @@ class EVMStrategyExecutor:
         """Convert a WAD value to Decimal."""
         return Decimal(value) / Decimal(self.WAD)
 
-    def after_initialize(self, initial_x: Decimal, initial_y: Decimal) -> EVMExecutionResult:
+    def after_initialize(
+        self, initial_x: Decimal, initial_y: Decimal
+    ) -> EVMExecutionResult:
         """Call the strategy's afterInitialize function.
 
         Args:
@@ -124,14 +137,17 @@ class EVMStrategyExecutor:
 
         # Encode calldata: selector + initialX + initialY
         calldata = (
-            self.SELECTOR_AFTER_INITIALIZE + self._encode_uint256(x_wad) + self._encode_uint256(y_wad)
+            self.SELECTOR_AFTER_INITIALIZE
+            + self._encode_uint256(x_wad)
+            + self._encode_uint256(y_wad)
         )
 
         try:
+            evm, deployed_address = self._runtime_handle()
             # Execute with gas limit
-            result = self.evm.message_call(
+            result = evm.message_call(
                 caller=self.CALLER_ADDRESS,
-                to=self.deployed_address,
+                to=deployed_address,
                 calldata=calldata,
                 value=0,
                 gas=self.GAS_LIMIT_INIT,
@@ -181,7 +197,7 @@ class EVMStrategyExecutor:
         calldata = self._trade_calldata
 
         # Clear and set bool isBuy (offset 4-35, with value at byte 35)
-        calldata[4:36] = b'\x00' * 32
+        calldata[4:36] = b"\x00" * 32
         if trade.side == "buy":
             calldata[35] = 1
 
@@ -190,27 +206,28 @@ class EVMStrategyExecutor:
 
         # amountX at offset 36
         val = int(trade.amount_x * wad)
-        calldata[36:68] = val.to_bytes(32, 'big')
+        calldata[36:68] = val.to_bytes(32, "big")
 
         # amountY at offset 68
         val = int(trade.amount_y * wad)
-        calldata[68:100] = val.to_bytes(32, 'big')
+        calldata[68:100] = val.to_bytes(32, "big")
 
         # timestamp at offset 100
-        calldata[100:132] = trade.timestamp.to_bytes(32, 'big')
+        calldata[100:132] = trade.timestamp.to_bytes(32, "big")
 
         # reserveX at offset 132
         val = int(trade.reserve_x * wad)
-        calldata[132:164] = val.to_bytes(32, 'big')
+        calldata[132:164] = val.to_bytes(32, "big")
 
         # reserveY at offset 164
         val = int(trade.reserve_y * wad)
-        calldata[164:196] = val.to_bytes(32, 'big')
+        calldata[164:196] = val.to_bytes(32, "big")
 
         try:
-            result = self.evm.message_call(
+            evm, deployed_address = self._runtime_handle()
+            result = evm.message_call(
                 caller=self.CALLER_ADDRESS,
-                to=self.deployed_address,
+                to=deployed_address,
                 calldata=bytes(calldata),
                 value=0,
                 gas=self.GAS_LIMIT_TRADE,
@@ -220,8 +237,8 @@ class EVMStrategyExecutor:
                 raise RuntimeError(f"Invalid return data length: {len(result)}")
 
             # Decode return values directly as integers
-            bid_fee_wad = int.from_bytes(result[0:32], 'big')
-            ask_fee_wad = int.from_bytes(result[32:64], 'big')
+            bid_fee_wad = int.from_bytes(result[0:32], "big")
+            ask_fee_wad = int.from_bytes(result[32:64], "big")
             return (bid_fee_wad, ask_fee_wad)
 
         except Exception as e:
@@ -254,9 +271,10 @@ class EVMStrategyExecutor:
             Strategy name string
         """
         try:
-            result = self.evm.message_call(
+            evm, deployed_address = self._runtime_handle()
+            result = evm.message_call(
                 caller=self.CALLER_ADDRESS,
-                to=self.deployed_address,
+                to=deployed_address,
                 calldata=self.SELECTOR_GET_NAME,
                 value=0,
                 gas=50_000,  # getName should be cheap

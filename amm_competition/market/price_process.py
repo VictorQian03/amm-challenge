@@ -18,10 +18,11 @@ class GBMPriceProcess:
     - sigma is the per-step volatility
     - dW is a Wiener process increment
     """
+
     initial_price: float
-    mu: float = 0.0           # Drift
-    sigma: float = 0.001      # Per-step volatility
-    dt: float = 1.0           # Time step
+    mu: float = 0.0  # Drift
+    sigma: float = 0.001  # Per-step volatility
+    dt: float = 1.0  # Time step
     seed: Optional[int] = None
 
     def __post_init__(self) -> None:
@@ -47,7 +48,7 @@ class GBMPriceProcess:
         """
         # GBM discretization: S(t+dt) = S(t) * exp((mu - 0.5*sigma^2)*dt + sigma*sqrt(dt)*Z)
         z = self._rng.standard_normal()
-        drift = (self.mu - 0.5 * self.sigma ** 2) * self.dt
+        drift = (self.mu - 0.5 * self.sigma**2) * self.dt
         diffusion = self.sigma * np.sqrt(self.dt) * z
         self._current_price = self._current_price * np.exp(drift + diffusion)
         return self.current_price

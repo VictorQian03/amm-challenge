@@ -1,6 +1,7 @@
 """Solidity compilation service using py-solc-x."""
 
 import solcx
+import solcx.exceptions
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -65,7 +66,9 @@ class SolidityCompiler:
                 sources[contract] = src_file.read_text()
         return sources
 
-    def compile(self, source_code: str, contract_name: str = "Strategy") -> CompilationResult:
+    def compile(
+        self, source_code: str, contract_name: str = "Strategy"
+    ) -> CompilationResult:
         """Compile Solidity source code.
 
         Args:
@@ -125,7 +128,9 @@ class SolidityCompiler:
             if "errors" in output:
                 for err in output["errors"]:
                     severity = err.get("severity", "error")
-                    message = err.get("formattedMessage", err.get("message", "Unknown error"))
+                    message = err.get(
+                        "formattedMessage", err.get("message", "Unknown error")
+                    )
                     if severity == "error":
                         errors.append(message)
                     elif severity == "warning":
@@ -290,4 +295,6 @@ class SolidityCompiler:
         result = self.compile(source_code)
         if not result.success:
             raise RuntimeError(f"Compilation failed: {'; '.join(result.errors or [])}")
+        if result.bytecode is None or result.abi is None:
+            raise RuntimeError("Compilation succeeded without bytecode or ABI")
         return result.bytecode, result.abi

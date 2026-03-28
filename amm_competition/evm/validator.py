@@ -39,14 +39,20 @@ class SolidityValidator:
         # Creating other contracts
         (r"\bnew\s+\w+\s*\(", "Creating new contracts is not allowed"),
         # External code introspection
-        (r"\.\s*code(?:hash)?\b", "Reading code from external addresses is not allowed"),
+        (
+            r"\.\s*code(?:hash)?\b",
+            "Reading code from external addresses is not allowed",
+        ),
         # Low-level address calls
         (r"\.transfer\s*\(", "transfer() is not allowed"),
         (r"\.send\s*\(", "send() is not allowed"),
         # Block manipulation hints
         (r"\bcoinbase\b", "block.coinbase access is not allowed"),
         # External contract interactions
-        (r"interface\s+\w+\s*\{(?![\s\S]*IAMMStrategy)", "Custom interfaces are not allowed"),
+        (
+            r"interface\s+\w+\s*\{(?![\s\S]*IAMMStrategy)",
+            "Custom interfaces are not allowed",
+        ),
     ]
 
     # Required patterns
@@ -149,7 +155,9 @@ class SolidityValidator:
     def _validate_contract_declaration(self, source_code: str) -> list[str]:
         """Require `contract Strategy is ...` with AMMStrategyBase in inheritance list."""
         errors = []
-        contract_match = re.search(r"\bcontract\s+Strategy\s+is\s+([^{}]+)\{", source_code)
+        contract_match = re.search(
+            r"\bcontract\s+Strategy\s+is\s+([^{}]+)\{", source_code
+        )
         if not contract_match:
             errors.append(
                 "Contract must be named 'Strategy' and inherit from AMMStrategyBase"

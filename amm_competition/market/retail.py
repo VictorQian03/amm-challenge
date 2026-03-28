@@ -10,6 +10,7 @@ import numpy as np
 @dataclass
 class RetailOrder:
     """A retail order to be routed to AMMs."""
+
     side: str  # "buy" or "sell" (from trader's perspective, re: X)
     size: Decimal  # Size in Y terms (how much Y willing to spend/receive)
 

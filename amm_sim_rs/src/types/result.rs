@@ -81,6 +81,30 @@ pub struct LightweightSimResult {
     /// Average fees (bid, ask) by strategy name over the simulation
     #[pyo3(get)]
     pub average_fees: HashMap<String, (f64, f64)>,
+
+    /// Retail edge by strategy name
+    #[pyo3(get)]
+    pub retail_edge: HashMap<String, f64>,
+
+    /// Arbitrage edge by strategy name
+    #[pyo3(get)]
+    pub arb_edge: HashMap<String, f64>,
+
+    /// Retail trade count by strategy name
+    #[pyo3(get)]
+    pub retail_trade_count: HashMap<String, u32>,
+
+    /// Arbitrage trade count by strategy name
+    #[pyo3(get)]
+    pub arb_trade_count: HashMap<String, u32>,
+
+    /// Maximum absolute fee jump observed across bid/ask by strategy name
+    #[pyo3(get)]
+    pub max_fee_jump: HashMap<String, f64>,
+
+    /// Time-weighted fees (bid, ask) by strategy name over the simulation
+    #[pyo3(get)]
+    pub time_weighted_fees: HashMap<String, (f64, f64)>,
 }
 
 #[pymethods]

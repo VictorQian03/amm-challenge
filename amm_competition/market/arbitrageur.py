@@ -11,6 +11,7 @@ from amm_competition.core.amm import AMM
 @dataclass
 class ArbResult:
     """Result of an arbitrage attempt."""
+
     amm: AMM
     profit: Decimal
     side: str  # "buy" or "sell" from AMM perspective

@@ -5,9 +5,9 @@ from typing import Optional, Tuple
 
 from amm_competition.core.interfaces import AMMStrategy
 from amm_competition.core.trade import FeeQuote, TradeInfo
-from amm_competition.evm.executor import EVMStrategyExecutor, EVMExecutionResult, _WAD_DECIMAL
-from amm_competition.evm.compiler import SolidityCompiler, CompilationResult
-from amm_competition.evm.validator import SolidityValidator, ValidationResult
+from amm_competition.evm.executor import EVMStrategyExecutor, _WAD_DECIMAL
+from amm_competition.evm.compiler import SolidityCompiler
+from amm_competition.evm.validator import SolidityValidator
 
 
 class EVMStrategyAdapter(AMMStrategy):
@@ -41,6 +41,11 @@ class EVMStrategyAdapter(AMMStrategy):
         # Track execution metrics
         self.total_gas_used = 0
         self.call_count = 0
+
+    @property
+    def bytecode(self) -> bytes:
+        """Return deployment bytecode for simulation runners."""
+        return self._bytecode
 
     @staticmethod
     def _clamp_fee_decimal(value: Decimal) -> Decimal:
@@ -174,9 +179,7 @@ class EVMStrategyAdapter(AMMStrategy):
             validator = SolidityValidator()
             validation = validator.validate(source_code)
             if not validation.valid:
-                raise ValueError(
-                    f"Validation failed: {'; '.join(validation.errors)}"
-                )
+                raise ValueError(f"Validation failed: {'; '.join(validation.errors)}")
 
         compiler = SolidityCompiler()
         compilation = compiler.compile(source_code)
@@ -185,6 +188,8 @@ class EVMStrategyAdapter(AMMStrategy):
             raise RuntimeError(
                 f"Compilation failed: {'; '.join(compilation.errors or [])}"
             )
+        if compilation.bytecode is None:
+            raise RuntimeError("Compilation succeeded without deployment bytecode")
 
         return cls(
             bytecode=compilation.bytecode,
@@ -193,7 +198,9 @@ class EVMStrategyAdapter(AMMStrategy):
         )
 
 
-def load_solidity_strategy(source_code: str, validate: bool = True) -> EVMStrategyAdapter:
+def load_solidity_strategy(
+    source_code: str, validate: bool = True
+) -> EVMStrategyAdapter:
     """Convenience function to load a Solidity strategy.
 
     Args:

@@ -1,0 +1,21 @@
+{
+  "run_id": "2026-03-27-hill-climb-contract-cleanup",
+  "repo_root": "/Users/victorqian/Desktop/opt_arena/simple_amm",
+  "scope": [
+    "amm_competition/hill_climb/harness.py",
+    "amm_competition/cli.py",
+    "tests/test_hill_climb.py",
+    "docs/hill_climb_loop.md",
+    "docs/plans/active/iterative_loop_review_and_prd.md"
+  ],
+  "intent": "Tighten hill-climb fail-fast contracts, remove legacy fallback behavior, and reduce test brittleness from monkeypatch-heavy seams.",
+  "assumptions": [
+    "The documented active hill-climb edit path should remain contracts/src/Strategy.sol.",
+    "Legacy compaction should fail on malformed or underspecified retained artifacts instead of guessing missing state."
+  ],
+  "validation": [
+    "uv run pytest tests/test_hill_climb.py",
+    "uv run ruff check amm_competition/hill_climb/harness.py amm_competition/cli.py tests/test_hill_climb.py",
+    "uv run ty check amm_competition/hill_climb/harness.py amm_competition/cli.py tests/test_hill_climb.py"
+  ]
+}

@@ -1,9 +1,15 @@
 """Tests for the Solidity baseline module."""
 
-import pytest
 from decimal import Decimal
 
-from amm_competition.evm.baseline import get_vanilla_bytecode_and_abi, load_vanilla_strategy
+from amm_competition.evm.baseline import (
+    build_fixed_fee_source,
+    fixed_fee_strategy_name,
+    get_vanilla_bytecode_and_abi,
+    load_fixed_fee_strategy,
+    load_starter_strategy,
+    load_vanilla_strategy,
+)
 from amm_competition.evm.adapter import EVMStrategyAdapter
 from amm_competition.core.trade import TradeInfo
 
@@ -23,7 +29,9 @@ class TestGetVanillaBytecodeAndAbi:
     def test_abi_contains_required_functions(self, vanilla_bytecode_and_abi):
         """Verify ABI contains afterInitialize, afterSwap, and getName."""
         bytecode, abi = vanilla_bytecode_and_abi
-        function_names = {item.get("name") for item in abi if item.get("type") == "function"}
+        function_names = {
+            item.get("name") for item in abi if item.get("type") == "function"
+        }
         assert "afterInitialize" in function_names
         assert "afterSwap" in function_names
         assert "getName" in function_names
@@ -89,3 +97,32 @@ class TestLoadVanillaStrategy:
         # Can reinitialize after reset
         fees = strategy.after_initialize(Decimal("200"), Decimal("20000"))
         assert fees.bid_fee == Decimal("0.003")
+
+
+class TestGeneratedFixedFeeStrategies:
+    def test_fixed_fee_name_is_stable(self):
+        assert fixed_fee_strategy_name(30, 30) == "Fixed_30bps"
+        assert fixed_fee_strategy_name(20, 40) == "Fixed_20x40bps"
+
+    def test_build_fixed_fee_source_embeds_name(self):
+        source = build_fixed_fee_source(20, 40)
+        assert "Fixed_20x40bps" in source
+        assert "contract FixedFeeStrategy" in source
+
+    def test_load_fixed_fee_strategy_returns_expected_fees(self):
+        strategy = load_fixed_fee_strategy(20, 40)
+        fees = strategy.after_initialize(Decimal("100"), Decimal("10000"))
+        assert fees.bid_fee == Decimal("0.002")
+        assert fees.ask_fee == Decimal("0.004")
+
+
+class TestStarterStrategy:
+    def test_load_starter_strategy_returns_expected_name(self):
+        strategy = load_starter_strategy()
+        assert strategy.get_name() == "StarterStrategy"
+
+    def test_load_starter_strategy_returns_expected_fee(self):
+        strategy = load_starter_strategy()
+        fees = strategy.after_initialize(Decimal("100"), Decimal("10000"))
+        assert fees.bid_fee == Decimal("0.005")
+        assert fees.ask_fee == Decimal("0.005")

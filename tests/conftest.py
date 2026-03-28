@@ -2,7 +2,7 @@
 
 import pytest
 
-from amm_competition.evm.baseline import get_vanilla_bytecode_and_abi, load_vanilla_strategy
+from amm_competition.evm.baseline import get_vanilla_bytecode_and_abi
 from amm_competition.evm.adapter import EVMStrategyAdapter
 
 

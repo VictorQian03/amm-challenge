@@ -123,14 +123,31 @@ impl SimulationEngine {
         // Track cumulative volumes
         let mut arb_volume_y: HashMap<String, f64> = HashMap::new();
         let mut retail_volume_y: HashMap<String, f64> = HashMap::new();
+        let mut retail_edge: HashMap<String, f64> = HashMap::new();
+        let mut arb_edge: HashMap<String, f64> = HashMap::new();
+        let mut retail_trade_count: HashMap<String, u32> = HashMap::new();
+        let mut arb_trade_count: HashMap<String, u32> = HashMap::new();
         // Track cumulative fees for averaging
         let mut cumulative_bid_fees: HashMap<String, f64> = HashMap::new();
         let mut cumulative_ask_fees: HashMap<String, f64> = HashMap::new();
-        for name in &names {
+        let mut max_fee_jump: HashMap<String, f64> = HashMap::new();
+        let mut previous_fees: HashMap<String, (f64, f64)> = HashMap::new();
+        for amm in &amms {
+            let name = &amm.name;
+            let fee_quote = amm.fees();
             arb_volume_y.insert(name.clone(), 0.0);
             retail_volume_y.insert(name.clone(), 0.0);
+            retail_edge.insert(name.clone(), 0.0);
+            arb_edge.insert(name.clone(), 0.0);
+            retail_trade_count.insert(name.clone(), 0);
+            arb_trade_count.insert(name.clone(), 0);
             cumulative_bid_fees.insert(name.clone(), 0.0);
             cumulative_ask_fees.insert(name.clone(), 0.0);
+            max_fee_jump.insert(name.clone(), 0.0);
+            previous_fees.insert(
+                name.clone(),
+                (fee_quote.bid_fee.to_f64(), fee_quote.ask_fee.to_f64()),
+            );
         }
 
         for t in 0..self.config.n_steps {
@@ -141,9 +158,12 @@ impl SimulationEngine {
             for amm in amms.iter_mut() {
                 if let Some(arb_result) = arbitrageur.execute_arb(amm, fair_price, t as u64) {
                     *arb_volume_y.get_mut(&arb_result.amm_name).unwrap() += arb_result.amount_y;
-                    let entry = edges.entry(arb_result.amm_name).or_insert(0.0);
+                    let edge = -arb_result.profit;
+                    let entry = edges.entry(arb_result.amm_name.clone()).or_insert(0.0);
                     // AMM edge is the negative of arbitrageur profit at true price
-                    *entry += -arb_result.profit;
+                    *entry += edge;
+                    *arb_edge.get_mut(&arb_result.amm_name).unwrap() += edge;
+                    *arb_trade_count.get_mut(&arb_result.amm_name).unwrap() += 1;
                 }
             }
 
@@ -157,8 +177,10 @@ impl SimulationEngine {
                 } else {
                     trade.amount_y - trade.amount_x * fair_price
                 };
-                let entry = edges.entry(trade.amm_name).or_insert(0.0);
+                let entry = edges.entry(trade.amm_name.clone()).or_insert(0.0);
                 *entry += trade_edge;
+                *retail_edge.get_mut(&trade.amm_name).unwrap() += trade_edge;
+                *retail_trade_count.get_mut(&trade.amm_name).unwrap() += 1;
             }
 
             // 4. Capture step result and accumulate fees
@@ -175,6 +197,11 @@ impl SimulationEngine {
                 if let Some((bid_fee, ask_fee)) = step.fees.get(name) {
                     *cumulative_bid_fees.get_mut(name).unwrap() += bid_fee;
                     *cumulative_ask_fees.get_mut(name).unwrap() += ask_fee;
+                    let (prev_bid, prev_ask) = previous_fees.get(name).copied().unwrap();
+                    let jump = (bid_fee - prev_bid).abs().max((ask_fee - prev_ask).abs());
+                    let current_max = max_fee_jump.get_mut(name).unwrap();
+                    *current_max = current_max.max(jump);
+                    previous_fees.insert(name.clone(), (*bid_fee, *ask_fee));
                 }
             }
             steps.push(step);
@@ -192,6 +219,7 @@ impl SimulationEngine {
             let avg_ask = cumulative_ask_fees.get(name).unwrap() / n_steps;
             average_fees.insert(name.clone(), (avg_bid, avg_ask));
         }
+        let time_weighted_fees = average_fees.clone();
 
         for (amm, name) in amms.iter().zip(names.iter()) {
             let (init_x, init_y) = initial_reserves.get(name).unwrap();
@@ -215,6 +243,12 @@ impl SimulationEngine {
             arb_volume_y,
             retail_volume_y,
             average_fees,
+            retail_edge,
+            arb_edge,
+            retail_trade_count,
+            arb_trade_count,
+            max_fee_jump,
+            time_weighted_fees,
         })
     }
 }

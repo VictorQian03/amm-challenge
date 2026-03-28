@@ -1,0 +1,780 @@
+"""Tests for the hill-climb research harness."""
+
+import argparse
+from decimal import Decimal
+import json
+from pathlib import Path
+import subprocess
+import threading
+from typing import Any, cast
+
+import pytest
+
+from amm_competition.cli import (
+    hill_climb_eval_command,
+    hill_climb_set_state_command,
+    hill_climb_status_command,
+)
+from amm_competition.competition.match import LightweightSimResult, MatchResult
+from amm_competition.competition.protected_surface import (
+    ProtectedSurfaceChecker,
+    ProtectedSurfaceFingerprint,
+)
+from amm_competition.hill_climb.harness import (
+    DEFAULT_STOP_RULES,
+    HillClimbHarness,
+    HillClimbHarnessError,
+    INCUMBENT_EPSILON,
+    LEGACY_NEXT_EVAL_ID_FILENAME,
+    RUN_MANIFEST_VERSION,
+    RUN_STATE_VERSION,
+)
+from amm_competition.hill_climb.stages import (
+    HILL_CLIMB_STAGES,
+    build_stage_config,
+    build_stage_runner,
+)
+
+
+def _make_match_result(*, mean_edges: list[float]) -> MatchResult:
+    simulation_results = []
+    for seed, candidate_edge in enumerate(mean_edges):
+        benchmark_edge = candidate_edge - 1.0
+        simulation_results.append(
+            LightweightSimResult(
+                seed=seed,
+                strategies=["submission", "normalizer"],
+                pnl={
+                    "submission": Decimal(str(candidate_edge)),
+                    "normalizer": Decimal(str(benchmark_edge)),
+                },
+                edges={
+                    "submission": Decimal(str(candidate_edge)),
+                    "normalizer": Decimal(str(benchmark_edge)),
+                },
+                initial_fair_price=100.0,
+                initial_reserves={
+                    "submission": (100.0, 10000.0),
+                    "normalizer": (100.0, 10000.0),
+                },
+                steps=[],
+                arb_volume_y={"submission": 2.0, "normalizer": 1.0},
+                retail_volume_y={"submission": 10.0, "normalizer": 5.0},
+                average_fees={
+                    "submission": (0.0075, 0.0075),
+                    "normalizer": (0.003, 0.003),
+                },
+                gbm_sigma=0.00095,
+                retail_arrival_rate=0.8,
+                retail_mean_size=20.0,
+                retail_edge={"submission": 5.0, "normalizer": 4.0},
+                arb_edge={"submission": -1.0, "normalizer": -1.0},
+                retail_trade_count={"submission": 3, "normalizer": 2},
+                arb_trade_count={"submission": 1, "normalizer": 1},
+                max_fee_jump={"submission": 0.001, "normalizer": 0.0},
+                time_weighted_fees={
+                    "submission": (0.0075, 0.0075),
+                    "normalizer": (0.003, 0.003),
+                },
+            )
+        )
+
+    return MatchResult(
+        strategy_a="candidate",
+        strategy_b="normalizer",
+        wins_a=len(mean_edges),
+        wins_b=0,
+        draws=0,
+        total_pnl_a=sum(
+            (result.pnl["submission"] for result in simulation_results), Decimal("0")
+        ),
+        total_pnl_b=sum(
+            (result.pnl["normalizer"] for result in simulation_results), Decimal("0")
+        ),
+        total_edge_a=sum(
+            (result.edges["submission"] for result in simulation_results), Decimal("0")
+        ),
+        total_edge_b=sum(
+            (result.edges["normalizer"] for result in simulation_results), Decimal("0")
+        ),
+        simulation_results=simulation_results,
+    )
+
+
+def _load_json(path: Path) -> dict:
+    return json.loads(path.read_text())
+
+
+def _git(args: list[str], *, cwd: Path) -> None:
+    subprocess.run(args, cwd=cwd, check=True, capture_output=True, text=True)
+
+
+def _build_protected_repo(tmp_path: Path) -> tuple[Path, Path, Path]:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+    protected_path = repo_root / "amm_competition" / "competition" / "config.py"
+    strategy_path = repo_root / "contracts" / "src" / "Strategy.sol"
+    protected_path.parent.mkdir(parents=True)
+    strategy_path.parent.mkdir(parents=True)
+    (repo_root / ".competition-protected-paths").write_text(
+        "amm_competition/competition/config.py\n"
+    )
+    protected_path.write_text("BASELINE = 1\n")
+    strategy_path.write_text("// strategy\n")
+
+    _git(["git", "init"], cwd=repo_root)
+    _git(["git", "config", "user.name", "Test User"], cwd=repo_root)
+    _git(["git", "config", "user.email", "test@example.com"], cwd=repo_root)
+    _git(["git", "add", "."], cwd=repo_root)
+    _git(["git", "commit", "-m", "init"], cwd=repo_root)
+    return repo_root, strategy_path, protected_path
+
+
+class _StubStrategy:
+    def __init__(self, name: str = "Candidate") -> None:
+        self._name = name
+
+    def get_name(self) -> str:
+        return self._name
+
+
+class _FixedStrategyLoader:
+    def __init__(self, strategy: _StubStrategy | None = None) -> None:
+        self._strategy = strategy or _StubStrategy()
+
+    def __call__(self, source_text: str) -> _StubStrategy:
+        del source_text
+        return self._strategy
+
+
+class _SequentialStrategyLoader:
+    def __init__(self, outcomes: list[_StubStrategy | BaseException]) -> None:
+        self._outcomes = iter(outcomes)
+
+    def __call__(self, source_text: str) -> _StubStrategy:
+        del source_text
+        outcome = next(self._outcomes)
+        if isinstance(outcome, BaseException):
+            raise outcome
+        return outcome
+
+
+class _SequentialRunnerFactory:
+    def __init__(self, results: list[MatchResult]) -> None:
+        self._results = iter(results)
+
+    def __call__(self, stage: str, n_workers: int | None) -> "_SequentialRunnerFactory":
+        del stage, n_workers
+        return self
+
+    def run_match(self, strategy_a, strategy_b, store_results=False) -> MatchResult:
+        del strategy_a, strategy_b, store_results
+        return next(self._results)
+
+
+class _NoopProtectedSurfaceChecker:
+    def ensure_runtime_eval_allowed(self) -> None:
+        return None
+
+    def current_fingerprint(self) -> ProtectedSurfaceFingerprint:
+        return ProtectedSurfaceFingerprint(
+            manifest_path=".competition-protected-paths",
+            sha256="test-fingerprint",
+            file_count=1,
+        )
+
+    def verify_recorded_fingerprint(
+        self, recorded_payload: object, *, run_id: str
+    ) -> None:
+        del run_id
+        if recorded_payload != self.current_fingerprint().to_payload():
+            raise RuntimeError("unexpected test fingerprint mismatch")
+
+
+def _build_test_harness(
+    tmp_path: Path,
+    *,
+    strategy_loader=None,
+    match_results: list[MatchResult] | None = None,
+) -> HillClimbHarness:
+    return HillClimbHarness(
+        artifact_root=tmp_path / "artifacts",
+        n_workers=1,
+        strategy_loader=cast(Any, strategy_loader or _FixedStrategyLoader()),
+        baseline_loader=lambda: object(),
+        stage_runner_factory=_SequentialRunnerFactory(
+            match_results or [_make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0])]
+        ),
+        protected_surface_checker=_NoopProtectedSurfaceChecker(),
+    )
+
+
+def test_hill_climb_stages_keep_competition_length_steps():
+    cfg = build_stage_config()
+    assert cfg.n_steps == 10000
+    for stage in HILL_CLIMB_STAGES.values():
+        assert len(stage.seed_block) == stage.n_simulations
+
+
+def test_build_stage_runner_uses_hill_climb_stage_seed_block():
+    runner = build_stage_runner("climb", n_workers=1)
+    assert runner.n_simulations == HILL_CLIMB_STAGES["climb"].n_simulations
+    assert runner.seed_block == HILL_CLIMB_STAGES["climb"].seed_block
+
+
+def test_evaluate_records_seed_keep_and_discard(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            _make_match_result(mean_edges=[6.0, 6.0, 6.0, 6.0]),
+            _make_match_result(mean_edges=[5.5, 5.5, 5.5, 5.5]),
+        ],
+    )
+
+    first = harness.evaluate(
+        run_id="mar26",
+        stage="screen",
+        source_path=source_path,
+        label="baseline",
+    )
+    second = harness.evaluate(
+        run_id="mar26",
+        stage="screen",
+        source_path=source_path,
+        label="improved",
+    )
+    third = harness.evaluate(
+        run_id="mar26",
+        stage="screen",
+        source_path=source_path,
+        label="regression",
+    )
+
+    assert first["status"] == "seed"
+    assert first["scorecard"]["run_metadata"]["stage"] == "screen"
+    assert first["scorecard"]["gate"]["passed"] is True
+    assert second["status"] == "keep"
+    assert second["delta_vs_incumbent"] == pytest.approx(1.0)
+    assert second["selection"]["promotion_margin"] == pytest.approx(INCUMBENT_EPSILON)
+    assert third["status"] == "discard"
+    assert third["delta_vs_incumbent"] == pytest.approx(-0.5)
+
+    results_path = tmp_path / "artifacts" / "mar26" / "results.tsv"
+    results = results_path.read_text().splitlines()
+    assert len(results) == 4
+    assert results[0].startswith("eval_id\tstage\tstatus")
+
+    incumbent_path = tmp_path / "artifacts" / "mar26" / "incumbents" / "screen.json"
+    incumbent = json.loads(incumbent_path.read_text())
+    assert incumbent["eval_id"] == second["eval_id"]
+    assert incumbent["status"] == "keep"
+
+
+def test_evaluate_writes_current_manifest_and_state(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(tmp_path)
+
+    summary = harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    run_dir = tmp_path / "artifacts" / "mar26"
+    manifest = _load_json(run_dir / "run.json")
+    state = _load_json(run_dir / "state.json")
+
+    assert manifest["artifact_version"] == RUN_MANIFEST_VERSION
+    assert manifest["active_strategy_path"] == str(source_path.resolve())
+    assert manifest["continuity_counter"] == ".next_eval_index"
+    assert manifest["protected_surface_fingerprint"] == {
+        "manifest_path": ".competition-protected-paths",
+        "sha256": "test-fingerprint",
+        "file_count": 1,
+    }
+    assert state["artifact_version"] == RUN_STATE_VERSION
+    assert state["baseline_eval_id"] == summary["eval_id"]
+    assert state["incumbent_eval_ids"] == {"screen": summary["eval_id"]}
+    assert state["last_completed_iteration"] == 1
+    assert state["current_target_stage"] == "screen"
+    assert state["stop_rules"] == DEFAULT_STOP_RULES
+    assert (run_dir / ".next_eval_index").read_text().strip() == "2"
+
+
+def test_evaluate_writes_invalid_record_on_failure(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// invalid candidate")
+
+    harness = _build_test_harness(
+        tmp_path,
+        strategy_loader=_SequentialStrategyLoader(
+            [HillClimbHarnessError("bad strategy")]
+        ),
+    )
+
+    with pytest.raises(HillClimbHarnessError, match="bad strategy"):
+        harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    results_jsonl = tmp_path / "artifacts" / "mar26" / "results.jsonl"
+    payload = json.loads(results_jsonl.read_text().splitlines()[0])
+    assert payload["status"] == "invalid"
+    assert payload["error"] == "bad strategy"
+
+
+def test_baseline_eval_id_skips_initial_invalid_result(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(
+        tmp_path,
+        strategy_loader=_SequentialStrategyLoader(
+            [HillClimbHarnessError("bad strategy"), _StubStrategy()]
+        ),
+    )
+
+    with pytest.raises(HillClimbHarnessError, match="bad strategy"):
+        harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    summary = harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    state = _load_json(tmp_path / "artifacts" / "mar26" / "state.json")
+
+    assert summary["status"] == "seed"
+    assert state["baseline_eval_id"] == summary["eval_id"]
+    assert state["last_completed_iteration"] == 2
+
+
+def test_evaluate_reuses_content_addressed_snapshot(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+        ],
+    )
+
+    first = harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    second = harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    assert first["snapshot_path"] == second["snapshot_path"]
+    assert Path(first["snapshot_path"]).parent.name == "snapshots"
+    assert not (tmp_path / "artifacts" / "mar26" / "evaluations").exists()
+
+
+def test_evaluate_discards_when_stage_gate_fails(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[_make_match_result(mean_edges=[-0.5, -0.5, -0.5, -0.5])],
+    )
+
+    summary = harness.evaluate(
+        run_id="mar26",
+        stage="screen",
+        source_path=source_path,
+        label="negative",
+    )
+
+    assert summary["status"] == "discard"
+    assert summary["delta_vs_incumbent"] is None
+    assert summary["selection"]["promotion_margin"] is None
+    assert summary["scorecard"]["gate"]["passed"] is False
+    assert "below stage threshold" in summary["scorecard"]["gate"]["failures"][0]
+
+
+def test_evaluate_discards_small_noisy_improvement(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[0.0, 5.0, 10.0, 5.0]),
+            _make_match_result(mean_edges=[0.5, 5.5, 10.5, 5.5]),
+        ],
+    )
+
+    first = harness.evaluate(
+        run_id="mar26",
+        stage="screen",
+        source_path=source_path,
+        label="baseline",
+    )
+    second = harness.evaluate(
+        run_id="mar26",
+        stage="screen",
+        source_path=source_path,
+        label="small-noisy-uplift",
+    )
+
+    assert first["status"] == "seed"
+    assert second["status"] == "discard"
+    assert second["delta_vs_incumbent"] == pytest.approx(0.5)
+    assert second["selection"]["promotion_margin"] == pytest.approx(2.5)
+    assert "did not clear promotion margin" in second["selection"]["rationale"]
+
+
+def test_pull_best_restores_incumbent_snapshot(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// seed")
+
+    harness = _build_test_harness(tmp_path)
+
+    summary = harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    restored_path = tmp_path / "restored" / "Strategy.sol"
+    source_path.write_text("// changed")
+
+    destination = harness.pull_best(
+        run_id="mar26",
+        stage="screen",
+        destination=restored_path,
+    )
+
+    assert destination == restored_path
+    assert restored_path.read_text() == Path(summary["snapshot_path"]).read_text()
+
+
+def test_evaluate_rejects_alternate_source_path_for_existing_run(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// active")
+    alternate_path = tmp_path / "Alternate.sol"
+    alternate_path.write_text("// alternate")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+        ],
+    )
+
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    with pytest.raises(HillClimbHarnessError, match="active strategy path"):
+        harness.evaluate(run_id="mar26", stage="screen", source_path=alternate_path)
+
+
+def test_hill_climb_eval_command_rejects_nondefault_active_path(capsys):
+    args = argparse.Namespace(
+        strategy="contracts/src/candidates/StarterCandidate.sol",
+        run_id="mar26",
+        stage="screen",
+        artifact_root="artifacts/hill_climb",
+        label=None,
+        description=None,
+    )
+
+    exit_code = hill_climb_eval_command(args)
+
+    assert exit_code == 1
+    assert "contracts/src/Strategy.sol" in capsys.readouterr().out
+
+
+def test_hill_climb_eval_command_rejects_dirty_protected_surface(
+    tmp_path, monkeypatch, capsys
+):
+    repo_root, strategy_path, protected_path = _build_protected_repo(tmp_path)
+    protected_path.write_text("BASELINE = 2\n")
+
+    args = argparse.Namespace(
+        strategy=str(strategy_path),
+        run_id="mar26",
+        stage="screen",
+        artifact_root=str(repo_root / "artifacts"),
+        label=None,
+        description=None,
+    )
+
+    class _UnexpectedHarness:
+        def __init__(self, *args, **kwargs) -> None:
+            del args, kwargs
+
+        def evaluate(self, **kwargs):
+            del kwargs
+            raise AssertionError(
+                "evaluate should not run when protected mechanics are dirty"
+            )
+
+    monkeypatch.setattr(
+        "amm_competition.cli._validate_active_hill_climb_strategy_path",
+        lambda path: path,
+    )
+    monkeypatch.setattr(
+        "amm_competition.cli.ProtectedSurfaceChecker.discover",
+        lambda: ProtectedSurfaceChecker(repo_root=repo_root),
+    )
+    monkeypatch.setattr("amm_competition.cli.HillClimbHarness", _UnexpectedHarness)
+
+    exit_code = hill_climb_eval_command(args)
+
+    assert exit_code == 1
+    output = capsys.readouterr().out
+    assert "Hill-climb evaluation failed:" in output
+    assert "amm_competition/competition/config.py" in output
+
+
+def test_hill_climb_eval_command_allows_dirty_protected_surface_with_override(
+    tmp_path, monkeypatch, capsys
+):
+    repo_root, strategy_path, protected_path = _build_protected_repo(tmp_path)
+    protected_path.write_text("BASELINE = 2\n")
+
+    args = argparse.Namespace(
+        strategy=str(strategy_path),
+        run_id="mar26",
+        stage="screen",
+        artifact_root=str(repo_root / "artifacts"),
+        label="override-check",
+        description=None,
+    )
+
+    class _StubHarness:
+        def __init__(self, *args, **kwargs) -> None:
+            del args, kwargs
+
+        def evaluate(self, **kwargs):
+            del kwargs
+            return {
+                "run_id": "mar26",
+                "eval_id": "screen_0001",
+                "stage": "screen",
+                "status": "seed",
+                "mean_edge": 1.25,
+                "snapshot_path": str(strategy_path),
+            }
+
+    monkeypatch.setenv("ALLOW_COMPETITION_MECHANICS_EDIT", "1")
+    monkeypatch.setattr(
+        "amm_competition.cli._validate_active_hill_climb_strategy_path",
+        lambda path: path,
+    )
+    monkeypatch.setattr(
+        "amm_competition.cli.ProtectedSurfaceChecker.discover",
+        lambda: ProtectedSurfaceChecker(repo_root=repo_root),
+    )
+    monkeypatch.setattr("amm_competition.cli.HillClimbHarness", _StubHarness)
+
+    exit_code = hill_climb_eval_command(args)
+
+    assert exit_code == 0
+    output = capsys.readouterr().out
+    assert "Run: mar26" in output
+    assert "Eval: screen_0001" in output
+
+
+def test_get_stage_status_rejects_changed_protected_surface_fingerprint_for_existing_run(
+    tmp_path,
+):
+    repo_root, strategy_path, protected_path = _build_protected_repo(tmp_path)
+    harness = HillClimbHarness(
+        artifact_root=repo_root / "artifacts",
+        n_workers=1,
+        strategy_loader=cast(Any, _FixedStrategyLoader()),
+        baseline_loader=lambda: object(),
+        stage_runner_factory=_SequentialRunnerFactory(
+            [_make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0])]
+        ),
+        protected_surface_checker=ProtectedSurfaceChecker(repo_root=repo_root),
+    )
+
+    harness.evaluate(run_id="mar26", stage="screen", source_path=strategy_path)
+    protected_path.write_text("BASELINE = 3\n")
+
+    with pytest.raises(
+        HillClimbHarnessError,
+        match="pinned to a different protected competition mechanics surface",
+    ):
+        harness.get_stage_status(run_id="mar26", stage="screen")
+
+
+def test_get_stage_status_requires_existing_run(tmp_path):
+    harness = HillClimbHarness(artifact_root=tmp_path / "artifacts", n_workers=1)
+    with pytest.raises(HillClimbHarnessError, match="Unknown hill-climb run"):
+        harness.get_stage_status(run_id="missing", stage="screen")
+
+
+def test_get_stage_status_rejects_obsolete_continuity_file(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(tmp_path)
+
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    run_dir = tmp_path / "artifacts" / "mar26"
+    (run_dir / LEGACY_NEXT_EVAL_ID_FILENAME).write_text("2\n")
+
+    with pytest.raises(HillClimbHarnessError, match="obsolete continuity file"):
+        harness.get_stage_status(run_id="mar26", stage="screen")
+
+
+def test_get_stage_status_rejects_duplicate_eval_ids(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(tmp_path)
+
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    run_dir = tmp_path / "artifacts" / "mar26"
+    results_jsonl = run_dir / "results.jsonl"
+    payload = results_jsonl.read_text().splitlines()[0]
+    results_jsonl.write_text(f"{payload}\n{payload}\n")
+    results_tsv = run_dir / "results.tsv"
+    lines = results_tsv.read_text().splitlines()
+    results_tsv.write_text("\n".join([lines[0], lines[1], lines[1]]) + "\n")
+    (run_dir / ".next_eval_index").write_text("3\n")
+
+    with pytest.raises(HillClimbHarnessError, match="duplicate eval_id"):
+        harness.get_stage_status(run_id="mar26", stage="screen")
+
+
+def test_parallel_evaluations_get_distinct_eval_ids(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    barrier = threading.Barrier(2)
+
+    class _SynchronizedHarness(HillClimbHarness):
+        def _ensure_run_dir(self, run_id, source_path, *, target_stage):
+            run_dir = super()._ensure_run_dir(
+                run_id, source_path, target_stage=target_stage
+            )
+            barrier.wait()
+            return run_dir
+
+    harness = _SynchronizedHarness(
+        artifact_root=tmp_path / "artifacts",
+        n_workers=1,
+        strategy_loader=cast(Any, _FixedStrategyLoader()),
+        baseline_loader=lambda: object(),
+        stage_runner_factory=_SequentialRunnerFactory(
+            [
+                _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+                _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            ]
+        ),
+    )
+
+    summaries: list[dict] = []
+    errors: list[BaseException] = []
+
+    def run_eval(label: str) -> None:
+        try:
+            summaries.append(
+                harness.evaluate(
+                    run_id="mar26",
+                    stage="smoke",
+                    source_path=source_path,
+                    label=label,
+                )
+            )
+        except BaseException as exc:  # pragma: no cover - test should not fail here
+            errors.append(exc)
+
+    first = threading.Thread(target=run_eval, args=("first",))
+    second = threading.Thread(target=run_eval, args=("second",))
+    first.start()
+    second.start()
+    first.join()
+    second.join()
+
+    assert errors == []
+    assert len(summaries) == 2
+    assert {summary["eval_id"] for summary in summaries} == {"smoke_0001", "smoke_0002"}
+
+    results = (
+        (tmp_path / "artifacts" / "mar26" / "results.tsv").read_text().splitlines()
+    )
+    assert len(results) == 3
+    assert results[1].startswith("smoke_0001\t")
+    assert results[2].startswith("smoke_0002\t")
+
+
+def test_off_target_eval_preserves_current_target_stage(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            _make_match_result(mean_edges=[4.0, 4.0, 4.0, 4.0]),
+        ],
+    )
+
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    harness.evaluate(run_id="mar26", stage="smoke", source_path=source_path)
+
+    state = _load_json(tmp_path / "artifacts" / "mar26" / "state.json")
+    assert state["current_target_stage"] == "screen"
+
+
+def test_set_state_updates_loop_metadata_and_status_reports_guidance(
+    tmp_path, capsys, monkeypatch
+):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            _make_match_result(mean_edges=[4.0, 4.0, 4.0, 4.0]),
+            _make_match_result(mean_edges=[3.0, 3.0, 3.0, 3.0]),
+            _make_match_result(mean_edges=[2.0, 2.0, 2.0, 2.0]),
+            _make_match_result(mean_edges=[1.0, 1.0, 1.0, 1.0]),
+            _make_match_result(mean_edges=[0.0, 0.0, 0.0, 0.0]),
+        ],
+    )
+
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    monkeypatch.setattr(
+        "amm_competition.hill_climb.harness.ProtectedSurfaceChecker.discover",
+        lambda: _NoopProtectedSurfaceChecker(),
+    )
+
+    set_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+        current_target_stage="screen",
+        next_hypothesis="Lower the ask fee sooner",
+        clear_next_hypothesis=False,
+        run_mode="background",
+        refine_after=4,
+        pivot_after=5,
+        stop_after=8,
+    )
+    assert hill_climb_set_state_command(set_args) == 0
+
+    state = _load_json(tmp_path / "artifacts" / "mar26" / "state.json")
+    assert state["current_target_stage"] == "screen"
+    assert state["next_hypothesis"] == "Lower the ask fee sooner"
+    assert state["run_mode"] == "background"
+    assert state["stop_rules"] == {
+        "refine_after_non_improving_iterations": 4,
+        "pivot_after_non_improving_iterations": 5,
+        "stop_after_non_improving_iterations": 8,
+    }
+
+    status_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+        stage="screen",
+    )
+    assert hill_climb_status_command(status_args) == 0
+    output = capsys.readouterr().out
+    assert "Current Target Stage: screen" in output
+    assert "Run Mode: background" in output
+    assert "Next Hypothesis: Lower the ask fee sooner" in output
+    assert "Target-Stage Non-Improving Streak: 5" in output
+    assert "Stop-Rule Guidance: pivot now" in output

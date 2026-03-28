@@ -30,7 +30,9 @@ def test_after_swap_fast_rejects_short_return_data(vanilla_bytecode_and_abi) -> 
 
     executor.evm = ShortReturnEVM()
 
-    with pytest.raises(RuntimeError, match="afterSwap failed: Invalid return data length"):
+    with pytest.raises(
+        RuntimeError, match="afterSwap failed: Invalid return data length"
+    ):
         executor.after_swap_fast(_sample_trade())
 
 

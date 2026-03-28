@@ -8,7 +8,8 @@ from typing import Literal
 
 class TradeSide(Enum):
     """Side of a trade from the AMM's perspective."""
-    BUY = "buy"    # AMM buys X (trader sells X)
+
+    BUY = "buy"  # AMM buys X (trader sells X)
     SELL = "sell"  # AMM sells X (trader buys X)
 
 
@@ -18,6 +19,7 @@ class FeeQuote:
 
     Fees are expressed as decimals (e.g., 0.003 = 30bps).
     """
+
     bid_fee: Decimal  # Fee when AMM buys X
     ask_fee: Decimal  # Fee when AMM sells X
 
@@ -40,12 +42,13 @@ class TradeInfo:
     This is the only information strategies receive about market activity.
     Strategies cannot see external prices, other AMM states, or any other data.
     """
+
     side: Literal["buy", "sell"]  # From AMM's perspective
-    amount_x: Decimal             # Amount of X traded
-    amount_y: Decimal             # Amount of Y traded
-    timestamp: int                # Simulation step number
-    reserve_x: Decimal            # Post-trade X reserves
-    reserve_y: Decimal            # Post-trade Y reserves
+    amount_x: Decimal  # Amount of X traded
+    amount_y: Decimal  # Amount of Y traded
+    timestamp: int  # Simulation step number
+    reserve_x: Decimal  # Post-trade X reserves
+    reserve_y: Decimal  # Post-trade Y reserves
 
     @property
     def implied_price(self) -> Decimal:
