@@ -4,10 +4,10 @@ pragma solidity ^0.8.24;
 import {AMMStrategyBase} from "./AMMStrategyBase.sol";
 import {TradeInfo} from "./IAMMStrategy.sol";
 
-/// @title Latent State Candidate
-/// @notice Microstructure guard core with a latent spot EWMA as the regime estimate.
+/// @title Latent State Incumbent Gap-Aware V3 Candidate
+/// @notice Preserve calmer resting fees, but charge more aggressively during real shocks.
 contract Strategy is AMMStrategyBase {
-    uint256 internal constant BASE_FEE = 70 * BPS;
+    uint256 internal constant BASE_FEE = 69 * BPS;
     uint256 internal constant DECAY_FAST = 8500 * BPS;
     uint256 internal constant DECAY_SLOW = 9200 * BPS;
     uint256 internal constant DECAY_COOLDOWN = 9000 * BPS;
@@ -27,7 +27,7 @@ contract Strategy is AMMStrategyBase {
         slots[4] = 0; // size memory
         slots[5] = 0; // last side: 1 buy, 2 sell
         slots[6] = spot; // last observed spot
-        slots[7] = 0;
+        slots[7] = 0; // last timestamp
 
         return (BASE_FEE, BASE_FEE);
     }
@@ -40,6 +40,8 @@ contract Strategy is AMMStrategyBase {
         uint256 currentSpot = wdiv(trade.reserveY, trade.reserveX);
         uint256 latentSpot = _blend(slots[0], currentSpot, ALPHA_SPOT);
         uint256 lastSpot = slots[6];
+        uint256 lastTimestamp = slots[7];
+        uint256 gap = trade.timestamp > lastTimestamp ? trade.timestamp - lastTimestamp : 0;
 
         uint256 sizeX = wdiv(trade.amountX, trade.reserveX);
         uint256 sizeY = wdiv(trade.amountY, trade.reserveY);
@@ -50,6 +52,18 @@ contract Strategy is AMMStrategyBase {
         uint256 askPressure = wmul(slots[2], DECAY_FAST);
         uint256 cooldown = wmul(slots[3], DECAY_COOLDOWN);
         uint256 sizeMemory = wmul(slots[4], DECAY_SLOW);
+
+        if (gap >= 4) {
+            bidPressure = wmul(bidPressure, 8000 * BPS);
+            askPressure = wmul(askPressure, 8000 * BPS);
+            cooldown = wmul(cooldown, 7400 * BPS);
+            sizeMemory = wmul(sizeMemory, 8400 * BPS);
+        } else if (gap >= 2) {
+            bidPressure = wmul(bidPressure, 9000 * BPS);
+            askPressure = wmul(askPressure, 9000 * BPS);
+            cooldown = wmul(cooldown, 8800 * BPS);
+            sizeMemory = wmul(sizeMemory, 9300 * BPS);
+        }
 
         uint256 shock = tradeSize > spotJump ? tradeSize : spotJump;
         if (tradeSize > 10 * BPS) {
@@ -71,9 +85,13 @@ contract Strategy is AMMStrategyBase {
 
         uint256 common = clampFee(
             BASE_FEE +
-                wmul(cooldown, 2400 * BPS) +
-                wmul(sizeMemory, 900 * BPS)
+                wmul(cooldown, 2350 * BPS) +
+                wmul(sizeMemory, 880 * BPS)
         );
+
+        if (gap >= 3 && cooldown < 5 * BPS) {
+            common = common > 2 * BPS ? common - 2 * BPS : MIN_FEE;
+        }
 
         bidFee =
             common +
@@ -83,6 +101,18 @@ contract Strategy is AMMStrategyBase {
             common +
             wmul(askPressure, 2200 * BPS) +
             wmul(shock, trade.isBuy ? 600 * BPS : 1800 * BPS);
+
+        uint256 eventSignal = shock > spotJump ? shock : spotJump;
+        if (eventSignal > 5 * BPS) {
+            uint256 special = wmul(eventSignal - 5 * BPS, 650 * BPS);
+            if (trade.isBuy) {
+                bidFee += special;
+                askFee += special / 4;
+            } else {
+                askFee += special;
+                bidFee += special / 4;
+            }
+        }
 
         if (currentSpot >= latentSpot) {
             bidFee = clampFee(bidFee + BPS);
@@ -94,7 +124,9 @@ contract Strategy is AMMStrategyBase {
             if (slots[5] == 1) {
                 bidFee = clampFee(bidFee + 2 * BPS);
             }
-            if (cooldown < 6 * BPS && askFee > 3 * BPS) {
+            if (cooldown < 5 * BPS && askFee > 5 * BPS) {
+                askFee -= 5 * BPS;
+            } else if (cooldown < 7 * BPS && askFee > 3 * BPS) {
                 askFee -= 3 * BPS;
             }
             slots[5] = 1;
@@ -102,7 +134,9 @@ contract Strategy is AMMStrategyBase {
             if (slots[5] == 2) {
                 askFee = clampFee(askFee + 2 * BPS);
             }
-            if (cooldown < 6 * BPS && bidFee > 3 * BPS) {
+            if (cooldown < 5 * BPS && bidFee > 5 * BPS) {
+                bidFee -= 5 * BPS;
+            } else if (cooldown < 7 * BPS && bidFee > 3 * BPS) {
                 bidFee -= 3 * BPS;
             }
             slots[5] = 2;
@@ -117,12 +151,13 @@ contract Strategy is AMMStrategyBase {
         slots[3] = cooldown;
         slots[4] = sizeMemory;
         slots[6] = currentSpot;
+        slots[7] = trade.timestamp;
 
         return (bidFee, askFee);
     }
 
     function getName() external pure override returns (string memory) {
-        return "LatentStateEWMA";
+        return "LatentStateIncumbentGapAwareV3";
     }
 
     function _blend(uint256 prev, uint256 sample, uint256 alpha) internal pure returns (uint256) {
