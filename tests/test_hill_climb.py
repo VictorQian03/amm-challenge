@@ -609,8 +609,17 @@ def test_get_stage_status_rejects_obsolete_continuity_file(tmp_path):
     run_dir = tmp_path / "artifacts" / "mar26"
     (run_dir / LEGACY_NEXT_EVAL_ID_FILENAME).write_text("2\n")
 
-    with pytest.raises(HillClimbHarnessError, match="obsolete continuity file"):
+    with pytest.raises(
+        HillClimbHarnessError, match="obsolete continuity file"
+    ) as excinfo:
         harness.get_stage_status(run_id="mar26", stage="screen")
+    assert (
+        "Do not hand-edit results.jsonl, results.tsv, state.json, or .next_eval_index"
+        in str(excinfo.value)
+    )
+    assert "Quarantine the run directory and start a fresh run_id instead." in str(
+        excinfo.value
+    )
 
 
 def test_get_stage_status_rejects_duplicate_eval_ids(tmp_path):
@@ -629,8 +638,15 @@ def test_get_stage_status_rejects_duplicate_eval_ids(tmp_path):
     results_tsv.write_text("\n".join([lines[0], lines[1], lines[1]]) + "\n")
     (run_dir / ".next_eval_index").write_text("3\n")
 
-    with pytest.raises(HillClimbHarnessError, match="duplicate eval_id"):
+    with pytest.raises(HillClimbHarnessError, match="duplicate eval_id") as excinfo:
         harness.get_stage_status(run_id="mar26", stage="screen")
+    assert (
+        "Do not hand-edit results.jsonl, results.tsv, state.json, or .next_eval_index"
+        in str(excinfo.value)
+    )
+    assert "Quarantine the run directory and start a fresh run_id instead." in str(
+        excinfo.value
+    )
 
 
 def test_parallel_evaluations_get_distinct_eval_ids(tmp_path):
@@ -753,6 +769,9 @@ def test_set_state_updates_loop_metadata_and_status_reports_guidance(
         refine_after=4,
         pivot_after=5,
         stop_after=8,
+        breakout_stage="screen",
+        breakout_threshold=6.0,
+        clear_breakout_goal=False,
     )
     assert hill_climb_set_state_command(set_args) == 0
 
@@ -765,6 +784,10 @@ def test_set_state_updates_loop_metadata_and_status_reports_guidance(
         "pivot_after_non_improving_iterations": 5,
         "stop_after_non_improving_iterations": 8,
     }
+    assert state["outcome_gate"] == {
+        "stage": "screen",
+        "minimum_mean_edge": 6.0,
+    }
 
     status_args = argparse.Namespace(
         run_id="mar26",
@@ -776,5 +799,44 @@ def test_set_state_updates_loop_metadata_and_status_reports_guidance(
     assert "Current Target Stage: screen" in output
     assert "Run Mode: background" in output
     assert "Next Hypothesis: Lower the ask fee sooner" in output
+    assert (
+        "Outcome Gate: pending (screen incumbent 5.000000 is below target 6.000000)"
+        in output
+    )
     assert "Target-Stage Non-Improving Streak: 5" in output
     assert "Stop-Rule Guidance: pivot now" in output
+
+
+def test_set_state_rejects_partial_breakout_goal_configuration(
+    tmp_path, capsys, monkeypatch
+):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(tmp_path)
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    monkeypatch.setattr(
+        "amm_competition.hill_climb.harness.ProtectedSurfaceChecker.discover",
+        lambda: _NoopProtectedSurfaceChecker(),
+    )
+
+    set_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+        current_target_stage=None,
+        next_hypothesis=None,
+        clear_next_hypothesis=False,
+        run_mode=None,
+        refine_after=None,
+        pivot_after=None,
+        stop_after=None,
+        breakout_stage="screen",
+        breakout_threshold=None,
+        clear_breakout_goal=False,
+    )
+
+    assert hill_climb_set_state_command(set_args) == 1
+    assert (
+        "choose both --breakout-stage and --breakout-threshold"
+        in capsys.readouterr().out
+    )

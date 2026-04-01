@@ -240,15 +240,21 @@ def hill_climb_eval_command(args: argparse.Namespace) -> int:
     try:
         strategy_path = _validate_active_hill_climb_strategy_path(Path(args.strategy))
         ProtectedSurfaceChecker.discover().ensure_runtime_eval_allowed()
-        summary = HillClimbHarness(
+        harness = HillClimbHarness(
             artifact_root=Path(args.artifact_root),
             n_workers=resolve_n_workers(),
-        ).evaluate(
+        )
+        summary = harness.evaluate(
             run_id=args.run_id,
             stage=args.stage,
             source_path=strategy_path,
             label=args.label,
             description=args.description,
+        )
+        state = (
+            harness.get_run_state(run_id=args.run_id)
+            if hasattr(harness, "get_run_state")
+            else None
         )
     except (HillClimbHarnessError, RuntimeError, ValueError) as exc:
         print(f"Hill-climb evaluation failed: {exc}")
@@ -264,6 +270,10 @@ def hill_climb_eval_command(args: argparse.Namespace) -> int:
         print(f"Promotion Margin: {selection['promotion_margin']:.6f}")
     if selection.get("rationale"):
         print(f"Decision: {selection['rationale']}")
+    if state is None or state.outcome_gate is None:
+        print("Outcome Gate: none")
+    else:
+        print(f"Outcome Gate: {state.outcome_gate.message}")
     print(f"Artifacts: {Path(summary['snapshot_path']).parent}")
     return 0
 
@@ -309,6 +319,10 @@ def hill_climb_status_command(args: argparse.Namespace) -> int:
     print(f"Current Target Stage: {state.current_target_stage}")
     print(f"Run Mode: {state.run_mode}")
     print(f"Next Hypothesis: {state.next_hypothesis or 'none'}")
+    if state.outcome_gate is None:
+        print("Outcome Gate: none")
+    else:
+        print(f"Outcome Gate: {state.outcome_gate.message}")
     print(
         "Stop Rules: "
         f"refine={state.stop_rules['refine_after_non_improving_iterations']}, "
@@ -325,6 +339,18 @@ def hill_climb_set_state_command(args: argparse.Namespace) -> int:
     if args.next_hypothesis is not None and args.clear_next_hypothesis:
         print(
             "Hill-climb state update failed: choose either --next-hypothesis or --clear-next-hypothesis"
+        )
+        return 1
+    if (args.breakout_stage is None) != (args.breakout_threshold is None):
+        print(
+            "Hill-climb state update failed: choose both --breakout-stage and --breakout-threshold"
+        )
+        return 1
+    if (args.breakout_stage is not None or args.breakout_threshold is not None) and (
+        args.clear_breakout_goal
+    ):
+        print(
+            "Hill-climb state update failed: choose either a breakout goal or --clear-breakout-goal"
         )
         return 1
 
@@ -359,6 +385,12 @@ def hill_climb_set_state_command(args: argparse.Namespace) -> int:
                     else existing["stop_after_non_improving_iterations"]
                 ),
             }
+        outcome_gate = None
+        if args.breakout_stage is not None:
+            outcome_gate = {
+                "stage": args.breakout_stage,
+                "minimum_mean_edge": float(args.breakout_threshold),
+            }
         state = harness.update_run_state(
             run_id=args.run_id,
             current_target_stage=args.current_target_stage,
@@ -367,6 +399,9 @@ def hill_climb_set_state_command(args: argparse.Namespace) -> int:
             or args.clear_next_hypothesis,
             run_mode=args.run_mode,
             stop_rules=stop_rules,
+            outcome_gate=outcome_gate,
+            outcome_gate_set=args.breakout_stage is not None
+            or args.clear_breakout_goal,
         )
     except (HillClimbHarnessError, RuntimeError, ValueError) as exc:
         print(f"Hill-climb state update failed: {exc}")
@@ -376,6 +411,10 @@ def hill_climb_set_state_command(args: argparse.Namespace) -> int:
     print(f"Current Target Stage: {state.current_target_stage}")
     print(f"Run Mode: {state.run_mode}")
     print(f"Next Hypothesis: {state.next_hypothesis or 'none'}")
+    if state.outcome_gate is None:
+        print("Outcome Gate: none")
+    else:
+        print(f"Outcome Gate: {state.outcome_gate.message}")
     print(
         "Stop Rules: "
         f"refine={state.stop_rules['refine_after_non_improving_iterations']}, "
@@ -603,6 +642,23 @@ Examples:
         type=int,
         default=None,
         help="Non-improving target-stage streak that should stop the current line",
+    )
+    hill_climb_set_state_parser.add_argument(
+        "--breakout-stage",
+        choices=list(HILL_CLIMB_STAGES.keys()),
+        default=None,
+        help="Stage whose incumbent must clear the breakout threshold",
+    )
+    hill_climb_set_state_parser.add_argument(
+        "--breakout-threshold",
+        type=float,
+        default=None,
+        help="Required mean_edge threshold for the declared breakout stage",
+    )
+    hill_climb_set_state_parser.add_argument(
+        "--clear-breakout-goal",
+        action="store_true",
+        help="Clear any recorded breakout outcome gate",
     )
     hill_climb_set_state_parser.set_defaults(func=hill_climb_set_state_command)
 

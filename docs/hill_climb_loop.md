@@ -42,6 +42,7 @@ Each run lives under `artifacts/hill_climb/<run_id>/`.
 - `state.json`
   - Authoritative resumable run state.
   - Required fields: `artifact_version`, `run_id`, `run_mode`, `current_target_stage`, `baseline_eval_id`, `incumbent_eval_ids`, `last_completed_iteration`, `stop_rules`, `next_hypothesis`, `updated_at`.
+  - Optional field: `outcome_gate` with `{stage, minimum_mean_edge}` for explicit breakout thresholds.
 - `results.jsonl`
   - Append-only full evaluation ledger.
 - `results.tsv`
@@ -58,6 +59,7 @@ Unsupported continuity:
 - `.next_eval_id` is obsolete.
 - Normal eval, status, and pull-best flows fail fast if `.next_eval_id` exists, if `state.json` is missing, if eval IDs are duplicated, or if the manifest/state version is stale.
 - Retained runs that still carry legacy continuity files or stale manifest/state versions are unsupported; start a fresh run instead.
+- If continuity or append-only validation fails, do not hand-edit `results.jsonl`, `results.tsv`, `state.json`, or `.next_eval_index` to force a resume. Quarantine the run directory and start a fresh `run_id`.
 
 Derived fields such as `snapshot_relpath`, `incumbent_before`, and the compact TSV row are convenience views. If they disagree with the authoritative manifest/state/results contract, the run should be treated as broken and replaced with a fresh run.
 
@@ -73,6 +75,7 @@ Promotion policy:
 
 - Move a candidate from `screen -> climb -> confirm -> final` only after it survives the current stage as `seed` or `keep`.
 - A stage failure or margin miss is a local branch failure, not a reason to overwrite the incumbent.
+- If the operator is chasing a specific breakout threshold, record it with `amm-match hill-climb set-state --breakout-stage <stage> --breakout-threshold <mean_edge>` and treat `keep` as local progress, not completion, until the recorded outcome gate passes.
 
 ## Stop Policy
 

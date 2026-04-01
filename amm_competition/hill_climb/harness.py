@@ -71,6 +71,17 @@ class LoopGuidance:
 
 
 @dataclass(frozen=True)
+class OutcomeGateStatus:
+    """Explicit user-visible success gate for thresholded optimization tasks."""
+
+    stage: str
+    minimum_mean_edge: float
+    incumbent_mean_edge: float | None
+    passed: bool
+    message: str
+
+
+@dataclass(frozen=True)
 class RunStateStatus:
     """Validated persisted loop state plus derived operator guidance."""
 
@@ -83,6 +94,7 @@ class RunStateStatus:
     run_mode: str
     stop_rules: dict[str, int]
     updated_at: str
+    outcome_gate: OutcomeGateStatus | None
     guidance: LoopGuidance
 
 
@@ -370,6 +382,8 @@ class HillClimbHarness:
         next_hypothesis_set: bool = False,
         run_mode: str | None = None,
         stop_rules: dict[str, int] | None = None,
+        outcome_gate: dict[str, Any] | None = None,
+        outcome_gate_set: bool = False,
     ) -> RunStateStatus:
         """Persist explicit loop-control metadata for an existing run."""
         normalized_run_id = _slug(run_id, fallback="run")
@@ -390,6 +404,8 @@ class HillClimbHarness:
                 updated_state["run_mode"] = run_mode
             if stop_rules is not None:
                 updated_state["stop_rules"] = stop_rules
+            if outcome_gate_set:
+                updated_state["outcome_gate"] = outcome_gate
             updated_state["updated_at"] = _utc_now()
             self._validate_state(run_dir, updated_state, results)
             self._write_state(run_dir, updated_state)
@@ -712,6 +728,7 @@ class HillClimbHarness:
             "incumbent_eval_ids": {},
             "last_completed_iteration": 0,
             "next_hypothesis": None,
+            "outcome_gate": None,
             "run_id": run_id,
             "run_mode": "foreground",
             "stop_rules": dict(DEFAULT_STOP_RULES),
@@ -746,6 +763,7 @@ class HillClimbHarness:
             "incumbent_eval_ids": incumbent_eval_ids,
             "last_completed_iteration": len(results),
             "next_hypothesis": existing_state.get("next_hypothesis"),
+            "outcome_gate": existing_state.get("outcome_gate"),
             "run_id": run_dir.name,
             "run_mode": existing_state.get("run_mode", "foreground"),
             "stop_rules": existing_state.get("stop_rules", dict(DEFAULT_STOP_RULES)),
@@ -899,6 +917,13 @@ class HillClimbHarness:
             self._protected_surface_checker = ProtectedSurfaceChecker.discover()
         return self._protected_surface_checker
 
+    def _corrupted_run_message(self, run_dir: Path, problem: str) -> str:
+        return (
+            f"{problem}\n"
+            "Do not hand-edit results.jsonl, results.tsv, state.json, or .next_eval_index to continue this run. "
+            f"Quarantine the run directory and start a fresh run_id instead."
+        )
+
     def _validate_results(self, run_dir: Path, results: list[dict[str, Any]]) -> None:
         seen_eval_ids: set[str] = set()
         expected_index = 1
@@ -919,7 +944,10 @@ class HillClimbHarness:
                 )
             if eval_id in seen_eval_ids:
                 raise HillClimbHarnessError(
-                    f"Run '{run_dir.name}' contains duplicate eval_id {eval_id!r} in results.jsonl"
+                    self._corrupted_run_message(
+                        run_dir,
+                        f"Run '{run_dir.name}' contains duplicate eval_id {eval_id!r} in results.jsonl",
+                    )
                 )
             seen_eval_ids.add(eval_id)
             eval_stage, index = self._parse_eval_id(eval_id)
@@ -929,8 +957,11 @@ class HillClimbHarness:
                 )
             if index != expected_index:
                 raise HillClimbHarnessError(
-                    f"Run '{run_dir.name}' has non-contiguous eval ids: expected index "
-                    f"{expected_index:04d}, found {eval_id!r}"
+                    self._corrupted_run_message(
+                        run_dir,
+                        f"Run '{run_dir.name}' has non-contiguous eval ids: expected index "
+                        f"{expected_index:04d}, found {eval_id!r}",
+                    )
                 )
             expected_index += 1
 
@@ -940,9 +971,11 @@ class HillClimbHarness:
         legacy_counter = run_dir / LEGACY_NEXT_EVAL_ID_FILENAME
         if legacy_counter.exists():
             raise HillClimbHarnessError(
-                f"Run '{run_dir.name}' still has obsolete continuity file {LEGACY_NEXT_EVAL_ID_FILENAME!r}. "
-                "Retained runs with the old continuity file are unsupported; "
-                "start a fresh run instead."
+                self._corrupted_run_message(
+                    run_dir,
+                    f"Run '{run_dir.name}' still has obsolete continuity file {LEGACY_NEXT_EVAL_ID_FILENAME!r}. "
+                    "Retained runs with the old continuity file are unsupported.",
+                )
             )
         counter_path = run_dir / NEXT_EVAL_INDEX_FILENAME
         if not counter_path.exists():
@@ -955,8 +988,11 @@ class HillClimbHarness:
         expected_next = len(results) + 1
         if next_eval_index != expected_next:
             raise HillClimbHarnessError(
-                f"Run '{run_dir.name}' has stale {NEXT_EVAL_INDEX_FILENAME!r}: "
-                f"expected {expected_next}, found {next_eval_index}"
+                self._corrupted_run_message(
+                    run_dir,
+                    f"Run '{run_dir.name}' has stale {NEXT_EVAL_INDEX_FILENAME!r}: "
+                    f"expected {expected_next}, found {next_eval_index}",
+                )
             )
 
     def _validate_state(
@@ -998,6 +1034,28 @@ class HillClimbHarness:
             raise HillClimbHarnessError(
                 f"Run '{run_dir.name}' state field stop_rules must be an object"
             )
+        outcome_gate = state.get("outcome_gate")
+        if outcome_gate is not None:
+            if not isinstance(outcome_gate, dict):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' state field outcome_gate must be null or an object"
+                )
+            stage = outcome_gate.get("stage")
+            if stage not in HILL_CLIMB_STAGES:
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' outcome_gate has unknown stage {stage!r}"
+                )
+            minimum_mean_edge = outcome_gate.get("minimum_mean_edge")
+            if isinstance(minimum_mean_edge, bool) or not isinstance(
+                minimum_mean_edge, (int, float)
+            ):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' outcome_gate.minimum_mean_edge must be a finite number"
+                )
+            if not math.isfinite(float(minimum_mean_edge)):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' outcome_gate.minimum_mean_edge must be a finite number"
+                )
         if state["run_mode"] not in {"foreground", "background"}:
             raise HillClimbHarnessError(
                 f"Run '{run_dir.name}' has unsupported run_mode {state['run_mode']!r}"
@@ -1023,13 +1081,19 @@ class HillClimbHarness:
         )
         if state["baseline_eval_id"] != expected_baseline:
             raise HillClimbHarnessError(
-                f"Run '{run_dir.name}' has stale baseline_eval_id: expected {expected_baseline!r}, "
-                f"found {state['baseline_eval_id']!r}"
+                self._corrupted_run_message(
+                    run_dir,
+                    f"Run '{run_dir.name}' has stale baseline_eval_id: expected {expected_baseline!r}, "
+                    f"found {state['baseline_eval_id']!r}",
+                )
             )
         if state["last_completed_iteration"] != len(results):
             raise HillClimbHarnessError(
-                f"Run '{run_dir.name}' has stale last_completed_iteration: expected {len(results)}, "
-                f"found {state['last_completed_iteration']}"
+                self._corrupted_run_message(
+                    run_dir,
+                    f"Run '{run_dir.name}' has stale last_completed_iteration: expected {len(results)}, "
+                    f"found {state['last_completed_iteration']}",
+                )
             )
         expected_incumbents: dict[str, str] = {}
         for summary in results:
@@ -1037,7 +1101,10 @@ class HillClimbHarness:
                 expected_incumbents[summary["stage"]] = summary["eval_id"]
         if state["incumbent_eval_ids"] != expected_incumbents:
             raise HillClimbHarnessError(
-                f"Run '{run_dir.name}' has stale incumbent_eval_ids in state.json"
+                self._corrupted_run_message(
+                    run_dir,
+                    f"Run '{run_dir.name}' has stale incumbent_eval_ids in state.json",
+                )
             )
 
     def _run_state_status_from_payload(
@@ -1056,7 +1123,57 @@ class HillClimbHarness:
             run_mode=state["run_mode"],
             stop_rules=dict(state["stop_rules"]),
             updated_at=state["updated_at"],
+            outcome_gate=self._build_outcome_gate_status(state, results),
             guidance=guidance,
+        )
+
+    def _build_outcome_gate_status(
+        self,
+        state: dict[str, Any],
+        results: list[dict[str, Any]],
+    ) -> OutcomeGateStatus | None:
+        raw_outcome_gate = state.get("outcome_gate")
+        if raw_outcome_gate is None:
+            return None
+
+        stage = raw_outcome_gate["stage"]
+        minimum_mean_edge = float(raw_outcome_gate["minimum_mean_edge"])
+        incumbent: dict[str, Any] | None = None
+        for summary in results:
+            if summary["stage"] == stage and summary["status"] in {"seed", "keep"}:
+                incumbent = summary
+        if incumbent is None:
+            return OutcomeGateStatus(
+                stage=stage,
+                minimum_mean_edge=minimum_mean_edge,
+                incumbent_mean_edge=None,
+                passed=False,
+                message=(
+                    f"pending (no {stage} incumbent yet; target {minimum_mean_edge:.6f})"
+                ),
+            )
+
+        incumbent_mean_edge = float(incumbent["mean_edge"])
+        if incumbent_mean_edge >= minimum_mean_edge:
+            return OutcomeGateStatus(
+                stage=stage,
+                minimum_mean_edge=minimum_mean_edge,
+                incumbent_mean_edge=incumbent_mean_edge,
+                passed=True,
+                message=(
+                    f"passed ({stage} incumbent {incumbent_mean_edge:.6f} cleared target "
+                    f"{minimum_mean_edge:.6f})"
+                ),
+            )
+        return OutcomeGateStatus(
+            stage=stage,
+            minimum_mean_edge=minimum_mean_edge,
+            incumbent_mean_edge=incumbent_mean_edge,
+            passed=False,
+            message=(
+                f"pending ({stage} incumbent {incumbent_mean_edge:.6f} is below target "
+                f"{minimum_mean_edge:.6f})"
+            ),
         )
 
     def _build_loop_guidance(

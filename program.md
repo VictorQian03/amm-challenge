@@ -33,6 +33,8 @@ Keep this file reviewable. Prefer small, explicit mutations over broad rewrites 
      - `uv run amm-match hill-climb pull-best --run-id mar26 --stage screen`
 5. Inspect current state at any time:
    - `uv run amm-match hill-climb status --run-id mar26 --stage screen`
+   - If the user asked for a specific breakout threshold, record it once:
+     - `uv run amm-match hill-climb set-state --run-id mar26 --breakout-stage screen --breakout-threshold 424`
 6. Promote surviving ideas through higher-simulation stages:
    - `screen` -> `climb` -> `confirm` -> `final`
 
@@ -52,3 +54,5 @@ See `docs/hill_climb_loop.md` for the canonical artifact schema, stage progressi
 - `invalid`: validation, compilation, or runtime failure.
 
 Strictly higher `mean_edge` is not enough on noisy stages.
+
+If a retained run fails continuity or append-only validation, do not repair the ledgers by hand. Quarantine that run and start a fresh `run_id`.

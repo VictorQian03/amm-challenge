@@ -60,7 +60,7 @@ As of the latest artifact hygiene cleanup, there is no retained active research 
 The active research artifact layout is `artifacts/hill_climb/<run_id>/`.
 
 - `run.json`: run manifest
-- `state.json`: resumable run state
+- `state.json`: resumable run state, including optional breakout outcome gate metadata
 - `results.tsv`: compact experiment ledger
 - `results.jsonl`: full append-only summaries
 - `incumbents/<stage>.json`: current best result for that stage
@@ -71,6 +71,8 @@ The harness no longer writes per-evaluation subfolders. Full evaluation payloads
 `results.jsonl`, and every record points at a shared snapshot under `snapshots/`.
 
 Normal resume flows fail fast on stale manifests, duplicate eval IDs, missing `state.json`, or obsolete `.next_eval_id` continuity files. Retained legacy runs are unsupported in the active harness and should be replaced with fresh runs.
+
+If a retained run fails continuity or append-only validation, do not sort or rewrite the ledgers by hand. Quarantine that run directory and continue in a fresh `run_id`.
 
 Retention policy:
 
