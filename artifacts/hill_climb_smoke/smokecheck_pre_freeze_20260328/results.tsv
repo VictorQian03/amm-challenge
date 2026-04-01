@@ -1,4 +1,0 @@
-eval_id	stage	status	mean_edge	incumbent_mean_edge	delta_vs_incumbent	strategy_name	label	description	snapshot_path
-smoke_0001	smoke	seed	402.091949			Anchor75Control	smoke		artifacts/hill_climb_smoke/smokecheck/snapshots/dd2838aa095fda422630ab3cfa98eb7f7f3801bf30fcc86fc8b615ebc6868e6d.sol
-smoke_0002	smoke	discard	387.841267	402.091949	-14.250682	StarterCandidate	smoke		artifacts/hill_climb_smoke/smokecheck/snapshots/42e138e8560d3c5061793f29893242bf5355160b0db951c38ceff79c7453a49f.sol
-smoke_0003	smoke	discard	417.840863	402.091949	15.748913	LatentStateEWMA	repaired-smoke-check		artifacts/hill_climb_smoke/smokecheck/snapshots/da78a6d398aa9d8887d3d3fcd20f17116a1e625cb215083d9045975850c118dc.sol

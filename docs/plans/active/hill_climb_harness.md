@@ -52,8 +52,10 @@ These define the competition mechanics and must remain stable during research:
 
 Canonical retained runs:
 
-- `artifacts/hill_climb/mar26-loop/`: the active research lane
-- `artifacts/hill_climb_smoke/smokecheck/`: the smoke sanity lane
+- at most one active research lane under `artifacts/hill_climb/<run_id>/`
+- at most one current smoke sanity lane under `artifacts/hill_climb_smoke/<run_id>/`
+
+As of the latest artifact hygiene cleanup, there is no retained active research lane. Start a fresh `run_id` before resuming hill climbing.
 
 The active research artifact layout is `artifacts/hill_climb/<run_id>/`.
 

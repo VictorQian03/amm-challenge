@@ -15,4 +15,4 @@ Core contract:
 - iterate on one candidate source file at a time
 - vary only `n_simulations` by stage
 - do not use paired local champion evals
-- retain one active artifact lane at `artifacts/hill_climb/mar26-loop/` plus smoke sanity under `artifacts/hill_climb_smoke/smokecheck/`
+- retain at most one active artifact lane under `artifacts/hill_climb/<run_id>/` plus one current smoke lane under `artifacts/hill_climb_smoke/<run_id>/`

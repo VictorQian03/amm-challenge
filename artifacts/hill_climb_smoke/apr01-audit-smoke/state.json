@@ -7,12 +7,12 @@
   },
   "last_completed_iteration": 1,
   "next_hypothesis": null,
-  "run_id": "frozen-eval-probe",
+  "run_id": "apr01-audit-smoke",
   "run_mode": "foreground",
   "stop_rules": {
     "pivot_after_non_improving_iterations": 5,
     "refine_after_non_improving_iterations": 3,
     "stop_after_non_improving_iterations": 8
   },
-  "updated_at": "2026-03-28T14:54:41+00:00"
+  "updated_at": "2026-04-01T17:47:59+00:00"
 }
