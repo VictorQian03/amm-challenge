@@ -1,0 +1,12 @@
+{
+  "topic": "amm_dynamic_fee_apr01-screen420-2134",
+  "date": "2026-04-01",
+  "scope": "External AMM dynamic fee ideas relevant to a single-file Solidity fee strategy under the repo's canonical hill-climb harness.",
+  "linked_run_id": "apr01-screen420-2134",
+  "decision_target": "Rank low-surface-area hypothesis overlays for contracts/src/Strategy.sol after a 428.250099 screen baseline.",
+  "constraints": [
+    "Do not modify evaluator or protected mechanics",
+    "Only contracts/src/Strategy.sol is live",
+    "One retained eval lane at a time"
+  ]
+}

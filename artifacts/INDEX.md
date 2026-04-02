@@ -7,8 +7,9 @@
 
 ## 2026-04-01
 
-- `artifacts/hill_climb/`: no retained active research lane after stale-run cleanup; start a fresh run_id before resuming hill climbing
+- `artifacts/hill_climb/apr01-screen420-2134/`: retained coordinated hill-climb lane carrying the `LatentStateIncumbentGapAwareV4` winner through `screen`, `climb`, `confirm`, and `final`
 - `artifacts/hill_climb_smoke/apr01-audit-smoke/`: retained smoke-harness lane under the current protected-surface fingerprint
+- `artifacts/research/amm_dynamic_fee_apr01-screen420-2134/`: external AMM dynamic-fee evidence memo and hypothesis ranking linked to retained run `apr01-screen420-2134`
 
 Per-run contract:
 
