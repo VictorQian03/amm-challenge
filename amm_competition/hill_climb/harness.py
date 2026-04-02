@@ -28,10 +28,13 @@ from amm_competition.hill_climb.stages import (
     resolve_hill_climb_stage,
 )
 
-ARTIFACT_VERSION = "hill_climb.v2"
-RUN_MANIFEST_VERSION = "hill_climb.run.v3"
-RUN_STATE_VERSION = "hill_climb.state.v1"
+ARTIFACT_VERSION = "hill_climb.v3"
+RUN_MANIFEST_VERSION = "hill_climb.run.v4"
+RUN_STATE_VERSION = "hill_climb.state.v2"
 SNAPSHOT_LAYOUT_VERSION = "flat_snapshots.v1"
+HISTORY_VERSION = "hill_climb.history.v1"
+HYPOTHESIS_VERSION = "hill_climb.hypothesis.v1"
+CROSS_RUN_INDEX_VERSION = "hill_climb.index.v1"
 INCUMBENT_EPSILON = 1e-9
 NEXT_EVAL_INDEX_FILENAME = ".next_eval_index"
 LEGACY_NEXT_EVAL_ID_FILENAME = ".next_eval_id"
@@ -45,6 +48,19 @@ RESULTS_HEADER = (
     "eval_id\tstage\tstatus\tmean_edge\tincumbent_mean_edge\tdelta_vs_incumbent\t"
     "strategy_name\tlabel\tdescription\tsnapshot_path\n"
 )
+HYPOTHESIS_STATUSES = {
+    "planned",
+    "queued",
+    "active",
+    "promoted",
+    "invalidated",
+    "abandoned",
+    "completed",
+    "seed",
+    "keep",
+    "discard",
+    "invalid",
+}
 
 
 class HillClimbHarnessError(RuntimeError):
@@ -90,7 +106,8 @@ class RunStateStatus:
     current_target_stage: str
     incumbent_eval_ids: dict[str, str]
     last_completed_iteration: int
-    next_hypothesis: str | None
+    next_hypothesis_id: str | None
+    next_hypothesis_note: str | None
     run_mode: str
     stop_rules: dict[str, int]
     updated_at: str
@@ -229,6 +246,11 @@ class HillClimbHarness:
         source_path: Path | str,
         label: str | None = None,
         description: str | None = None,
+        hypothesis_id: str | None = None,
+        parent_eval_id: str | None = None,
+        change_summary: str | None = None,
+        research_refs: list[str] | None = None,
+        replay_reason: str | None = None,
     ) -> dict[str, Any]:
         """Evaluate a strategy source against the normalizer and persist artifacts."""
         normalized_run_id = _slug(run_id, fallback="run")
@@ -241,7 +263,27 @@ class HillClimbHarness:
         source_text = self._read_source(source_path)
         source_sha256 = _sha256(source_text)
         snapshot_path = self._store_snapshot(run_dir, source_text, source_sha256)
-        eval_id = self._reserve_evaluation_id(run_dir=run_dir, stage=stage_config.name)
+        lineage = self._resolve_lineage(
+            run_dir,
+            hypothesis_id=hypothesis_id,
+            parent_eval_id=parent_eval_id,
+            stage=stage_config.name,
+            source_sha256=source_sha256,
+            replay_reason=replay_reason,
+        )
+        try:
+            eval_id = self._reserve_evaluation_id(
+                run_dir=run_dir, stage=stage_config.name
+            )
+        except Exception:
+            with self._run_lock(run_dir):
+                self._release_pending_source(
+                    run_dir,
+                    stage=stage_config.name,
+                    source_sha256=source_sha256,
+                )
+            raise
+        normalized_research_refs = self._normalize_string_list(research_refs)
 
         try:
             strategy = self._strategy_loader(source_text)
@@ -281,6 +323,12 @@ class HillClimbHarness:
                 "snapshot_relpath": str(snapshot_path.relative_to(run_dir)),
                 "label": label,
                 "description": description,
+                "hypothesis_id": lineage["hypothesis_id"],
+                "parent_eval_id": lineage["parent_eval_id"],
+                "parent_source_sha256": lineage["parent_source_sha256"],
+                "change_summary": change_summary,
+                "research_refs": normalized_research_refs,
+                "replay_reason": replay_reason,
                 "strategy_name": strategy_name,
                 "status": selection.status,
                 "mean_edge": mean_edge,
@@ -306,6 +354,12 @@ class HillClimbHarness:
                 "snapshot_relpath": str(snapshot_path.relative_to(run_dir)),
                 "label": label,
                 "description": description,
+                "hypothesis_id": lineage["hypothesis_id"],
+                "parent_eval_id": lineage["parent_eval_id"],
+                "parent_source_sha256": lineage["parent_source_sha256"],
+                "change_summary": change_summary,
+                "research_refs": normalized_research_refs,
+                "replay_reason": replay_reason,
                 "strategy_name": None,
                 "status": "invalid",
                 "mean_edge": None,
@@ -314,7 +368,36 @@ class HillClimbHarness:
                 "error": str(exc),
             }
             with self._run_lock(run_dir):
+                try:
+                    self._append_result(run_dir, summary)
+                    self._link_hypothesis_eval(run_dir, summary)
+                    self._write_state(
+                        run_dir,
+                        self._build_state_payload(
+                            run_dir,
+                            target_stage=stage_config.name,
+                            existing_state=self._load_state_payload(
+                                run_dir, require_current=True
+                            ),
+                        ),
+                    )
+                    self._sync_derived_views(run_dir)
+                finally:
+                    self._release_pending_source(
+                        run_dir,
+                        stage=stage_config.name,
+                        source_sha256=source_sha256,
+                    )
+            raise HillClimbHarnessError(
+                f"Evaluation failed for {source_path}: {exc}"
+            ) from exc
+
+        with self._run_lock(run_dir):
+            try:
                 self._append_result(run_dir, summary)
+                self._link_hypothesis_eval(run_dir, summary)
+                if summary["status"] in {"seed", "keep"}:
+                    self._write_incumbent(run_dir, stage_config.name, summary)
                 self._write_state(
                     run_dir,
                     self._build_state_payload(
@@ -325,24 +408,13 @@ class HillClimbHarness:
                         ),
                     ),
                 )
-            raise HillClimbHarnessError(
-                f"Evaluation failed for {source_path}: {exc}"
-            ) from exc
-
-        with self._run_lock(run_dir):
-            self._append_result(run_dir, summary)
-            if summary["status"] in {"seed", "keep"}:
-                self._write_incumbent(run_dir, stage_config.name, summary)
-            self._write_state(
-                run_dir,
-                self._build_state_payload(
+                self._sync_derived_views(run_dir)
+            finally:
+                self._release_pending_source(
                     run_dir,
-                    target_stage=stage_config.name,
-                    existing_state=self._load_state_payload(
-                        run_dir, require_current=True
-                    ),
-                ),
-            )
+                    stage=stage_config.name,
+                    source_sha256=source_sha256,
+                )
         return summary
 
     def get_stage_status(self, *, run_id: str, stage: str) -> StageStatus:
@@ -378,8 +450,10 @@ class HillClimbHarness:
         *,
         run_id: str,
         current_target_stage: str | None = None,
-        next_hypothesis: str | None = None,
-        next_hypothesis_set: bool = False,
+        next_hypothesis_id: str | None = None,
+        next_hypothesis_id_set: bool = False,
+        next_hypothesis_note: str | None = None,
+        next_hypothesis_note_set: bool = False,
         run_mode: str | None = None,
         stop_rules: dict[str, int] | None = None,
         outcome_gate: dict[str, Any] | None = None,
@@ -398,8 +472,12 @@ class HillClimbHarness:
             updated_state = dict(current_state)
             if current_target_stage is not None:
                 updated_state["current_target_stage"] = current_target_stage
-            if next_hypothesis_set:
-                updated_state["next_hypothesis"] = next_hypothesis
+            if next_hypothesis_id_set:
+                updated_state["next_hypothesis_id"] = next_hypothesis_id
+                if next_hypothesis_id is None:
+                    updated_state["next_hypothesis_note"] = None
+            if next_hypothesis_note_set:
+                updated_state["next_hypothesis_note"] = next_hypothesis_note
             if run_mode is not None:
                 updated_state["run_mode"] = run_mode
             if stop_rules is not None:
@@ -409,7 +487,177 @@ class HillClimbHarness:
             updated_state["updated_at"] = _utc_now()
             self._validate_state(run_dir, updated_state, results)
             self._write_state(run_dir, updated_state)
+            self._sync_derived_views(run_dir)
         return self._run_state_status_from_payload(updated_state, results)
+
+    def upsert_hypothesis(
+        self,
+        *,
+        run_id: str,
+        hypothesis_id: str,
+        title: str | None = None,
+        rationale: str | None = None,
+        expected_effect: str | None = None,
+        mutation_family: str | None = None,
+        status: str | None = None,
+        parent_hypothesis_id: str | None = None,
+        seed_eval_id: str | None = None,
+        research_refs: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Create or update a hypothesis record for a run."""
+        normalized_run_id = _slug(run_id, fallback="run")
+        run_dir = self.artifact_root / normalized_run_id
+        if not run_dir.exists():
+            raise HillClimbHarnessError(f"Unknown hill-climb run: {normalized_run_id}")
+
+        with self._run_lock(run_dir):
+            self._validate_current_run(run_dir)
+            hypotheses = self._load_hypotheses(run_dir)
+            payload = hypotheses.get(hypothesis_id)
+            created_at = _utc_now()
+            if payload is None:
+                missing = [
+                    name
+                    for name, value in (
+                        ("title", title),
+                        ("rationale", rationale),
+                        ("expected_effect", expected_effect),
+                        ("mutation_family", mutation_family),
+                    )
+                    if value is None
+                ]
+                if missing:
+                    raise HillClimbHarnessError(
+                        "New hypotheses require " + ", ".join(missing)
+                    )
+                payload = {
+                    "artifact_version": HYPOTHESIS_VERSION,
+                    "hypothesis_id": hypothesis_id,
+                    "title": title,
+                    "rationale": rationale,
+                    "expected_effect": expected_effect,
+                    "mutation_family": mutation_family,
+                    "status": status or "queued",
+                    "created_at": created_at,
+                    "updated_at": created_at,
+                    "parent_hypothesis_id": parent_hypothesis_id,
+                    "seed_eval_id": seed_eval_id,
+                    "eval_ids": [],
+                    "research_refs": self._normalize_string_list(research_refs),
+                }
+            else:
+                payload = dict(payload)
+                if title is not None:
+                    payload["title"] = title
+                if rationale is not None:
+                    payload["rationale"] = rationale
+                if expected_effect is not None:
+                    payload["expected_effect"] = expected_effect
+                if mutation_family is not None:
+                    payload["mutation_family"] = mutation_family
+                if status is not None:
+                    payload["status"] = status
+                if parent_hypothesis_id is not None:
+                    payload["parent_hypothesis_id"] = parent_hypothesis_id
+                if seed_eval_id is not None:
+                    payload["seed_eval_id"] = seed_eval_id
+                if research_refs is not None:
+                    payload["research_refs"] = self._normalize_string_list(
+                        research_refs
+                    )
+                payload["updated_at"] = created_at
+            if (
+                payload.get("parent_hypothesis_id") is not None
+                and payload["parent_hypothesis_id"] not in hypotheses
+            ):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' has no parent hypothesis {payload['parent_hypothesis_id']!r}"
+                )
+            self._validate_hypothesis(
+                run_dir, payload, results=self._read_results(run_dir)
+            )
+            self._write_hypothesis(run_dir, payload)
+            self._sync_derived_views(run_dir)
+        return payload
+
+    def get_history(self, *, run_id: str) -> list[dict[str, Any]]:
+        """Return the compact derived history view for a run."""
+        normalized_run_id = _slug(run_id, fallback="run")
+        run_dir = self.artifact_root / normalized_run_id
+        if not run_dir.exists():
+            raise HillClimbHarnessError(f"Unknown hill-climb run: {normalized_run_id}")
+        self._validate_current_run(run_dir)
+        return self._build_history(self._read_results(run_dir))
+
+    def get_evaluation(self, *, run_id: str, eval_id: str) -> dict[str, Any]:
+        """Return one evaluation summary by id."""
+        normalized_run_id = _slug(run_id, fallback="run")
+        run_dir = self.artifact_root / normalized_run_id
+        if not run_dir.exists():
+            raise HillClimbHarnessError(f"Unknown hill-climb run: {normalized_run_id}")
+        self._validate_current_run(run_dir)
+        for summary in self._read_results(run_dir):
+            if summary["eval_id"] == eval_id:
+                return summary
+        raise HillClimbHarnessError(
+            f"Run '{normalized_run_id}' has no evaluation {eval_id!r}"
+        )
+
+    def get_hypothesis(self, *, run_id: str, hypothesis_id: str) -> dict[str, Any]:
+        """Return one hypothesis record by id."""
+        normalized_run_id = _slug(run_id, fallback="run")
+        run_dir = self.artifact_root / normalized_run_id
+        if not run_dir.exists():
+            raise HillClimbHarnessError(f"Unknown hill-climb run: {normalized_run_id}")
+        self._validate_current_run(run_dir)
+        payload = self._load_hypotheses(run_dir).get(hypothesis_id)
+        if payload is None:
+            raise HillClimbHarnessError(
+                f"Run '{normalized_run_id}' has no hypothesis {hypothesis_id!r}"
+            )
+        return payload
+
+    def summarize_run(self, *, run_id: str) -> dict[str, Any]:
+        """Return an agent-facing summary for one run."""
+        state = self.get_run_state(run_id=run_id)
+        history = self.get_history(run_id=run_id)
+        hypotheses = sorted(
+            self._load_hypotheses(
+                self.artifact_root / _slug(run_id, fallback="run")
+            ).values(),
+            key=lambda payload: payload["hypothesis_id"],
+        )
+        promoted = [entry for entry in history if entry["status"] in {"seed", "keep"}]
+        notable_failures = [
+            entry for entry in history if entry["status"] in {"discard", "invalid"}
+        ]
+        unresolved = [
+            payload
+            for payload in hypotheses
+            if payload["status"] in {"planned", "queued", "active"}
+        ]
+        return {
+            "run_id": state.run_id,
+            "current_target_stage": state.current_target_stage,
+            "outcome_gate": None
+            if state.outcome_gate is None
+            else {
+                "stage": state.outcome_gate.stage,
+                "minimum_mean_edge": state.outcome_gate.minimum_mean_edge,
+                "passed": state.outcome_gate.passed,
+                "message": state.outcome_gate.message,
+            },
+            "incumbent_chain": promoted,
+            "abandoned_families": sorted(
+                {
+                    payload["mutation_family"]
+                    for payload in hypotheses
+                    if payload["status"] in {"abandoned", "invalidated"}
+                }
+            ),
+            "unresolved_hypotheses": unresolved,
+            "notable_failures": notable_failures[-5:],
+        }
 
     def pull_best(self, *, run_id: str, stage: str, destination: Path | str) -> Path:
         """Copy the incumbent stage strategy snapshot into the destination path."""
@@ -455,6 +703,8 @@ class HillClimbHarness:
             self._default_state_payload(run_id=run_id, target_stage=target_stage),
         )
         self._write_next_eval_index(run_dir, 1)
+        self._ensure_read_surfaces(run_dir)
+        self._sync_derived_views(run_dir)
         return run_dir
 
     def _read_source(self, source_path: Path) -> str:
@@ -510,6 +760,12 @@ class HillClimbHarness:
                 self._write_snapshot_file(snapshot_path, source_text)
         return snapshot_path
 
+    def _ensure_read_surfaces(self, run_dir: Path) -> None:
+        history_path = self._history_path(run_dir)
+        if not history_path.exists():
+            history_path.write_text("")
+        self._hypotheses_dir(run_dir).mkdir(parents=True, exist_ok=True)
+
     def _read_results(self, run_dir: Path) -> list[dict[str, Any]]:
         results_path = run_dir / "results.jsonl"
         if not results_path.exists():
@@ -519,6 +775,306 @@ class HillClimbHarness:
             for line in results_path.read_text().splitlines()
             if line.strip()
         ]
+
+    def _history_path(self, run_dir: Path) -> Path:
+        return run_dir / "history.jsonl"
+
+    def _hypotheses_dir(self, run_dir: Path) -> Path:
+        return run_dir / "hypotheses"
+
+    def _hypothesis_path(self, run_dir: Path, hypothesis_id: str) -> Path:
+        return self._hypotheses_dir(run_dir) / f"{hypothesis_id}.json"
+
+    def _pending_sources_dir(self, run_dir: Path) -> Path:
+        return run_dir / ".pending_sources"
+
+    def _pending_source_path(self, run_dir: Path, *, stage: str, source_sha256: str) -> Path:
+        return self._pending_sources_dir(run_dir) / f"{stage}--{source_sha256}"
+
+    def _normalize_string_list(self, values: list[str] | None) -> list[str]:
+        if values is None:
+            return []
+        normalized: list[str] = []
+        for value in values:
+            if not isinstance(value, str):
+                raise HillClimbHarnessError("Expected a list of strings")
+            text = value.strip()
+            if text:
+                normalized.append(text)
+        return normalized
+
+    def _load_hypotheses(self, run_dir: Path) -> dict[str, dict[str, Any]]:
+        hypotheses_dir = self._hypotheses_dir(run_dir)
+        if not hypotheses_dir.exists():
+            return {}
+        payloads: dict[str, dict[str, Any]] = {}
+        for path in sorted(hypotheses_dir.glob("*.json")):
+            payload = _json_load(path)
+            hypothesis_id = payload.get("hypothesis_id")
+            if not isinstance(hypothesis_id, str):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' has hypothesis file without hypothesis_id: {path.name}"
+                )
+            payloads[hypothesis_id] = payload
+        return payloads
+
+    def _write_hypothesis(self, run_dir: Path, payload: dict[str, Any]) -> None:
+        path = self._hypothesis_path(run_dir, payload["hypothesis_id"])
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(_json_dump(payload))
+
+    def _build_history(self, results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        history: list[dict[str, Any]] = []
+        for summary in results:
+            scorecard = summary.get("scorecard")
+            gate = scorecard.get("gate", {}) if isinstance(scorecard, dict) else {}
+            selection = summary.get("selection", {})
+            history.append(
+                {
+                    "artifact_version": HISTORY_VERSION,
+                    "eval_id": summary["eval_id"],
+                    "created_at": summary["created_at"],
+                    "stage": summary["stage"],
+                    "status": summary["status"],
+                    "label": summary.get("label"),
+                    "description": summary.get("description"),
+                    "hypothesis_id": summary.get("hypothesis_id"),
+                    "source_sha256": summary.get("source_sha256"),
+                    "parent_eval_id": summary.get("parent_eval_id"),
+                    "parent_source_sha256": summary.get("parent_source_sha256"),
+                    "mean_edge": summary.get("mean_edge"),
+                    "delta_vs_incumbent": summary.get("delta_vs_incumbent"),
+                    "promotion_margin": selection.get("promotion_margin"),
+                    "gate_passed": bool(gate.get("passed", False)),
+                    "decision_summary": selection.get("rationale")
+                    or summary.get("error"),
+                    "change_summary": summary.get("change_summary"),
+                    "replay_reason": summary.get("replay_reason"),
+                    "research_refs": list(summary.get("research_refs", [])),
+                }
+            )
+        return history
+
+    def _find_result(
+        self, results: list[dict[str, Any]], eval_id: str
+    ) -> dict[str, Any] | None:
+        for summary in results:
+            if summary["eval_id"] == eval_id:
+                return summary
+        return None
+
+    def _resolve_lineage(
+        self,
+        run_dir: Path,
+        *,
+        hypothesis_id: str | None,
+        parent_eval_id: str | None,
+        stage: str,
+        source_sha256: str,
+        replay_reason: str | None,
+    ) -> dict[str, Any]:
+        with self._run_lock(run_dir):
+            self._validate_current_run(run_dir)
+            results = self._read_results(run_dir)
+            state = self._load_state_payload(run_dir, require_current=True)
+            hypotheses = self._load_hypotheses(run_dir)
+            effective_hypothesis_id = hypothesis_id or state.get("next_hypothesis_id")
+            if (
+                effective_hypothesis_id is not None
+                and effective_hypothesis_id not in hypotheses
+            ):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' has no hypothesis {effective_hypothesis_id!r}"
+                )
+            prior_eval_id: str | None = parent_eval_id
+            if prior_eval_id is None:
+                incumbent_before = self._read_incumbent(run_dir, stage)
+                if incumbent_before is not None:
+                    prior_eval_id = incumbent_before["eval_id"]
+            parent_source_sha256 = None
+            if prior_eval_id is not None:
+                parent_summary = self._find_result(results, prior_eval_id)
+                if parent_summary is None:
+                    raise HillClimbHarnessError(
+                        f"Run '{run_dir.name}' has no parent eval {prior_eval_id!r}"
+                    )
+                parent_source_sha256 = parent_summary.get("source_sha256")
+            if replay_reason is None:
+                for summary in results:
+                    if (
+                        summary.get("stage") == stage
+                        and summary.get("source_sha256") == source_sha256
+                    ):
+                        raise HillClimbHarnessError(
+                            "Same-stage duplicate source snapshots require an explicit replay reason. "
+                            f"Run '{run_dir.name}' already recorded {summary['eval_id']} for stage "
+                            f"{stage!r} with source {source_sha256}."
+                        )
+            if replay_reason is None:
+                pending_path = self._pending_source_path(
+                    run_dir, stage=stage, source_sha256=source_sha256
+                )
+                if pending_path.exists():
+                    raise HillClimbHarnessError(
+                        "Another evaluation is already in flight for the same stage/source snapshot. "
+                        f"Run '{run_dir.name}' is currently reserving {stage!r} source {source_sha256}."
+                    )
+                pending_path.parent.mkdir(parents=True, exist_ok=True)
+                pending_path.mkdir()
+            return {
+                "hypothesis_id": effective_hypothesis_id,
+                "parent_eval_id": prior_eval_id,
+                "parent_source_sha256": parent_source_sha256,
+            }
+
+    def _release_pending_source(
+        self, run_dir: Path, *, stage: str, source_sha256: str
+    ) -> None:
+        pending_path = self._pending_source_path(
+            run_dir, stage=stage, source_sha256=source_sha256
+        )
+        try:
+            pending_path.rmdir()
+        except FileNotFoundError:
+            return
+        try:
+            self._pending_sources_dir(run_dir).rmdir()
+        except OSError:
+            return
+
+    def _link_hypothesis_eval(self, run_dir: Path, summary: dict[str, Any]) -> None:
+        hypothesis_id = summary.get("hypothesis_id")
+        if hypothesis_id is None:
+            return
+        hypotheses = self._load_hypotheses(run_dir)
+        payload = hypotheses.get(hypothesis_id)
+        if payload is None:
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' has no hypothesis {hypothesis_id!r}"
+            )
+        updated = dict(payload)
+        eval_ids = list(updated.get("eval_ids", []))
+        if summary["eval_id"] not in eval_ids:
+            eval_ids.append(summary["eval_id"])
+        updated["eval_ids"] = eval_ids
+        if updated.get("seed_eval_id") is None:
+            updated["seed_eval_id"] = summary["eval_id"]
+        updated["status"] = summary["status"]
+        updated["updated_at"] = _utc_now()
+        merged_refs = set(updated.get("research_refs", []))
+        merged_refs.update(summary.get("research_refs", []))
+        updated["research_refs"] = sorted(merged_refs)
+        self._validate_hypothesis(run_dir, updated, results=self._read_results(run_dir))
+        self._write_hypothesis(run_dir, updated)
+
+    def _sync_derived_views(self, run_dir: Path) -> None:
+        self._ensure_read_surfaces(run_dir)
+        results = self._read_results(run_dir)
+        history_path = self._history_path(run_dir)
+        history_lines = [
+            json.dumps(entry, sort_keys=True) for entry in self._build_history(results)
+        ]
+        history_path.write_text(
+            "" if not history_lines else "\n".join(history_lines) + "\n"
+        )
+        self._write_cross_run_index()
+
+    def _collect_research_artifact_paths(self, run_dir: Path) -> list[str]:
+        collected: set[str] = set()
+        for summary in self._read_results(run_dir):
+            for ref in summary.get("research_refs", []):
+                if isinstance(ref, str) and ref.strip():
+                    collected.add(ref)
+        for payload in self._load_hypotheses(run_dir).values():
+            for ref in payload.get("research_refs", []):
+                if isinstance(ref, str) and ref.strip():
+                    collected.add(ref)
+        research_root = self.artifact_root.parent / "research"
+        if research_root.exists():
+            for path in sorted(research_root.iterdir()):
+                if run_dir.name in path.name:
+                    collected.add(str(path))
+        return sorted(collected)
+
+    def _write_cross_run_index(self) -> None:
+        self.artifact_root.parent.mkdir(parents=True, exist_ok=True)
+        entries: list[dict[str, Any]] = []
+        if self.artifact_root.exists():
+            for run_dir in sorted(
+                path for path in self.artifact_root.iterdir() if path.is_dir()
+            ):
+                manifest_path = run_dir / "run.json"
+                if not manifest_path.exists():
+                    continue
+                try:
+                    manifest = _json_load(manifest_path)
+                    results = self._read_results(run_dir)
+                    state = self._load_state_payload(run_dir, require_current=False)
+                    history = self._build_history(results)
+                    best_mean_edges = {
+                        stage: float(summary["mean_edge"])
+                        for stage, eval_id in state.get(
+                            "incumbent_eval_ids", {}
+                        ).items()
+                        for summary in results
+                        if summary["eval_id"] == eval_id
+                        and summary.get("mean_edge") is not None
+                    }
+                    status = "active"
+                    notes: list[str] = []
+                    outcome_gate = state.get("outcome_gate")
+                    if outcome_gate is not None:
+                        gate_status = self._build_outcome_gate_status(state, results)
+                        if gate_status is not None:
+                            notes.append(gate_status.message)
+                            if gate_status.passed:
+                                status = "goal-passed"
+                    if not history:
+                        status = "empty"
+                    elif any(entry["status"] == "invalid" for entry in history):
+                        notes.append("contains invalid evaluations")
+                    next_hypothesis_id = state.get("next_hypothesis_id")
+                    if next_hypothesis_id is not None:
+                        note = state.get("next_hypothesis_note")
+                        if note:
+                            notes.append(
+                                f"next hypothesis {next_hypothesis_id}: {note}"
+                            )
+                        else:
+                            notes.append(f"next hypothesis {next_hypothesis_id}")
+                    entries.append(
+                        {
+                            "run_id": manifest["run_id"],
+                            "created_at": manifest["created_at"],
+                            "status": status,
+                            "active_stage": state.get("current_target_stage"),
+                            "best_eval_ids": dict(state.get("incumbent_eval_ids", {})),
+                            "best_mean_edges": best_mean_edges,
+                            "research_artifact_paths": self._collect_research_artifact_paths(
+                                run_dir
+                            ),
+                            "notes": notes,
+                        }
+                    )
+                except HillClimbHarnessError as exc:
+                    entries.append(
+                        {
+                            "run_id": run_dir.name,
+                            "created_at": None,
+                            "status": "invalid",
+                            "active_stage": None,
+                            "best_eval_ids": {},
+                            "best_mean_edges": {},
+                            "research_artifact_paths": [],
+                            "notes": [str(exc)],
+                        }
+                    )
+        payload = {
+            "artifact_version": CROSS_RUN_INDEX_VERSION,
+            "generated_at": _utc_now(),
+            "hill_climb_runs": entries,
+        }
+        (self.artifact_root.parent / "index.json").write_text(_json_dump(payload))
 
     def _next_eval_index(self, run_dir: Path) -> int:
         index_path = run_dir / NEXT_EVAL_INDEX_FILENAME
@@ -539,12 +1095,6 @@ class HillClimbHarness:
             eval_index = self._next_eval_index(run_dir)
             self._write_next_eval_index(run_dir, eval_index + 1)
             return f"{stage}_{eval_index:04d}"
-
-    def _append_result(self, run_dir: Path, summary: dict[str, Any]) -> None:
-        results_jsonl = run_dir / "results.jsonl"
-        with results_jsonl.open("a") as handle:
-            handle.write(json.dumps(summary, sort_keys=True) + "\n")
-        self._append_results_row(run_dir, summary)
 
     def _resolve_status(
         self,
@@ -687,6 +1237,12 @@ class HillClimbHarness:
             ]
         )
 
+    def _append_result(self, run_dir: Path, summary: dict[str, Any]) -> None:
+        results_jsonl = run_dir / "results.jsonl"
+        with results_jsonl.open("a") as handle:
+            handle.write(json.dumps(summary, sort_keys=True) + "\n")
+        self._append_results_row(run_dir, summary)
+
     def _append_results_row(self, run_dir: Path, summary: dict[str, Any]) -> None:
         results_path = run_dir / "results.tsv"
         with results_path.open("a") as handle:
@@ -706,6 +1262,8 @@ class HillClimbHarness:
             "artifact_version": RUN_MANIFEST_VERSION,
             "continuity_counter": NEXT_EVAL_INDEX_FILENAME,
             "created_at": _utc_now(),
+            "history_path": "history.jsonl",
+            "hypotheses_dir": "hypotheses",
             "protected_surface_fingerprint": protected_surface_fingerprint,
             "results_jsonl": "results.jsonl",
             "results_tsv": "results.tsv",
@@ -727,7 +1285,8 @@ class HillClimbHarness:
             "current_target_stage": target_stage,
             "incumbent_eval_ids": {},
             "last_completed_iteration": 0,
-            "next_hypothesis": None,
+            "next_hypothesis_id": None,
+            "next_hypothesis_note": None,
             "outcome_gate": None,
             "run_id": run_id,
             "run_mode": "foreground",
@@ -762,7 +1321,8 @@ class HillClimbHarness:
             ),
             "incumbent_eval_ids": incumbent_eval_ids,
             "last_completed_iteration": len(results),
-            "next_hypothesis": existing_state.get("next_hypothesis"),
+            "next_hypothesis_id": existing_state.get("next_hypothesis_id"),
+            "next_hypothesis_note": existing_state.get("next_hypothesis_note"),
             "outcome_gate": existing_state.get("outcome_gate"),
             "run_id": run_dir.name,
             "run_mode": existing_state.get("run_mode", "foreground"),
@@ -800,6 +1360,10 @@ class HillClimbHarness:
         results_tsv = run_dir / "results.tsv"
         if not results_tsv.exists():
             results_tsv.write_text(RESULTS_HEADER)
+        history_path = self._history_path(run_dir)
+        if not history_path.exists():
+            history_path.write_text("")
+        self._hypotheses_dir(run_dir).mkdir(parents=True, exist_ok=True)
 
     def _validate_results_ledgers(self, run_dir: Path) -> None:
         results_jsonl = run_dir / "results.jsonl"
@@ -857,6 +1421,8 @@ class HillClimbHarness:
             "artifact_version",
             "continuity_counter",
             "created_at",
+            "history_path",
+            "hypotheses_dir",
             "results_jsonl",
             "results_tsv",
             "run_id",
@@ -874,6 +1440,8 @@ class HillClimbHarness:
                 f"Run manifest run_id {manifest['run_id']!r} does not match directory {run_dir.name!r}"
             )
         for field, expected in (
+            ("history_path", "history.jsonl"),
+            ("hypotheses_dir", "hypotheses"),
             ("results_jsonl", "results.jsonl"),
             ("results_tsv", "results.tsv"),
             ("snapshot_dir", "snapshots"),
@@ -903,6 +1471,9 @@ class HillClimbHarness:
         self._validate_continuity_files(run_dir, results)
         state = self._load_state_payload(run_dir, require_current=True)
         self._validate_state(run_dir, state, results)
+        hypotheses = self._load_hypotheses(run_dir)
+        self._validate_hypotheses(run_dir, hypotheses, results)
+        self._validate_history_index(run_dir, results)
         self._validate_snapshots(run_dir, results)
         try:
             self._protected_surface().verify_recorded_fingerprint(
@@ -926,7 +1497,9 @@ class HillClimbHarness:
 
     def _validate_results(self, run_dir: Path, results: list[dict[str, Any]]) -> None:
         seen_eval_ids: set[str] = set()
+        seen_stage_sources: dict[tuple[str, str], str] = {}
         expected_index = 1
+        eval_ids = {summary.get("eval_id") for summary in results}
         for summary in results:
             eval_id = summary.get("eval_id")
             stage = summary.get("stage")
@@ -964,6 +1537,214 @@ class HillClimbHarness:
                     )
                 )
             expected_index += 1
+            hypothesis_id = summary.get("hypothesis_id")
+            if hypothesis_id is not None and not isinstance(hypothesis_id, str):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' has eval {eval_id!r} with non-string hypothesis_id"
+                )
+            parent_eval_id = summary.get("parent_eval_id")
+            if parent_eval_id is not None and not isinstance(parent_eval_id, str):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' has eval {eval_id!r} with non-string parent_eval_id"
+                )
+            if parent_eval_id is not None and parent_eval_id not in eval_ids:
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' has eval {eval_id!r} with unknown parent_eval_id {parent_eval_id!r}"
+                )
+            parent_source_sha256 = summary.get("parent_source_sha256")
+            if parent_source_sha256 is not None and not isinstance(
+                parent_source_sha256, str
+            ):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' has eval {eval_id!r} with non-string parent_source_sha256"
+                )
+            if parent_eval_id is None and parent_source_sha256 is not None:
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' has eval {eval_id!r} with parent_source_sha256 but no parent_eval_id"
+                )
+            if parent_eval_id is not None:
+                parent_summary = next(
+                    (
+                        payload
+                        for payload in results
+                        if payload.get("eval_id") == parent_eval_id
+                    ),
+                    None,
+                )
+                if parent_summary is None or parent_source_sha256 != parent_summary.get(
+                    "source_sha256"
+                ):
+                    raise HillClimbHarnessError(
+                        f"Run '{run_dir.name}' has eval {eval_id!r} with stale parent_source_sha256"
+                    )
+            change_summary = summary.get("change_summary")
+            if change_summary is not None and not isinstance(change_summary, str):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' has eval {eval_id!r} with non-string change_summary"
+                )
+            replay_reason = summary.get("replay_reason")
+            if replay_reason is not None and not isinstance(replay_reason, str):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' has eval {eval_id!r} with non-string replay_reason"
+                )
+            research_refs = summary.get("research_refs", [])
+            if not isinstance(research_refs, list) or any(
+                not isinstance(value, str) for value in research_refs
+            ):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' has eval {eval_id!r} with invalid research_refs"
+                )
+            source_sha256 = summary.get("source_sha256")
+            if isinstance(source_sha256, str):
+                key = (stage, source_sha256)
+                prior_eval_id = seen_stage_sources.get(key)
+                if prior_eval_id is not None and replay_reason is None:
+                    raise HillClimbHarnessError(
+                        self._corrupted_run_message(
+                            run_dir,
+                            f"Run '{run_dir.name}' reuses source_sha256 {source_sha256} for stage {stage!r} "
+                            f"in {eval_id!r} after {prior_eval_id!r} without replay_reason",
+                        )
+                    )
+                seen_stage_sources.setdefault(key, eval_id)
+
+    def _validate_hypotheses(
+        self,
+        run_dir: Path,
+        hypotheses: dict[str, dict[str, Any]],
+        results: list[dict[str, Any]],
+    ) -> None:
+        for payload in hypotheses.values():
+            self._validate_hypothesis(run_dir, payload, results=results)
+            parent_hypothesis_id = payload.get("parent_hypothesis_id")
+            if (
+                parent_hypothesis_id is not None
+                and parent_hypothesis_id not in hypotheses
+            ):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has unknown parent_hypothesis_id "
+                    f"{parent_hypothesis_id!r}"
+                )
+        state = self._load_state_payload(run_dir, require_current=True)
+        next_hypothesis_id = state.get("next_hypothesis_id")
+        if next_hypothesis_id is not None and next_hypothesis_id not in hypotheses:
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' references missing next_hypothesis_id {next_hypothesis_id!r}"
+            )
+        for summary in results:
+            hypothesis_id = summary.get("hypothesis_id")
+            if hypothesis_id is not None and hypothesis_id not in hypotheses:
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' has eval {summary['eval_id']!r} referencing missing hypothesis_id {hypothesis_id!r}"
+                )
+
+    def _validate_hypothesis(
+        self,
+        run_dir: Path,
+        payload: dict[str, Any],
+        *,
+        results: list[dict[str, Any]],
+    ) -> None:
+        required_fields = {
+            "artifact_version",
+            "hypothesis_id",
+            "title",
+            "rationale",
+            "expected_effect",
+            "mutation_family",
+            "status",
+            "created_at",
+            "updated_at",
+            "parent_hypothesis_id",
+            "seed_eval_id",
+            "eval_ids",
+            "research_refs",
+        }
+        missing = sorted(required_fields - set(payload))
+        if missing:
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload.get('hypothesis_id')!r} is missing required fields: {', '.join(missing)}"
+            )
+        if payload["artifact_version"] != HYPOTHESIS_VERSION:
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has unsupported version {payload['artifact_version']!r}"
+            )
+        for field in (
+            "hypothesis_id",
+            "title",
+            "rationale",
+            "expected_effect",
+            "mutation_family",
+            "status",
+            "created_at",
+            "updated_at",
+        ):
+            if not isinstance(payload[field], str):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' hypothesis field {field!r} must be a string"
+                )
+        if payload["status"] not in HYPOTHESIS_STATUSES:
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has unsupported status {payload['status']!r}"
+            )
+        if payload["parent_hypothesis_id"] is not None and not isinstance(
+            payload["parent_hypothesis_id"], str
+        ):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has invalid parent_hypothesis_id"
+            )
+        if payload["seed_eval_id"] is not None and not isinstance(
+            payload["seed_eval_id"], str
+        ):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has invalid seed_eval_id"
+            )
+        if not isinstance(payload["eval_ids"], list) or any(
+            not isinstance(eval_id, str) for eval_id in payload["eval_ids"]
+        ):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has invalid eval_ids"
+            )
+        if not isinstance(payload["research_refs"], list) or any(
+            not isinstance(reference, str) for reference in payload["research_refs"]
+        ):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has invalid research_refs"
+            )
+        result_eval_ids = {summary["eval_id"] for summary in results}
+        if (
+            payload["seed_eval_id"] is not None
+            and payload["seed_eval_id"] not in result_eval_ids
+        ):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has unknown seed_eval_id {payload['seed_eval_id']!r}"
+            )
+        if any(eval_id not in result_eval_ids for eval_id in payload["eval_ids"]):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} references unknown eval_ids"
+            )
+
+    def _validate_history_index(
+        self, run_dir: Path, results: list[dict[str, Any]]
+    ) -> None:
+        history_path = self._history_path(run_dir)
+        if not history_path.exists():
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' is missing history.jsonl"
+            )
+        actual = [
+            json.loads(line)
+            for line in history_path.read_text().splitlines()
+            if line.strip()
+        ]
+        expected = self._build_history(results)
+        if actual != expected:
+            raise HillClimbHarnessError(
+                self._corrupted_run_message(
+                    run_dir,
+                    f"Run '{run_dir.name}' has stale history.jsonl",
+                )
+            )
 
     def _validate_continuity_files(
         self, run_dir: Path, results: list[dict[str, Any]]
@@ -1007,7 +1788,8 @@ class HillClimbHarness:
             "current_target_stage",
             "incumbent_eval_ids",
             "last_completed_iteration",
-            "next_hypothesis",
+            "next_hypothesis_id",
+            "next_hypothesis_note",
             "run_id",
             "run_mode",
             "stop_rules",
@@ -1060,12 +1842,31 @@ class HillClimbHarness:
             raise HillClimbHarnessError(
                 f"Run '{run_dir.name}' has unsupported run_mode {state['run_mode']!r}"
             )
-        if state["next_hypothesis"] is not None and not isinstance(
-            state["next_hypothesis"], str
+        if state["next_hypothesis_id"] is not None and not isinstance(
+            state["next_hypothesis_id"], str
         ):
             raise HillClimbHarnessError(
-                f"Run '{run_dir.name}' state field next_hypothesis must be null or a string"
+                f"Run '{run_dir.name}' state field next_hypothesis_id must be null or a string"
             )
+        if state["next_hypothesis_note"] is not None and not isinstance(
+            state["next_hypothesis_note"], str
+        ):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' state field next_hypothesis_note must be null or a string"
+            )
+        if (
+            state["next_hypothesis_id"] is None
+            and state["next_hypothesis_note"] is not None
+        ):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' cannot retain next_hypothesis_note without next_hypothesis_id"
+            )
+        if state["next_hypothesis_id"] is not None:
+            hypotheses = self._load_hypotheses(run_dir)
+            if state["next_hypothesis_id"] not in hypotheses:
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' references missing next_hypothesis_id {state['next_hypothesis_id']!r}"
+                )
         for key, minimum in DEFAULT_STOP_RULES.items():
             raw_value = state["stop_rules"].get(key)
             if not isinstance(raw_value, int) or raw_value < minimum:
@@ -1119,7 +1920,8 @@ class HillClimbHarness:
             current_target_stage=state["current_target_stage"],
             incumbent_eval_ids=dict(state["incumbent_eval_ids"]),
             last_completed_iteration=state["last_completed_iteration"],
-            next_hypothesis=state["next_hypothesis"],
+            next_hypothesis_id=state["next_hypothesis_id"],
+            next_hypothesis_note=state["next_hypothesis_note"],
             run_mode=state["run_mode"],
             stop_rules=dict(state["stop_rules"]),
             updated_at=state["updated_at"],

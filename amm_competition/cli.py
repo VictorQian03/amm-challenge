@@ -250,6 +250,11 @@ def hill_climb_eval_command(args: argparse.Namespace) -> int:
             source_path=strategy_path,
             label=args.label,
             description=args.description,
+            hypothesis_id=getattr(args, "hypothesis_id", None),
+            parent_eval_id=getattr(args, "parent_eval_id", None),
+            change_summary=getattr(args, "change_summary", None),
+            research_refs=list(getattr(args, "research_refs", []) or []),
+            replay_reason=getattr(args, "replay_reason", None),
         )
         state = (
             harness.get_run_state(run_id=args.run_id)
@@ -265,6 +270,16 @@ def hill_climb_eval_command(args: argparse.Namespace) -> int:
     print(f"Stage: {summary['stage']}")
     print(f"Status: {summary['status']}")
     print(f"Mean Edge: {summary['mean_edge']:.6f}")
+    if summary.get("hypothesis_id"):
+        print(f"Hypothesis: {summary['hypothesis_id']}")
+    if summary.get("parent_eval_id"):
+        print(f"Parent Eval: {summary['parent_eval_id']}")
+    if summary.get("change_summary"):
+        print(f"Change Summary: {summary['change_summary']}")
+    if summary.get("research_refs"):
+        print("Research Refs: " + ", ".join(summary["research_refs"]))
+    if summary.get("replay_reason"):
+        print(f"Replay Reason: {summary['replay_reason']}")
     selection = summary.get("selection", {})
     if selection.get("promotion_margin") is not None:
         print(f"Promotion Margin: {selection['promotion_margin']:.6f}")
@@ -318,7 +333,14 @@ def hill_climb_status_command(args: argparse.Namespace) -> int:
         )
     print(f"Current Target Stage: {state.current_target_stage}")
     print(f"Run Mode: {state.run_mode}")
-    print(f"Next Hypothesis: {state.next_hypothesis or 'none'}")
+    if state.next_hypothesis_id is None:
+        print("Next Hypothesis: none")
+    elif state.next_hypothesis_note:
+        print(
+            f"Next Hypothesis: {state.next_hypothesis_id} ({state.next_hypothesis_note})"
+        )
+    else:
+        print(f"Next Hypothesis: {state.next_hypothesis_id}")
     if state.outcome_gate is None:
         print("Outcome Gate: none")
     else:
@@ -336,9 +358,12 @@ def hill_climb_status_command(args: argparse.Namespace) -> int:
 
 def hill_climb_set_state_command(args: argparse.Namespace) -> int:
     """Persist explicit loop-state metadata for an existing run."""
-    if args.next_hypothesis is not None and args.clear_next_hypothesis:
+    next_hypothesis_id_arg = getattr(args, "next_hypothesis_id", None)
+    next_hypothesis_note_arg = getattr(args, "next_hypothesis_note", None)
+    clear_next_hypothesis = getattr(args, "clear_next_hypothesis", False)
+    if next_hypothesis_id_arg is not None and clear_next_hypothesis:
         print(
-            "Hill-climb state update failed: choose either --next-hypothesis or --clear-next-hypothesis"
+            "Hill-climb state update failed: choose either --next-hypothesis-id or --clear-next-hypothesis"
         )
         return 1
     if (args.breakout_stage is None) != (args.breakout_threshold is None):
@@ -359,15 +384,20 @@ def hill_climb_set_state_command(args: argparse.Namespace) -> int:
             artifact_root=Path(args.artifact_root),
             n_workers=resolve_n_workers(),
         )
-        next_hypothesis = args.next_hypothesis
-        if args.clear_next_hypothesis:
-            next_hypothesis = None
+        existing_state = harness.get_run_state(run_id=args.run_id)
+        next_hypothesis_id = next_hypothesis_id_arg
+        next_hypothesis_note = next_hypothesis_note_arg
+        if clear_next_hypothesis:
+            next_hypothesis_id = None
+            next_hypothesis_note = None
+        elif next_hypothesis_note is not None and next_hypothesis_id is None:
+            next_hypothesis_id = existing_state.next_hypothesis_id
         stop_rules = None
         if any(
             value is not None
             for value in (args.refine_after, args.pivot_after, args.stop_after)
         ):
-            existing = harness.get_run_state(run_id=args.run_id).stop_rules
+            existing = existing_state.stop_rules
             stop_rules = {
                 "refine_after_non_improving_iterations": (
                     args.refine_after
@@ -394,9 +424,12 @@ def hill_climb_set_state_command(args: argparse.Namespace) -> int:
         state = harness.update_run_state(
             run_id=args.run_id,
             current_target_stage=args.current_target_stage,
-            next_hypothesis=next_hypothesis,
-            next_hypothesis_set=args.next_hypothesis is not None
-            or args.clear_next_hypothesis,
+            next_hypothesis_id=next_hypothesis_id,
+            next_hypothesis_id_set=next_hypothesis_id_arg is not None
+            or clear_next_hypothesis,
+            next_hypothesis_note=next_hypothesis_note,
+            next_hypothesis_note_set=next_hypothesis_note_arg is not None
+            or clear_next_hypothesis,
             run_mode=args.run_mode,
             stop_rules=stop_rules,
             outcome_gate=outcome_gate,
@@ -410,7 +443,14 @@ def hill_climb_set_state_command(args: argparse.Namespace) -> int:
     print(f"Run: {state.run_id}")
     print(f"Current Target Stage: {state.current_target_stage}")
     print(f"Run Mode: {state.run_mode}")
-    print(f"Next Hypothesis: {state.next_hypothesis or 'none'}")
+    if state.next_hypothesis_id is None:
+        print("Next Hypothesis: none")
+    elif state.next_hypothesis_note:
+        print(
+            f"Next Hypothesis: {state.next_hypothesis_id} ({state.next_hypothesis_note})"
+        )
+    else:
+        print(f"Next Hypothesis: {state.next_hypothesis_id}")
     if state.outcome_gate is None:
         print("Outcome Gate: none")
     else:
@@ -422,6 +462,159 @@ def hill_climb_set_state_command(args: argparse.Namespace) -> int:
         f"stop={state.stop_rules['stop_after_non_improving_iterations']}"
     )
     print(f"Stop-Rule Guidance: {state.guidance.message}")
+    return 0
+
+
+def hill_climb_set_hypothesis_command(args: argparse.Namespace) -> int:
+    """Create or update a run hypothesis record."""
+    try:
+        payload = HillClimbHarness(
+            artifact_root=Path(args.artifact_root),
+            n_workers=resolve_n_workers(),
+        ).upsert_hypothesis(
+            run_id=args.run_id,
+            hypothesis_id=args.hypothesis_id,
+            title=args.title,
+            rationale=args.rationale,
+            expected_effect=args.expected_effect,
+            mutation_family=args.mutation_family,
+            status=args.status,
+            parent_hypothesis_id=args.parent_hypothesis_id,
+            seed_eval_id=args.seed_eval_id,
+            research_refs=list(args.research_refs or []),
+        )
+    except (HillClimbHarnessError, RuntimeError, ValueError) as exc:
+        print(f"Hill-climb hypothesis update failed: {exc}")
+        return 1
+
+    print(f"Run: {args.run_id}")
+    print(f"Hypothesis: {payload['hypothesis_id']}")
+    print(f"Status: {payload['status']}")
+    print(f"Mutation Family: {payload['mutation_family']}")
+    print(f"Eval Count: {len(payload['eval_ids'])}")
+    return 0
+
+
+def hill_climb_history_command(args: argparse.Namespace) -> int:
+    """Show the compact history view for a run."""
+    try:
+        history = HillClimbHarness(
+            artifact_root=Path(args.artifact_root),
+            n_workers=resolve_n_workers(),
+        ).get_history(run_id=args.run_id)
+    except (HillClimbHarnessError, RuntimeError, ValueError) as exc:
+        print(f"Hill-climb history failed: {exc}")
+        return 1
+
+    print("eval_id\tstage\tstatus\tmean_edge\thypothesis_id\tparent_eval_id\tdecision")
+    for entry in history:
+        mean_edge = entry["mean_edge"]
+        mean_edge_text = "n/a" if mean_edge is None else f"{mean_edge:.6f}"
+        print(
+            "\t".join(
+                [
+                    entry["eval_id"],
+                    entry["stage"],
+                    entry["status"],
+                    mean_edge_text,
+                    entry.get("hypothesis_id") or "",
+                    entry.get("parent_eval_id") or "",
+                    entry.get("decision_summary") or "",
+                ]
+            )
+        )
+    return 0
+
+
+def hill_climb_show_eval_command(args: argparse.Namespace) -> int:
+    """Show one evaluation with lineage metadata."""
+    try:
+        summary = HillClimbHarness(
+            artifact_root=Path(args.artifact_root),
+            n_workers=resolve_n_workers(),
+        ).get_evaluation(run_id=args.run_id, eval_id=args.eval_id)
+    except (HillClimbHarnessError, RuntimeError, ValueError) as exc:
+        print(f"Hill-climb show-eval failed: {exc}")
+        return 1
+
+    print(f"Run: {summary['run_id']}")
+    print(f"Eval: {summary['eval_id']}")
+    print(f"Stage: {summary['stage']}")
+    print(f"Status: {summary['status']}")
+    print(f"Label: {summary.get('label') or 'none'}")
+    print(f"Hypothesis: {summary.get('hypothesis_id') or 'none'}")
+    print(f"Parent Eval: {summary.get('parent_eval_id') or 'none'}")
+    print(f"Parent Source: {summary.get('parent_source_sha256') or 'none'}")
+    print(f"Change Summary: {summary.get('change_summary') or 'none'}")
+    print("Research Refs: " + (", ".join(summary.get("research_refs", [])) or "none"))
+    mean_edge = summary.get("mean_edge")
+    print(f"Mean Edge: {'n/a' if mean_edge is None else f'{mean_edge:.6f}'}")
+    selection = summary.get("selection", {})
+    print(f"Decision: {selection.get('rationale') or summary.get('error') or 'none'}")
+    return 0
+
+
+def hill_climb_show_hypothesis_command(args: argparse.Namespace) -> int:
+    """Show one hypothesis and its linked evaluations."""
+    try:
+        payload = HillClimbHarness(
+            artifact_root=Path(args.artifact_root),
+            n_workers=resolve_n_workers(),
+        ).get_hypothesis(run_id=args.run_id, hypothesis_id=args.hypothesis_id)
+    except (HillClimbHarnessError, RuntimeError, ValueError) as exc:
+        print(f"Hill-climb show-hypothesis failed: {exc}")
+        return 1
+
+    print(f"Run: {args.run_id}")
+    print(f"Hypothesis: {payload['hypothesis_id']}")
+    print(f"Title: {payload['title']}")
+    print(f"Status: {payload['status']}")
+    print(f"Mutation Family: {payload['mutation_family']}")
+    print(f"Expected Effect: {payload['expected_effect']}")
+    print(f"Rationale: {payload['rationale']}")
+    print(f"Parent Hypothesis: {payload.get('parent_hypothesis_id') or 'none'}")
+    print(f"Seed Eval: {payload.get('seed_eval_id') or 'none'}")
+    print("Eval IDs: " + (", ".join(payload.get("eval_ids", [])) or "none"))
+    print("Research Refs: " + (", ".join(payload.get("research_refs", [])) or "none"))
+    return 0
+
+
+def hill_climb_summarize_run_command(args: argparse.Namespace) -> int:
+    """Show an agent-facing summary for a run."""
+    try:
+        summary = HillClimbHarness(
+            artifact_root=Path(args.artifact_root),
+            n_workers=resolve_n_workers(),
+        ).summarize_run(run_id=args.run_id)
+    except (HillClimbHarnessError, RuntimeError, ValueError) as exc:
+        print(f"Hill-climb summarize-run failed: {exc}")
+        return 1
+
+    print(f"Run: {summary['run_id']}")
+    print(f"Current Target Stage: {summary['current_target_stage']}")
+    outcome_gate = summary.get("outcome_gate")
+    if outcome_gate is None:
+        print("Outcome Gate: none")
+    else:
+        print(f"Outcome Gate: {outcome_gate['message']}")
+    print("Incumbent Chain:")
+    for entry in summary["incumbent_chain"]:
+        mean_edge = entry["mean_edge"]
+        mean_edge_text = "n/a" if mean_edge is None else f"{mean_edge:.6f}"
+        print(
+            f"  {entry['eval_id']} {entry['stage']} {entry['status']} {mean_edge_text}"
+        )
+    print("Abandoned Families: " + (", ".join(summary["abandoned_families"]) or "none"))
+    print("Unresolved Hypotheses:")
+    for payload in summary["unresolved_hypotheses"]:
+        print(
+            f"  {payload['hypothesis_id']} {payload['status']} {payload['mutation_family']}"
+        )
+    print("Notable Failures:")
+    for entry in summary["notable_failures"]:
+        print(
+            f"  {entry['eval_id']} {entry['status']} {entry.get('decision_summary') or ''}"
+        )
     return 0
 
 
@@ -569,6 +762,32 @@ Examples:
         default=None,
         help="Longer experiment note recorded with the evaluation",
     )
+    hill_climb_eval_parser.add_argument(
+        "--hypothesis-id",
+        default=None,
+        help="Registered hypothesis linked to this evaluation",
+    )
+    hill_climb_eval_parser.add_argument(
+        "--parent-eval-id",
+        default=None,
+        help="Explicit parent evaluation for lineage tracking",
+    )
+    hill_climb_eval_parser.add_argument(
+        "--change-summary",
+        default=None,
+        help="Short description of what changed relative to the parent",
+    )
+    hill_climb_eval_parser.add_argument(
+        "--research-refs",
+        action="append",
+        default=[],
+        help="Repeatable research or plan reference linked to this evaluation",
+    )
+    hill_climb_eval_parser.add_argument(
+        "--replay-reason",
+        default=None,
+        help="Required when intentionally replaying the same stage/source snapshot",
+    )
     hill_climb_eval_parser.set_defaults(func=hill_climb_eval_command)
 
     hill_climb_status_parser = hill_climb_subparsers.add_parser(
@@ -610,9 +829,14 @@ Examples:
         help="Declared target stage for the active search plan",
     )
     hill_climb_set_state_parser.add_argument(
-        "--next-hypothesis",
+        "--next-hypothesis-id",
         default=None,
-        help="Short note describing the next hypothesis to test",
+        help="Registered hypothesis id queued for the next move",
+    )
+    hill_climb_set_state_parser.add_argument(
+        "--next-hypothesis-note",
+        default=None,
+        help="Optional short note for the queued hypothesis",
     )
     hill_climb_set_state_parser.add_argument(
         "--clear-next-hypothesis",
@@ -661,6 +885,130 @@ Examples:
         help="Clear any recorded breakout outcome gate",
     )
     hill_climb_set_state_parser.set_defaults(func=hill_climb_set_state_command)
+
+    hill_climb_set_hypothesis_parser = hill_climb_subparsers.add_parser(
+        "set-hypothesis",
+        help="Create or update a first-class hypothesis record for a run",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--run-id", required=True, help="Stable run identifier"
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--artifact-root",
+        default="artifacts/hill_climb",
+        help="Artifact root for hill-climb run outputs",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--hypothesis-id", required=True, help="Stable hypothesis identifier"
+    )
+    hill_climb_set_hypothesis_parser.add_argument("--title", default=None)
+    hill_climb_set_hypothesis_parser.add_argument("--rationale", default=None)
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--expected-effect",
+        default=None,
+        help="Expected user-visible or score-visible effect",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--mutation-family",
+        default=None,
+        help="Design family or mutation bucket for clustering history",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--status",
+        choices=[
+            "planned",
+            "queued",
+            "active",
+            "promoted",
+            "invalidated",
+            "abandoned",
+            "completed",
+        ],
+        default=None,
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--parent-hypothesis-id",
+        default=None,
+        help="Optional parent hypothesis for lineage tracking",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--seed-eval-id",
+        default=None,
+        help="Optional seed evaluation already linked to this hypothesis",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--research-refs",
+        action="append",
+        default=[],
+        help="Repeatable research or plan reference linked to this hypothesis",
+    )
+    hill_climb_set_hypothesis_parser.set_defaults(
+        func=hill_climb_set_hypothesis_command
+    )
+
+    hill_climb_history_parser = hill_climb_subparsers.add_parser(
+        "history",
+        help="Show the compact derived history for a run",
+    )
+    hill_climb_history_parser.add_argument(
+        "--run-id", required=True, help="Stable run identifier"
+    )
+    hill_climb_history_parser.add_argument(
+        "--artifact-root",
+        default="artifacts/hill_climb",
+        help="Artifact root for hill-climb run outputs",
+    )
+    hill_climb_history_parser.set_defaults(func=hill_climb_history_command)
+
+    hill_climb_show_eval_parser = hill_climb_subparsers.add_parser(
+        "show-eval",
+        help="Show one evaluation record with lineage metadata",
+    )
+    hill_climb_show_eval_parser.add_argument(
+        "--run-id", required=True, help="Stable run identifier"
+    )
+    hill_climb_show_eval_parser.add_argument(
+        "--eval-id", required=True, help="Evaluation identifier"
+    )
+    hill_climb_show_eval_parser.add_argument(
+        "--artifact-root",
+        default="artifacts/hill_climb",
+        help="Artifact root for hill-climb run outputs",
+    )
+    hill_climb_show_eval_parser.set_defaults(func=hill_climb_show_eval_command)
+
+    hill_climb_show_hypothesis_parser = hill_climb_subparsers.add_parser(
+        "show-hypothesis",
+        help="Show one hypothesis record and its linked evaluations",
+    )
+    hill_climb_show_hypothesis_parser.add_argument(
+        "--run-id", required=True, help="Stable run identifier"
+    )
+    hill_climb_show_hypothesis_parser.add_argument(
+        "--hypothesis-id", required=True, help="Hypothesis identifier"
+    )
+    hill_climb_show_hypothesis_parser.add_argument(
+        "--artifact-root",
+        default="artifacts/hill_climb",
+        help="Artifact root for hill-climb run outputs",
+    )
+    hill_climb_show_hypothesis_parser.set_defaults(
+        func=hill_climb_show_hypothesis_command
+    )
+
+    hill_climb_summarize_run_parser = hill_climb_subparsers.add_parser(
+        "summarize-run",
+        help="Show an agent-facing summary of the run state and history",
+    )
+    hill_climb_summarize_run_parser.add_argument(
+        "--run-id", required=True, help="Stable run identifier"
+    )
+    hill_climb_summarize_run_parser.add_argument(
+        "--artifact-root",
+        default="artifacts/hill_climb",
+        help="Artifact root for hill-climb run outputs",
+    )
+    hill_climb_summarize_run_parser.set_defaults(func=hill_climb_summarize_run_command)
 
     hill_climb_pull_parser = hill_climb_subparsers.add_parser(
         "pull-best",

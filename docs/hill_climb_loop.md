@@ -38,15 +38,20 @@ Each run lives under `artifacts/hill_climb/<run_id>/`.
 
 - `run.json`
   - Authoritative manifest metadata.
-  - Required fields: `artifact_version`, `run_id`, `created_at`, `active_strategy_path`, `snapshot_dir`, `snapshot_layout`, `results_jsonl`, `results_tsv`, `state_path`, `continuity_counter`.
+  - Required fields: `artifact_version`, `run_id`, `created_at`, `active_strategy_path`, `snapshot_dir`, `snapshot_layout`, `results_jsonl`, `results_tsv`, `history_path`, `hypotheses_dir`, `state_path`, `continuity_counter`.
 - `state.json`
   - Authoritative resumable run state.
-  - Required fields: `artifact_version`, `run_id`, `run_mode`, `current_target_stage`, `baseline_eval_id`, `incumbent_eval_ids`, `last_completed_iteration`, `stop_rules`, `next_hypothesis`, `updated_at`.
+  - Required fields: `artifact_version`, `run_id`, `run_mode`, `current_target_stage`, `baseline_eval_id`, `incumbent_eval_ids`, `last_completed_iteration`, `stop_rules`, `next_hypothesis_id`, `next_hypothesis_note`, `updated_at`.
   - Optional field: `outcome_gate` with `{stage, minimum_mean_edge}` for explicit breakout thresholds.
 - `results.jsonl`
   - Append-only full evaluation ledger.
+  - Each eval now records lineage metadata: `hypothesis_id`, `parent_eval_id`, `parent_source_sha256`, `change_summary`, `research_refs`, and optional `replay_reason`.
 - `results.tsv`
   - Append-only compact experiment ledger.
+- `history.jsonl`
+  - Derived compact read model generated from `results.jsonl`.
+- `hypotheses/<hypothesis_id>.json`
+  - Authoritative hypothesis registry with lifecycle, lineage, and linked eval ids.
 - `incumbents/<stage>.json`
   - Derived current incumbent snapshots per stage.
 - `snapshots/<source_sha256>.sol`
@@ -61,7 +66,7 @@ Unsupported continuity:
 - Retained runs that still carry legacy continuity files or stale manifest/state versions are unsupported; start a fresh run instead.
 - If continuity or append-only validation fails, do not hand-edit `results.jsonl`, `results.tsv`, `state.json`, or `.next_eval_index` to force a resume. Quarantine the run directory and start a fresh `run_id`.
 
-Derived fields such as `snapshot_relpath`, `incumbent_before`, and the compact TSV row are convenience views. If they disagree with the authoritative manifest/state/results contract, the run should be treated as broken and replaced with a fresh run.
+Derived fields such as `snapshot_relpath`, `incumbent_before`, `history.jsonl`, and the compact TSV row are convenience views. If they disagree with the authoritative manifest/state/results/hypothesis contract, the run should be treated as broken and replaced with a fresh run.
 
 ## Stage Progression
 
@@ -76,6 +81,16 @@ Promotion policy:
 - Move a candidate from `screen -> climb -> confirm -> final` only after it survives the current stage as `seed` or `keep`.
 - A stage failure or margin miss is a local branch failure, not a reason to overwrite the incumbent.
 - If the operator is chasing a specific breakout threshold, record it with `amm-match hill-climb set-state --breakout-stage <stage> --breakout-threshold <mean_edge>` and treat `keep` as local progress, not completion, until the recorded outcome gate passes.
+- Same-stage re-evals of the same `source_sha256` fail by default. Use `--replay-reason` only for intentional replays.
+
+## Read Surfaces
+
+- `amm-match hill-climb status`: quick incumbent/latest plus loop guidance.
+- `amm-match hill-climb history --run-id <id>`: compact per-eval timeline.
+- `amm-match hill-climb show-eval --run-id <id> --eval-id <id>`: one eval with lineage metadata.
+- `amm-match hill-climb set-hypothesis --run-id <id> --hypothesis-id <id> ...`: create or update the first-class hypothesis registry.
+- `amm-match hill-climb show-hypothesis --run-id <id> --hypothesis-id <id>`: one hypothesis with linked evals.
+- `amm-match hill-climb summarize-run --run-id <id>`: incumbent chain, unresolved ideas, abandoned families, and notable failures.
 
 ## Stop Policy
 

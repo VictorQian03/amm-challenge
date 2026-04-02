@@ -13,7 +13,8 @@
 
 Per-run contract:
 
-- keep only `run.json`, `results.jsonl`, `results.tsv`, `incumbents/`, and `snapshots/`
+- keep only `run.json`, `state.json`, `results.jsonl`, `results.tsv`, `history.jsonl`, `hypotheses/`, `incumbents/`, and `snapshots/`
+- keep the machine-readable cross-run catalog at `artifacts/index.json`
 - do not recreate per-evaluation `evaluations/` trees
 - normalize any legacy run with `amm-match hill-climb compact --artifact-root <root>`
 - do not retain old probe, compare, or superseded baseline runs once the active lane is updated

@@ -12,8 +12,13 @@ import pytest
 
 from amm_competition.cli import (
     hill_climb_eval_command,
+    hill_climb_history_command,
     hill_climb_set_state_command,
+    hill_climb_set_hypothesis_command,
+    hill_climb_show_eval_command,
+    hill_climb_show_hypothesis_command,
     hill_climb_status_command,
+    hill_climb_summarize_run_command,
 )
 from amm_competition.competition.match import LightweightSimResult, MatchResult
 from amm_competition.competition.protected_surface import (
@@ -241,12 +246,14 @@ def test_evaluate_records_seed_keep_and_discard(tmp_path):
         source_path=source_path,
         label="baseline",
     )
+    source_path.write_text("// candidate v2")
     second = harness.evaluate(
         run_id="mar26",
         stage="screen",
         source_path=source_path,
         label="improved",
     )
+    source_path.write_text("// candidate v3")
     third = harness.evaluate(
         run_id="mar26",
         stage="screen",
@@ -289,6 +296,8 @@ def test_evaluate_writes_current_manifest_and_state(tmp_path):
     assert manifest["artifact_version"] == RUN_MANIFEST_VERSION
     assert manifest["active_strategy_path"] == str(source_path.resolve())
     assert manifest["continuity_counter"] == ".next_eval_index"
+    assert manifest["history_path"] == "history.jsonl"
+    assert manifest["hypotheses_dir"] == "hypotheses"
     assert manifest["protected_surface_fingerprint"] == {
         "manifest_path": ".competition-protected-paths",
         "sha256": "test-fingerprint",
@@ -299,8 +308,13 @@ def test_evaluate_writes_current_manifest_and_state(tmp_path):
     assert state["incumbent_eval_ids"] == {"screen": summary["eval_id"]}
     assert state["last_completed_iteration"] == 1
     assert state["current_target_stage"] == "screen"
+    assert state["next_hypothesis_id"] is None
+    assert state["next_hypothesis_note"] is None
     assert state["stop_rules"] == DEFAULT_STOP_RULES
     assert (run_dir / ".next_eval_index").read_text().strip() == "2"
+    assert (run_dir / "history.jsonl").exists()
+    assert (run_dir / "hypotheses").is_dir()
+    assert (tmp_path / "index.json").exists()
 
 
 def test_evaluate_writes_invalid_record_on_failure(tmp_path):
@@ -337,6 +351,7 @@ def test_baseline_eval_id_skips_initial_invalid_result(tmp_path):
     with pytest.raises(HillClimbHarnessError, match="bad strategy"):
         harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
 
+    source_path.write_text("// candidate retry")
     summary = harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
     state = _load_json(tmp_path / "artifacts" / "mar26" / "state.json")
 
@@ -358,11 +373,101 @@ def test_evaluate_reuses_content_addressed_snapshot(tmp_path):
     )
 
     first = harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
-    second = harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    second = harness.evaluate(
+        run_id="mar26",
+        stage="screen",
+        source_path=source_path,
+        replay_reason="intentional replay of identical source for snapshot reuse",
+    )
 
     assert first["snapshot_path"] == second["snapshot_path"]
     assert Path(first["snapshot_path"]).parent.name == "snapshots"
     assert not (tmp_path / "artifacts" / "mar26" / "evaluations").exists()
+
+
+def test_evaluate_rejects_same_stage_duplicate_source_without_replay_reason(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+        ],
+    )
+
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    with pytest.raises(HillClimbHarnessError, match="duplicate source snapshots"):
+        harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+
+def test_evaluate_records_lineage_metadata_and_updates_history_and_hypothesis_registry(
+    tmp_path,
+):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate baseline")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            _make_match_result(mean_edges=[6.0, 6.0, 6.0, 6.0]),
+        ],
+    )
+
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="timing-overlay",
+        title="Timing overlay",
+        rationale="Shorten the widening lag",
+        expected_effect="Improve clustered toxic handling",
+        mutation_family="timing-overlay",
+        status="queued",
+        research_refs=["docs/plans/active/apr01-screen420-2134.md"],
+    )
+
+    source_path.write_text("// candidate mutated")
+    summary = harness.evaluate(
+        run_id="mar26",
+        stage="screen",
+        source_path=source_path,
+        hypothesis_id="timing-overlay",
+        parent_eval_id="screen_0001",
+        change_summary="Shorten the widening lag after clustered shocks",
+        research_refs=["artifacts/research/run-a/memo.md"],
+    )
+
+    assert summary["hypothesis_id"] == "timing-overlay"
+    assert summary["parent_eval_id"] == "screen_0001"
+    assert summary["parent_source_sha256"] is not None
+    assert (
+        summary["change_summary"] == "Shorten the widening lag after clustered shocks"
+    )
+    assert summary["research_refs"] == ["artifacts/research/run-a/memo.md"]
+
+    history = harness.get_history(run_id="mar26")
+    assert history[-1]["hypothesis_id"] == "timing-overlay"
+    assert history[-1]["parent_eval_id"] == "screen_0001"
+    assert (
+        history[-1]["change_summary"]
+        == "Shorten the widening lag after clustered shocks"
+    )
+
+    hypothesis = harness.get_hypothesis(run_id="mar26", hypothesis_id="timing-overlay")
+    assert hypothesis["seed_eval_id"] == "screen_0002"
+    assert hypothesis["eval_ids"] == ["screen_0002"]
+    assert hypothesis["status"] == "keep"
+    assert sorted(hypothesis["research_refs"]) == [
+        "artifacts/research/run-a/memo.md",
+        "docs/plans/active/apr01-screen420-2134.md",
+    ]
+
+    index_payload = json.loads((tmp_path / "index.json").read_text())
+    assert index_payload["artifact_version"]
+    assert index_payload["hill_climb_runs"][0]["run_id"] == "mar26"
 
 
 def test_evaluate_discards_when_stage_gate_fails(tmp_path):
@@ -406,6 +511,7 @@ def test_evaluate_discards_small_noisy_improvement(tmp_path):
         source_path=source_path,
         label="baseline",
     )
+    source_path.write_text("// candidate noisy uplift")
     second = harness.evaluate(
         run_id="mar26",
         stage="screen",
@@ -687,6 +793,7 @@ def test_parallel_evaluations_get_distinct_eval_ids(tmp_path):
                     stage="smoke",
                     source_path=source_path,
                     label=label,
+                    replay_reason="parallel identical-source replay for eval-id reservation",
                 )
             )
         except BaseException as exc:  # pragma: no cover - test should not fail here
@@ -748,22 +855,29 @@ def test_set_state_updates_loop_metadata_and_status_reports_guidance(
         ],
     )
 
-    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
-    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
-    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
-    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
-    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
-    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    for idx in range(6):
+        source_path.write_text(f"// candidate {idx}")
+        harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
     monkeypatch.setattr(
         "amm_competition.hill_climb.harness.ProtectedSurfaceChecker.discover",
         lambda: _NoopProtectedSurfaceChecker(),
+    )
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="lower-ask-sooner",
+        title="Lower the ask fee sooner",
+        rationale="Shorten the toxic widening lag after small clustered buys",
+        expected_effect="Improve screen mean_edge without broad carry drag",
+        mutation_family="timing-overlay",
+        status="queued",
     )
 
     set_args = argparse.Namespace(
         run_id="mar26",
         artifact_root=str(tmp_path / "artifacts"),
         current_target_stage="screen",
-        next_hypothesis="Lower the ask fee sooner",
+        next_hypothesis_id="lower-ask-sooner",
+        next_hypothesis_note="Lower the ask fee sooner",
         clear_next_hypothesis=False,
         run_mode="background",
         refine_after=4,
@@ -777,7 +891,8 @@ def test_set_state_updates_loop_metadata_and_status_reports_guidance(
 
     state = _load_json(tmp_path / "artifacts" / "mar26" / "state.json")
     assert state["current_target_stage"] == "screen"
-    assert state["next_hypothesis"] == "Lower the ask fee sooner"
+    assert state["next_hypothesis_id"] == "lower-ask-sooner"
+    assert state["next_hypothesis_note"] == "Lower the ask fee sooner"
     assert state["run_mode"] == "background"
     assert state["stop_rules"] == {
         "refine_after_non_improving_iterations": 4,
@@ -798,7 +913,7 @@ def test_set_state_updates_loop_metadata_and_status_reports_guidance(
     output = capsys.readouterr().out
     assert "Current Target Stage: screen" in output
     assert "Run Mode: background" in output
-    assert "Next Hypothesis: Lower the ask fee sooner" in output
+    assert "Next Hypothesis: lower-ask-sooner (Lower the ask fee sooner)" in output
     assert (
         "Outcome Gate: pending (screen incumbent 5.000000 is below target 6.000000)"
         in output
@@ -824,7 +939,8 @@ def test_set_state_rejects_partial_breakout_goal_configuration(
         run_id="mar26",
         artifact_root=str(tmp_path / "artifacts"),
         current_target_stage=None,
-        next_hypothesis=None,
+        next_hypothesis_id=None,
+        next_hypothesis_note=None,
         clear_next_hypothesis=False,
         run_mode=None,
         refine_after=None,
@@ -840,3 +956,102 @@ def test_set_state_rejects_partial_breakout_goal_configuration(
         "choose both --breakout-stage and --breakout-threshold"
         in capsys.readouterr().out
     )
+
+
+def test_hill_climb_history_and_lookup_commands_surface_agent_facing_read_models(
+    tmp_path, capsys, monkeypatch
+):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// baseline")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            _make_match_result(mean_edges=[6.0, 6.0, 6.0, 6.0]),
+        ],
+    )
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="timing-overlay",
+        title="Timing overlay",
+        rationale="Shorten widening lag",
+        expected_effect="Lift screen edge",
+        mutation_family="timing-overlay",
+        status="queued",
+        research_refs=["docs/plans/active/apr01-screen420-2134.md"],
+    )
+    monkeypatch.setattr(
+        "amm_competition.hill_climb.harness.ProtectedSurfaceChecker.discover",
+        lambda: _NoopProtectedSurfaceChecker(),
+    )
+    source_path.write_text("// mutated")
+    harness.evaluate(
+        run_id="mar26",
+        stage="screen",
+        source_path=source_path,
+        hypothesis_id="timing-overlay",
+        parent_eval_id="screen_0001",
+        change_summary="Shorten widening lag",
+        research_refs=["artifacts/research/run-a/memo.md"],
+    )
+
+    set_hypothesis_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+        hypothesis_id="timing-overlay",
+        title=None,
+        rationale=None,
+        expected_effect=None,
+        mutation_family=None,
+        status="completed",
+        parent_hypothesis_id=None,
+        seed_eval_id=None,
+        research_refs=[],
+    )
+    assert hill_climb_set_hypothesis_command(set_hypothesis_args) == 0
+    assert "Hypothesis: timing-overlay" in capsys.readouterr().out
+
+    history_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+    )
+    assert hill_climb_history_command(history_args) == 0
+    history_output = capsys.readouterr().out
+    assert "eval_id\tstage\tstatus" in history_output
+    assert (
+        "screen_0002\tscreen\tkeep\t6.000000\ttiming-overlay\tscreen_0001"
+        in history_output
+    )
+
+    show_eval_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+        eval_id="screen_0002",
+    )
+    assert hill_climb_show_eval_command(show_eval_args) == 0
+    show_eval_output = capsys.readouterr().out
+    assert "Hypothesis: timing-overlay" in show_eval_output
+    assert "Parent Eval: screen_0001" in show_eval_output
+    assert "Change Summary: Shorten widening lag" in show_eval_output
+
+    show_hypothesis_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+        hypothesis_id="timing-overlay",
+    )
+    assert hill_climb_show_hypothesis_command(show_hypothesis_args) == 0
+    show_hypothesis_output = capsys.readouterr().out
+    assert "Hypothesis: timing-overlay" in show_hypothesis_output
+    assert "Seed Eval: screen_0002" in show_hypothesis_output
+    assert "Eval IDs: screen_0002" in show_hypothesis_output
+
+    summarize_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+    )
+    assert hill_climb_summarize_run_command(summarize_args) == 0
+    summarize_output = capsys.readouterr().out
+    assert "Incumbent Chain:" in summarize_output
+    assert "screen_0002 screen keep 6.000000" in summarize_output
