@@ -7,12 +7,11 @@ import {TradeInfo} from "./IAMMStrategy.sol";
 /// @title Latent State Incumbent Gap-Aware V4 Candidate
 /// @notice Keep the calm regime cheaper, but add a hard defensive regime for clustered shocks.
 contract Strategy is AMMStrategyBase {
-    uint256 internal constant BASE_FEE = 61 * BPS;
+    uint256 internal constant BASE_FEE = 66 * BPS;
     uint256 internal constant DECAY_FAST = 8500 * BPS;
     uint256 internal constant DECAY_SLOW = 9200 * BPS;
     uint256 internal constant DECAY_COOLDOWN = 9000 * BPS;
     uint256 internal constant ALPHA_SPOT = 12 * BPS;
-    uint256 internal constant ALPHA_QUIET = 8 * BPS;
 
     function afterInitialize(uint256 initialX, uint256 initialY)
         external
@@ -29,7 +28,6 @@ contract Strategy is AMMStrategyBase {
         slots[5] = 0; // last side: 1 buy, 2 sell
         slots[6] = spot; // last observed spot
         slots[7] = 0; // last timestamp
-        slots[8] = 0; // quiet memory
 
         return (BASE_FEE, BASE_FEE);
     }
@@ -44,13 +42,13 @@ contract Strategy is AMMStrategyBase {
         uint256 lastSpot = slots[6];
         uint256 lastTimestamp = slots[7];
         uint256 gap = trade.timestamp > lastTimestamp ? trade.timestamp - lastTimestamp : 0;
-        uint256 latentGap = latentSpot == 0 ? 0 : wdiv(absDiff(currentSpot, latentSpot), latentSpot);
 
         uint256 sizeX = wdiv(trade.amountX, trade.reserveX);
         uint256 sizeY = wdiv(trade.amountY, trade.reserveY);
         uint256 tradeSize = sizeX > sizeY ? sizeX : sizeY;
 
         uint256 spotJump = lastSpot == 0 ? 0 : wdiv(absDiff(currentSpot, lastSpot), lastSpot);
+        uint256 latentGap = latentSpot == 0 ? 0 : wdiv(absDiff(currentSpot, latentSpot), latentSpot);
         uint256 bidPressure = wmul(slots[1], DECAY_FAST);
         uint256 askPressure = wmul(slots[2], DECAY_FAST);
         uint256 cooldown = wmul(slots[3], DECAY_COOLDOWN);
@@ -69,29 +67,12 @@ contract Strategy is AMMStrategyBase {
         }
 
         uint256 shock = tradeSize > spotJump ? tradeSize : spotJump;
+        uint256 eventSignal = shock > spotJump ? shock : spotJump;
+        uint256 dangerSignal = eventSignal > latentGap ? eventSignal : latentGap;
         if (tradeSize > 10 * BPS) {
             shock += wmul(tradeSize, 2000 * BPS);
         } else if (tradeSize > 4 * BPS) {
             shock += wmul(tradeSize, 1200 * BPS);
-        }
-
-        uint256 eventSignal = shock > spotJump ? shock : spotJump;
-        uint256 quietSignal = 0;
-        if (gap >= 8) {
-            quietSignal = WAD;
-        } else if (gap > 0) {
-            quietSignal = (gap * WAD) / 8;
-        }
-        if (eventSignal > 7 * BPS) {
-            quietSignal /= 4;
-        } else if (eventSignal > 4 * BPS) {
-            quietSignal /= 2;
-        }
-        uint256 quietMemory = _blend(slots[8], quietSignal, ALPHA_QUIET);
-        if (gap >= 4) {
-            quietMemory = wmul(quietMemory, 7600 * BPS);
-        } else if (gap >= 2) {
-            quietMemory = wmul(quietMemory, 9000 * BPS);
         }
 
         cooldown = clamp(cooldown + wmul(shock, 1500 * BPS), 0, WAD);
@@ -113,16 +94,6 @@ contract Strategy is AMMStrategyBase {
 
         if (gap >= 3 && cooldown < 5 * BPS) {
             common = common > 3 * BPS ? common - 3 * BPS : MIN_FEE;
-        }
-
-        uint256 quietRecapture = 0;
-        if (
-            cooldown < 5 * BPS &&
-            quietSignal > 0 &&
-            eventSignal <= 4 * BPS &&
-            latentGap <= 3 * BPS
-        ) {
-            quietRecapture = wmul(quietSignal, 120 * BPS) + wmul(quietMemory, 60 * BPS);
         }
 
         bidFee =
@@ -159,10 +130,18 @@ contract Strategy is AMMStrategyBase {
             askFee += defense;
         }
 
-        if (currentSpot >= latentSpot) {
-            bidFee = clampFee(bidFee + BPS);
-        } else {
-            askFee = clampFee(askFee + BPS);
+        uint256 tilt = 0;
+        if (dangerSignal >= 4 * BPS) {
+            tilt = BPS + wmul(dangerSignal - 4 * BPS, 450 * BPS);
+        } else if (dangerSignal >= 2 * BPS && cooldown >= 4 * BPS) {
+            tilt = BPS;
+        }
+        if (tilt != 0) {
+            if (currentSpot >= latentSpot) {
+                bidFee = clampFee(bidFee + tilt);
+            } else {
+                askFee = clampFee(askFee + tilt);
+            }
         }
 
         if (trade.isBuy) {
@@ -187,22 +166,6 @@ contract Strategy is AMMStrategyBase {
             slots[5] = 2;
         }
 
-        if (quietRecapture > 0) {
-            if (trade.isBuy) {
-                if (askFee > quietRecapture) {
-                    askFee -= quietRecapture;
-                } else {
-                    askFee = MIN_FEE;
-                }
-            } else {
-                if (bidFee > quietRecapture) {
-                    bidFee -= quietRecapture;
-                } else {
-                    bidFee = MIN_FEE;
-                }
-            }
-        }
-
         bidFee = clampFee(bidFee);
         askFee = clampFee(askFee);
 
@@ -213,13 +176,12 @@ contract Strategy is AMMStrategyBase {
         slots[4] = sizeMemory;
         slots[6] = currentSpot;
         slots[7] = trade.timestamp;
-        slots[8] = quietMemory > quietSignal ? quietMemory : quietSignal;
 
         return (bidFee, askFee);
     }
 
     function getName() external pure override returns (string memory) {
-        return "LatentStateIncumbentGapAwareV10QuietIdle";
+        return "LatentStateIncumbentGapAwareV4";
     }
 
     function _blend(uint256 prev, uint256 sample, uint256 alpha) internal pure returns (uint256) {

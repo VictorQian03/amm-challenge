@@ -124,7 +124,6 @@ contract Strategy is AMMStrategyBase {
         ) {
             quietRecapture = wmul(quietSignal, 120 * BPS) + wmul(quietMemory, 60 * BPS);
         }
-
         bidFee =
             common +
             wmul(bidPressure, 2200 * BPS) +
@@ -157,6 +156,23 @@ contract Strategy is AMMStrategyBase {
         if (defense != 0) {
             bidFee += defense;
             askFee += defense;
+        }
+
+        uint256 arbOverlay = 0;
+        if (latentGap >= 4 * BPS) {
+            arbOverlay = wmul(latentGap - 4 * BPS, 450 * BPS);
+            if (eventSignal >= 6 * BPS) {
+                arbOverlay += wmul(eventSignal - 6 * BPS, 180 * BPS);
+            }
+        }
+        if (arbOverlay != 0) {
+            if (trade.isBuy) {
+                bidFee += arbOverlay;
+                askFee += arbOverlay / 5;
+            } else {
+                askFee += arbOverlay;
+                bidFee += arbOverlay / 5;
+            }
         }
 
         if (currentSpot >= latentSpot) {

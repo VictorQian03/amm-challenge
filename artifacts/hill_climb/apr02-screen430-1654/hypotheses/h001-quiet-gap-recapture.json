@@ -1,0 +1,17 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-02T23:55:10+00:00",
+  "eval_ids": [],
+  "expected_effect": "Improve calm flow capture without weakening clustered-shock defense.",
+  "hypothesis_id": "h001-quiet-gap-recapture",
+  "mutation_family": "quiet-gap",
+  "parent_hypothesis_id": null,
+  "rationale": "Trim the passive side only after real idle gaps when cooldown and danger are already quiet.",
+  "research_refs": [
+    "docs/plans/active/apr02-screen430-1654.md"
+  ],
+  "seed_eval_id": null,
+  "status": "queued",
+  "title": "Quiet-gap recapture",
+  "updated_at": "2026-04-02T23:55:10+00:00"
+}
