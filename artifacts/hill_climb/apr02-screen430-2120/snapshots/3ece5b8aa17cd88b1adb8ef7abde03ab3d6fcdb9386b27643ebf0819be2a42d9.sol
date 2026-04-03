@@ -7,7 +7,7 @@ import {TradeInfo} from "./IAMMStrategy.sol";
 /// @title Latent State Incumbent Gap-Aware V4 Candidate
 /// @notice Keep the calm regime cheaper, but add a hard defensive regime for clustered shocks.
 contract Strategy is AMMStrategyBase {
-    uint256 internal constant BASE_FEE = 49 * BPS;
+    uint256 internal constant BASE_FEE = 50 * BPS;
     uint256 internal constant DECAY_FAST = 8500 * BPS;
     uint256 internal constant DECAY_SLOW = 9200 * BPS;
     uint256 internal constant DECAY_COOLDOWN = 9000 * BPS;

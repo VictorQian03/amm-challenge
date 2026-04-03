@@ -1,6 +1,6 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-03T00:14:02+00:00",
+  "generated_at": "2026-04-03T04:51:36+00:00",
   "hill_climb_runs": [
     {
       "active_stage": "final",
@@ -42,6 +42,41 @@
         "docs/plans/active/apr02-screen430-1654.md"
       ],
       "run_id": "apr02-screen430-1654",
+      "status": "active"
+    },
+    {
+      "active_stage": "screen",
+      "best_eval_ids": {
+        "screen": "screen_0001"
+      },
+      "best_mean_edges": {
+        "screen": 431.48808339860506
+      },
+      "created_at": "2026-04-03T04:20:57+00:00",
+      "notes": [
+        "passed (screen incumbent 431.488083 cleared target 430.000000)"
+      ],
+      "research_artifact_paths": [
+        "docs/plans/active/apr02-screen430-2120.md",
+        "https://arxiv.org/abs/2303.00208"
+      ],
+      "run_id": "apr02-screen430-2120",
+      "status": "goal-passed"
+    },
+    {
+      "active_stage": "screen",
+      "best_eval_ids": {
+        "screen": "screen_0001"
+      },
+      "best_mean_edges": {
+        "screen": 431.4721752839522
+      },
+      "created_at": "2026-04-03T04:25:54+00:00",
+      "notes": [],
+      "research_artifact_paths": [
+        "docs/plans/active/apr02-screen430-2120.md"
+      ],
+      "run_id": "apr02-screen430-2120-w03-passive-anchor",
       "status": "active"
     }
   ]

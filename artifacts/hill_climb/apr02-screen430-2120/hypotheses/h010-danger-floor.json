@@ -1,0 +1,17 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-03T04:45:03+00:00",
+  "eval_ids": [],
+  "expected_effect": "Preserve most retail gains while limiting the worsening arb tail.",
+  "hypothesis_id": "h010-danger-floor",
+  "mutation_family": "danger-floor",
+  "parent_hypothesis_id": "h008-state-consistent-surface",
+  "rationale": "Keep the lower-fee state-consistent surface but add a bounded danger-only compensation term so arb bleed does not run away as base fees fall.",
+  "research_refs": [
+    "docs/plans/active/apr02-screen430-2120.md"
+  ],
+  "seed_eval_id": null,
+  "status": "abandoned",
+  "title": "Cheap surface with danger floor",
+  "updated_at": "2026-04-03T04:51:36+00:00"
+}

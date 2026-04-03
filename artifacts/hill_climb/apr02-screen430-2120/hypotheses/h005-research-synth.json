@@ -1,0 +1,21 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-03T04:22:10+00:00",
+  "eval_ids": [
+    "screen_0002",
+    "screen_0003"
+  ],
+  "expected_effect": "Find a cleaner structural mutation than another coefficient-only tweak.",
+  "hypothesis_id": "h005-research-synth",
+  "mutation_family": "research-synth",
+  "parent_hypothesis_id": null,
+  "rationale": "Use candidate history plus external dynamic-fee references to derive one lower-surface mutation grounded in an explicit risk-and-reversion model.",
+  "research_refs": [
+    "docs/plans/active/apr02-screen430-2120.md",
+    "https://arxiv.org/abs/2303.00208"
+  ],
+  "seed_eval_id": "screen_0002",
+  "status": "completed",
+  "title": "Research synthesis pivot",
+  "updated_at": "2026-04-03T04:31:35+00:00"
+}
