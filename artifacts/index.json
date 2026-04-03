@@ -1,83 +1,24 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-03T04:51:36+00:00",
+  "generated_at": "2026-04-03T18:21:23+00:00",
   "hill_climb_runs": [
     {
-      "active_stage": "final",
+      "active_stage": "screen",
       "best_eval_ids": {
-        "climb": "climb_0003",
-        "confirm": "confirm_0004",
-        "final": "final_0005",
         "screen": "screen_0001"
       },
       "best_mean_edges": {
-        "climb": 428.1726905802786,
-        "confirm": 415.3225332984615,
-        "final": 420.61299311885574,
-        "screen": 428.2500988769002
+        "screen": 448.38265379800384
       },
-      "created_at": "2026-04-02T04:36:46+00:00",
+      "created_at": "2026-04-03T16:57:04+00:00",
       "notes": [
-        "passed (screen incumbent 428.250099 cleared target 420.000000)"
+        "passed (screen incumbent 448.382654 cleared target 430.000000)"
       ],
       "research_artifact_paths": [
-        "artifacts/research/amm_dynamic_fee_apr01-screen420-2134"
+        "docs/plans/active/apr03-screen430-0955.md"
       ],
-      "run_id": "apr01-screen420-2134",
+      "run_id": "apr03-screen430-0955",
       "status": "goal-passed"
-    },
-    {
-      "active_stage": "screen",
-      "best_eval_ids": {
-        "screen": "screen_0001"
-      },
-      "best_mean_edges": {
-        "screen": 428.2500988769002
-      },
-      "created_at": "2026-04-02T23:54:39+00:00",
-      "notes": [
-        "pending (screen incumbent 428.250099 is below target 430.000000)"
-      ],
-      "research_artifact_paths": [
-        "docs/plans/active/apr02-screen430-1654.md"
-      ],
-      "run_id": "apr02-screen430-1654",
-      "status": "active"
-    },
-    {
-      "active_stage": "screen",
-      "best_eval_ids": {
-        "screen": "screen_0001"
-      },
-      "best_mean_edges": {
-        "screen": 431.48808339860506
-      },
-      "created_at": "2026-04-03T04:20:57+00:00",
-      "notes": [
-        "passed (screen incumbent 431.488083 cleared target 430.000000)"
-      ],
-      "research_artifact_paths": [
-        "docs/plans/active/apr02-screen430-2120.md",
-        "https://arxiv.org/abs/2303.00208"
-      ],
-      "run_id": "apr02-screen430-2120",
-      "status": "goal-passed"
-    },
-    {
-      "active_stage": "screen",
-      "best_eval_ids": {
-        "screen": "screen_0001"
-      },
-      "best_mean_edges": {
-        "screen": 431.4721752839522
-      },
-      "created_at": "2026-04-03T04:25:54+00:00",
-      "notes": [],
-      "research_artifact_paths": [
-        "docs/plans/active/apr02-screen430-2120.md"
-      ],
-      "run_id": "apr02-screen430-2120-w03-passive-anchor",
-      "status": "active"
     }
   ]
 }
