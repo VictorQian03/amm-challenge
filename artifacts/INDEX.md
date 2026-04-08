@@ -11,6 +11,10 @@
 - `artifacts/hill_climb_smoke/apr01-audit-smoke/`: retained smoke-harness lane under the current protected-surface fingerprint
 - `artifacts/research/amm_dynamic_fee_apr01-screen420-2134/`: external AMM dynamic-fee evidence memo and hypothesis ranking linked to retained run `apr01-screen420-2134`
 
+## 2026-04-07
+
+- `artifacts/hill_climb/apr07-screen430-1749/`: archived screen-stage retained lane for the latent-state quote engine search that identified quiet latent-spot recentering as the strongest raw frontier before stop-policy exit
+
 Per-run contract:
 
 - keep only `run.json`, `state.json`, `results.jsonl`, `results.tsv`, `history.jsonl`, `hypotheses/`, `incumbents/`, and `snapshots/`

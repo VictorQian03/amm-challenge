@@ -1,0 +1,15 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-08T00:50:09+00:00",
+  "eval_ids": [],
+  "expected_effect": "Establish the current live screen score and parent lineage for all fresh worker branches.",
+  "hypothesis_id": "h000-live-baseline",
+  "mutation_family": "baseline",
+  "parent_hypothesis_id": null,
+  "rationale": "Fresh retained baseline for the current live coherent quote engine with the passive recapture micro-lift and calm-divergence release.",
+  "research_refs": [],
+  "seed_eval_id": "screen_0001",
+  "status": "completed",
+  "title": "Live baseline",
+  "updated_at": "2026-04-08T01:01:10+00:00"
+}

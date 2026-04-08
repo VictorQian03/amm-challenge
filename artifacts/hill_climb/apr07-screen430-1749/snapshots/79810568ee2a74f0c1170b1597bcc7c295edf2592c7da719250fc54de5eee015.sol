@@ -118,21 +118,6 @@ contract Strategy is AMMStrategyBase {
         uint256 flowImbalance = totalFlow == 0 ? 0 : wdiv(absDiff(buyFlow, sellFlow), totalFlow);
         uint256 flowPressure = _blend(slots[9], flowImbalance, ALPHA_FLOW);
 
-        uint256 quietGate = _oneMinus(
-            clamp(
-                wmul(volMemory, 2400 * BPS) +
-                    wmul(hazardMemory, 2000 * BPS) +
-                    wmul(flowPressure, 2000 * BPS) +
-                    wmul(spotJump, 1800 * BPS),
-                0,
-                WAD
-            )
-        );
-        if (gap >= 3) {
-            uint256 quietRecenter = wmul(quietGate, gap >= 4 ? 700 * BPS : 450 * BPS);
-            latentSpot = _blend(latentSpot, currentSpot, quietRecenter);
-        }
-
         uint256 richSignal = 0;
         uint256 cheapSignal = 0;
         if (currentSpot >= latentSpot) {
@@ -170,13 +155,41 @@ contract Strategy is AMMStrategyBase {
         } else if (gap >= 2) {
             passiveRecaptureMemory = wmul(passiveRecaptureMemory, 9000 * BPS);
         }
+        uint256 quietGate = _oneMinus(
+            clamp(
+                wmul(volMemory, 2400 * BPS) +
+                    wmul(hazardMemory, 2000 * BPS) +
+                    wmul(flowPressure, 2000 * BPS) +
+                    wmul(spotJump, 1800 * BPS),
+                0,
+                WAD
+            )
+        );
+        uint256 calmRelease = wmul(calmMemory, quietGate);
+        calmRelease = wmul(
+            calmRelease,
+            _oneMinus(clamp(wmul(divergenceMemory, 1800 * BPS), 0, WAD))
+        );
+        if (gap >= 4) {
+            calmRelease = wmul(calmRelease, 9200 * BPS);
+        } else if (gap >= 2) {
+            calmRelease = wmul(calmRelease, 9700 * BPS);
+        }
+        uint256 calmReleaseCut = wmul(calmRelease, 1450 * BPS);
+        uint256 calmSharedRebate = gap >= 3 ? wmul(calmRelease, 220 * BPS) : 0;
+
+        uint256 quietHazard = sideHazard;
+        uint256 quietHazardDiscount = gap >= 3 ? wmul(quietGate, 45 * BPS) : 0;
+        if (quietHazardDiscount > 0) {
+            quietHazard = quietHazard > quietHazardDiscount ? quietHazard - quietHazardDiscount : 0;
+        }
 
         uint256 bidRiskSignal =
-            wmul(sellShare, sideHazard) +
+            wmul(sellShare, quietHazard) +
             wmul(richSignal, 8500 * BPS) +
             bidFlowRisk;
         uint256 askRiskSignal =
-            wmul(buyShare, sideHazard) +
+            wmul(buyShare, quietHazard) +
             wmul(cheapSignal, 8500 * BPS) +
             askFlowRisk;
 
@@ -199,6 +212,7 @@ contract Strategy is AMMStrategyBase {
 
         uint256 sharedRebate = wmul(calmMemory, 180 * BPS);
         sharedSpread = sharedSpread > sharedRebate ? sharedSpread - sharedRebate : MIN_FEE;
+        sharedSpread = sharedSpread > calmSharedRebate ? sharedSpread - calmSharedRebate : MIN_FEE;
 
         bidFee =
             sharedSpread +
@@ -211,13 +225,16 @@ contract Strategy is AMMStrategyBase {
         uint256 askOpportunityCut = wmul(askOpportunitySignal, 8200 * BPS);
         uint256 passiveRecaptureCut = wmul(passiveRecaptureMemory, 1550 * BPS);
         uint256 calmDivergenceBonus = 0;
-        if (hazardMemory < 1100 * BPS && flowPressure < 650 * BPS && gap >= 2) {
-            calmDivergenceBonus = wmul(divergenceMemory, gap >= 4 ? 650 * BPS : 400 * BPS);
+        if (gap >= 2) {
+            calmDivergenceBonus = wmul(
+                wmul(divergenceMemory, gap >= 4 ? 720 * BPS : 460 * BPS),
+                quietGate
+            );
         }
         if (currentSpot >= latentSpot) {
-            askOpportunityCut += passiveRecaptureCut + calmDivergenceBonus;
+            askOpportunityCut += passiveRecaptureCut + calmDivergenceBonus + calmReleaseCut;
         } else {
-            bidOpportunityCut += passiveRecaptureCut + calmDivergenceBonus;
+            bidOpportunityCut += passiveRecaptureCut + calmDivergenceBonus + calmReleaseCut;
         }
         bidFee = bidFee > bidOpportunityCut ? bidFee - bidOpportunityCut : MIN_FEE;
         askFee = askFee > askOpportunityCut ? askFee - askOpportunityCut : MIN_FEE;

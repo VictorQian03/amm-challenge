@@ -129,7 +129,7 @@ contract Strategy is AMMStrategyBase {
             )
         );
         if (gap >= 3) {
-            uint256 quietRecenter = wmul(quietGate, gap >= 4 ? 700 * BPS : 450 * BPS);
+            uint256 quietRecenter = wmul(quietGate, gap >= 4 ? 900 * BPS : 600 * BPS);
             latentSpot = _blend(latentSpot, currentSpot, quietRecenter);
         }
 
@@ -153,6 +153,12 @@ contract Strategy is AMMStrategyBase {
         uint256 bidFlowRisk = buyFlow >= sellFlow ? 0 : flowDirectionalRisk;
         uint256 askFlowRisk = buyFlow >= sellFlow ? flowDirectionalRisk : 0;
 
+        uint256 quietHazard = sideHazard;
+        uint256 quietHazardDiscount = gap >= 3 ? wmul(quietGate, 45 * BPS) : 0;
+        if (quietHazardDiscount > 0) {
+            quietHazard = quietHazard > quietHazardDiscount ? quietHazard - quietHazardDiscount : 0;
+        }
+
         uint256 passiveRecaptureObservation = wmul(
             gapLong,
             _oneMinus(
@@ -172,11 +178,11 @@ contract Strategy is AMMStrategyBase {
         }
 
         uint256 bidRiskSignal =
-            wmul(sellShare, sideHazard) +
+            wmul(sellShare, quietHazard) +
             wmul(richSignal, 8500 * BPS) +
             bidFlowRisk;
         uint256 askRiskSignal =
-            wmul(buyShare, sideHazard) +
+            wmul(buyShare, quietHazard) +
             wmul(cheapSignal, 8500 * BPS) +
             askFlowRisk;
 

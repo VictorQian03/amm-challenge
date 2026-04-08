@@ -129,7 +129,7 @@ contract Strategy is AMMStrategyBase {
             )
         );
         if (gap >= 3) {
-            uint256 quietRecenter = wmul(quietGate, gap >= 4 ? 700 * BPS : 450 * BPS);
+            uint256 quietRecenter = wmul(quietGate, gap >= 4 ? 800 * BPS : 500 * BPS);
             latentSpot = _blend(latentSpot, currentSpot, quietRecenter);
         }
 

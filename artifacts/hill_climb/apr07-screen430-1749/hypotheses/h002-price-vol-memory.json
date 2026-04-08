@@ -1,0 +1,15 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-08T00:52:24+00:00",
+  "eval_ids": [],
+  "expected_effect": "Improve raw edge by tightening calm carry without giving up burst protection.",
+  "hypothesis_id": "h002-price-vol-memory",
+  "mutation_family": "fast-vol-overlay",
+  "parent_hypothesis_id": "h000-live-baseline",
+  "rationale": "The current engine still mixes trade-size and price-jump stress into one broad carry surface. Split fast price-jump memory from size memory so bursty markout episodes widen quickly while quiet periods stay cheaper.",
+  "research_refs": [],
+  "seed_eval_id": null,
+  "status": "invalidated",
+  "title": "Price-vol memory overlay",
+  "updated_at": "2026-04-08T01:00:28+00:00"
+}

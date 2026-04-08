@@ -1,0 +1,18 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-08T01:05:08+00:00",
+  "eval_ids": [
+    "screen_0005",
+    "screen_0008"
+  ],
+  "expected_effect": "Recover broad screen edge by lowering side-risk pricing only when the existing quiet gate is already high.",
+  "hypothesis_id": "h005-quiet-risk-discount",
+  "mutation_family": "calm-risk-discount",
+  "parent_hypothesis_id": "h004-research-overlay",
+  "rationale": "The surviving calm overlay improved edge broadly, which suggests quiet-state fees are still too high in side-risk terms, not just in passive-side recapture. Test a bounded quiet-gated discount on risk pricing without changing toxic-state behavior.",
+  "research_refs": [],
+  "seed_eval_id": "screen_0005",
+  "status": "completed",
+  "title": "Quiet risk discount",
+  "updated_at": "2026-04-08T01:19:20+00:00"
+}

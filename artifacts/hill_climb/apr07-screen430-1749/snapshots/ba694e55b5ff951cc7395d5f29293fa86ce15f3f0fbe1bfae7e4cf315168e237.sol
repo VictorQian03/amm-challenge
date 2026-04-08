@@ -118,21 +118,6 @@ contract Strategy is AMMStrategyBase {
         uint256 flowImbalance = totalFlow == 0 ? 0 : wdiv(absDiff(buyFlow, sellFlow), totalFlow);
         uint256 flowPressure = _blend(slots[9], flowImbalance, ALPHA_FLOW);
 
-        uint256 quietGate = _oneMinus(
-            clamp(
-                wmul(volMemory, 2400 * BPS) +
-                    wmul(hazardMemory, 2000 * BPS) +
-                    wmul(flowPressure, 2000 * BPS) +
-                    wmul(spotJump, 1800 * BPS),
-                0,
-                WAD
-            )
-        );
-        if (gap >= 3) {
-            uint256 quietRecenter = wmul(quietGate, gap >= 4 ? 700 * BPS : 450 * BPS);
-            latentSpot = _blend(latentSpot, currentSpot, quietRecenter);
-        }
-
         uint256 richSignal = 0;
         uint256 cheapSignal = 0;
         if (currentSpot >= latentSpot) {

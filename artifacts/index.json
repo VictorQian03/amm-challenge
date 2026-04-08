@@ -1,6 +1,6 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-08T00:09:07+00:00",
+  "generated_at": "2026-04-08T01:19:20+00:00",
   "hill_climb_runs": [
     {
       "active_stage": "screen",
@@ -18,6 +18,61 @@
         "docs/plans/active/apr07-screen430-1634.md"
       ],
       "run_id": "apr07-screen430-1634",
+      "status": "active"
+    },
+    {
+      "active_stage": "screen",
+      "best_eval_ids": {
+        "screen": "screen_0001"
+      },
+      "best_mean_edges": {
+        "screen": 428.5670843223019
+      },
+      "created_at": "2026-04-08T00:12:44+00:00",
+      "notes": [
+        "pending (screen incumbent 428.567084 is below target 430.000000)"
+      ],
+      "research_artifact_paths": [
+        "docs/plans/active/apr07-screen430-1711.md"
+      ],
+      "run_id": "apr07-screen430-1711",
+      "status": "active"
+    },
+    {
+      "active_stage": "screen",
+      "best_eval_ids": {
+        "screen": "screen_0001"
+      },
+      "best_mean_edges": {
+        "screen": 428.68549835392173
+      },
+      "created_at": "2026-04-08T00:29:10+00:00",
+      "notes": [
+        "pending (screen incumbent 428.685498 is below target 430.000000)"
+      ],
+      "research_artifact_paths": [
+        "docs/plans/active/apr07-screen430-1728.md"
+      ],
+      "run_id": "apr07-screen430-1728",
+      "status": "active"
+    },
+    {
+      "active_stage": "screen",
+      "best_eval_ids": {
+        "screen": "screen_0001"
+      },
+      "best_mean_edges": {
+        "screen": 428.70265262927904
+      },
+      "created_at": "2026-04-08T00:49:19+00:00",
+      "notes": [
+        "pending (screen incumbent 428.702653 is below target 430.000000)"
+      ],
+      "research_artifact_paths": [
+        "artifacts/research/amm_dynamic_fee_apr01-screen420-2134/memo.md",
+        "docs/plans/active/apr07-screen430-1749.md"
+      ],
+      "run_id": "apr07-screen430-1749",
       "status": "active"
     }
   ]

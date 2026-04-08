@@ -1,0 +1,15 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-08T01:11:32+00:00",
+  "eval_ids": [],
+  "expected_effect": "Reduce stale side toxicity in calm periods without lowering protection in active flow clusters.",
+  "hypothesis_id": "h009-quiet-flow-reset",
+  "mutation_family": "state-dynamics-flow",
+  "parent_hypothesis_id": "h000-live-baseline",
+  "rationale": "If quiet-state discounts help broadly, directional flow pressure may also be persisting too long across idle gaps. Test faster quiet-state decay on flow memories and flowPressure instead of changing fee formulas.",
+  "research_refs": [],
+  "seed_eval_id": null,
+  "status": "completed",
+  "title": "Quiet flow reset",
+  "updated_at": "2026-04-08T01:19:20+00:00"
+}
