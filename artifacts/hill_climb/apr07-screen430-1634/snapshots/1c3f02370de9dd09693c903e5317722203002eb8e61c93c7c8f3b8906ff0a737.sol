@@ -21,7 +21,6 @@ contract Strategy is AMMStrategyBase {
     uint256 internal constant ALPHA_CALM = 14 * BPS;
     uint256 internal constant ALPHA_DIVERGENCE = 22 * BPS;
     uint256 internal constant ALPHA_FLOW = 18 * BPS;
-    uint256 internal constant ALPHA_PASSIVE = 18 * BPS;
 
     function afterInitialize(uint256 initialX, uint256 initialY)
         external
@@ -40,7 +39,6 @@ contract Strategy is AMMStrategyBase {
         slots[7] = 0; // last timestamp
         slots[8] = 0; // latent divergence memory
         slots[9] = 0; // directional flow pressure memory
-        slots[10] = 0; // passive recapture memory
 
         return (BASE_FEE, BASE_FEE);
     }
@@ -138,24 +136,6 @@ contract Strategy is AMMStrategyBase {
         uint256 bidFlowRisk = buyFlow >= sellFlow ? 0 : flowDirectionalRisk;
         uint256 askFlowRisk = buyFlow >= sellFlow ? flowDirectionalRisk : 0;
 
-        uint256 passiveRecaptureObservation = wmul(
-            gapLong,
-            _oneMinus(
-                clamp(
-                    wmul(flowPressure, 3000 * BPS) +
-                        wmul(divergence, 4500 * BPS),
-                    0,
-                    WAD
-                )
-            )
-        );
-        uint256 passiveRecaptureMemory = _blend(slots[10], passiveRecaptureObservation, ALPHA_PASSIVE);
-        if (gap >= 4) {
-            passiveRecaptureMemory = wmul(passiveRecaptureMemory, 7600 * BPS);
-        } else if (gap >= 2) {
-            passiveRecaptureMemory = wmul(passiveRecaptureMemory, 9000 * BPS);
-        }
-
         uint256 bidRiskSignal =
             wmul(sellShare, sideHazard) +
             wmul(richSignal, 8500 * BPS) +
@@ -175,9 +155,9 @@ contract Strategy is AMMStrategyBase {
         uint256 sharedSpread =
             BASE_FEE +
             wmul(volMemory, 1800 * BPS) +
-            wmul(hazardMemory, 2400 * BPS) +
-            wmul(divergenceMemory, 900 * BPS) +
-            wmul(wmul(flowImbalance, _max(volMemory, hazardMemory)), 2800 * BPS);
+            wmul(hazardMemory, 1900 * BPS) +
+            wmul(divergenceMemory, 600 * BPS) +
+            wmul(wmul(flowImbalance, _max(volMemory, hazardMemory)), 2200 * BPS);
 
         sharedSpread += wmul(volObservation, 650 * BPS);
         sharedSpread += wmul(hazardObservation, 1100 * BPS);
@@ -187,19 +167,13 @@ contract Strategy is AMMStrategyBase {
 
         bidFee =
             sharedSpread +
-            wmul(bidRiskSignal, 4800 * BPS);
+            wmul(bidRiskSignal, 5200 * BPS);
         askFee =
             sharedSpread +
-            wmul(askRiskSignal, 4800 * BPS);
+            wmul(askRiskSignal, 5200 * BPS);
 
         uint256 bidOpportunityCut = wmul(bidOpportunitySignal, 8200 * BPS);
         uint256 askOpportunityCut = wmul(askOpportunitySignal, 8200 * BPS);
-        uint256 passiveRecaptureCut = wmul(passiveRecaptureMemory, 1400 * BPS);
-        if (currentSpot >= latentSpot) {
-            askOpportunityCut += passiveRecaptureCut;
-        } else {
-            bidOpportunityCut += passiveRecaptureCut;
-        }
         bidFee = bidFee > bidOpportunityCut ? bidFee - bidOpportunityCut : MIN_FEE;
         askFee = askFee > askOpportunityCut ? askFee - askOpportunityCut : MIN_FEE;
 
@@ -216,7 +190,6 @@ contract Strategy is AMMStrategyBase {
         slots[7] = trade.timestamp;
         slots[8] = divergenceMemory;
         slots[9] = flowPressure;
-        slots[10] = passiveRecaptureMemory;
 
         return (bidFee, askFee);
     }

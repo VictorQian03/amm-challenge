@@ -41,6 +41,7 @@ contract Strategy is AMMStrategyBase {
         slots[8] = 0; // latent divergence memory
         slots[9] = 0; // directional flow pressure memory
         slots[10] = 0; // passive recapture memory
+        slots[11] = 0; // last trade side marker
 
         return (BASE_FEE, BASE_FEE);
     }
@@ -202,6 +203,27 @@ contract Strategy is AMMStrategyBase {
         }
         bidFee = bidFee > bidOpportunityCut ? bidFee - bidOpportunityCut : MIN_FEE;
         askFee = askFee > askOpportunityCut ? askFee - askOpportunityCut : MIN_FEE;
+
+        uint256 sameSideBoost = 0;
+        if (flowPressure > 500 * BPS) {
+            sameSideBoost =
+                wmul(flowPressure, 60 * BPS) +
+                wmul(hazardMemory, 20 * BPS);
+            if (sameSideBoost > 4 * BPS) {
+                sameSideBoost = 4 * BPS;
+            }
+        }
+        if (trade.isBuy) {
+            if (slots[11] == 1 && sameSideBoost > 0) {
+                bidFee += sameSideBoost;
+            }
+            slots[11] = 1;
+        } else {
+            if (slots[11] == 2 && sameSideBoost > 0) {
+                askFee += sameSideBoost;
+            }
+            slots[11] = 2;
+        }
 
         bidFee = clampFee(bidFee);
         askFee = clampFee(askFee);

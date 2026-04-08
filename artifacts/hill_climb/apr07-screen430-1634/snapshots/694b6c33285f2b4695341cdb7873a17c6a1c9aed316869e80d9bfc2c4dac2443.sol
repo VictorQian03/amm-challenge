@@ -7,7 +7,7 @@ import {TradeInfo} from "./IAMMStrategy.sol";
 /// @title Latent State Quote Engine
 /// @notice Estimate fair value and market state first, then map state into spread, side risk, and side opportunity.
 contract Strategy is AMMStrategyBase {
-    uint256 internal constant BASE_FEE = 18 * BPS;
+    uint256 internal constant BASE_FEE = 20 * BPS;
 
     uint256 internal constant DECAY_VOL = 9000 * BPS;
     uint256 internal constant DECAY_FLOW = 8700 * BPS;
@@ -21,7 +21,6 @@ contract Strategy is AMMStrategyBase {
     uint256 internal constant ALPHA_CALM = 14 * BPS;
     uint256 internal constant ALPHA_DIVERGENCE = 22 * BPS;
     uint256 internal constant ALPHA_FLOW = 18 * BPS;
-    uint256 internal constant ALPHA_PASSIVE = 18 * BPS;
 
     function afterInitialize(uint256 initialX, uint256 initialY)
         external
@@ -40,7 +39,6 @@ contract Strategy is AMMStrategyBase {
         slots[7] = 0; // last timestamp
         slots[8] = 0; // latent divergence memory
         slots[9] = 0; // directional flow pressure memory
-        slots[10] = 0; // passive recapture memory
 
         return (BASE_FEE, BASE_FEE);
     }
@@ -132,29 +130,11 @@ contract Strategy is AMMStrategyBase {
         }
 
         uint256 flowDirectionalRisk = 0;
-        if (flowPressure > 500 * BPS) {
-            flowDirectionalRisk = wmul(flowPressure, 320 * BPS);
+        if (flowPressure > 600 * BPS) {
+            flowDirectionalRisk = wmul(flowPressure, 280 * BPS);
         }
         uint256 bidFlowRisk = buyFlow >= sellFlow ? 0 : flowDirectionalRisk;
         uint256 askFlowRisk = buyFlow >= sellFlow ? flowDirectionalRisk : 0;
-
-        uint256 passiveRecaptureObservation = wmul(
-            gapLong,
-            _oneMinus(
-                clamp(
-                    wmul(flowPressure, 3000 * BPS) +
-                        wmul(divergence, 4500 * BPS),
-                    0,
-                    WAD
-                )
-            )
-        );
-        uint256 passiveRecaptureMemory = _blend(slots[10], passiveRecaptureObservation, ALPHA_PASSIVE);
-        if (gap >= 4) {
-            passiveRecaptureMemory = wmul(passiveRecaptureMemory, 7600 * BPS);
-        } else if (gap >= 2) {
-            passiveRecaptureMemory = wmul(passiveRecaptureMemory, 9000 * BPS);
-        }
 
         uint256 bidRiskSignal =
             wmul(sellShare, sideHazard) +
@@ -181,6 +161,9 @@ contract Strategy is AMMStrategyBase {
 
         sharedSpread += wmul(volObservation, 650 * BPS);
         sharedSpread += wmul(hazardObservation, 1100 * BPS);
+        if (flowPressure > 600 * BPS) {
+            sharedSpread += wmul(flowPressure - 600 * BPS, 18 * BPS);
+        }
 
         uint256 sharedRebate = wmul(calmMemory, 180 * BPS);
         sharedSpread = sharedSpread > sharedRebate ? sharedSpread - sharedRebate : MIN_FEE;
@@ -194,12 +177,6 @@ contract Strategy is AMMStrategyBase {
 
         uint256 bidOpportunityCut = wmul(bidOpportunitySignal, 8200 * BPS);
         uint256 askOpportunityCut = wmul(askOpportunitySignal, 8200 * BPS);
-        uint256 passiveRecaptureCut = wmul(passiveRecaptureMemory, 1400 * BPS);
-        if (currentSpot >= latentSpot) {
-            askOpportunityCut += passiveRecaptureCut;
-        } else {
-            bidOpportunityCut += passiveRecaptureCut;
-        }
         bidFee = bidFee > bidOpportunityCut ? bidFee - bidOpportunityCut : MIN_FEE;
         askFee = askFee > askOpportunityCut ? askFee - askOpportunityCut : MIN_FEE;
 
@@ -216,7 +193,6 @@ contract Strategy is AMMStrategyBase {
         slots[7] = trade.timestamp;
         slots[8] = divergenceMemory;
         slots[9] = flowPressure;
-        slots[10] = passiveRecaptureMemory;
 
         return (bidFee, askFee);
     }

@@ -1,6 +1,6 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-03T18:21:23+00:00",
+  "generated_at": "2026-04-08T00:09:07+00:00",
   "hill_climb_runs": [
     {
       "active_stage": "screen",
@@ -8,17 +8,17 @@
         "screen": "screen_0001"
       },
       "best_mean_edges": {
-        "screen": 448.38265379800384
+        "screen": 414.9384382492886
       },
-      "created_at": "2026-04-03T16:57:04+00:00",
+      "created_at": "2026-04-07T23:35:09+00:00",
       "notes": [
-        "passed (screen incumbent 448.382654 cleared target 430.000000)"
+        "pending (screen incumbent 414.938438 is below target 430.000000)"
       ],
       "research_artifact_paths": [
-        "docs/plans/active/apr03-screen430-0955.md"
+        "docs/plans/active/apr07-screen430-1634.md"
       ],
-      "run_id": "apr03-screen430-0955",
-      "status": "goal-passed"
+      "run_id": "apr07-screen430-1634",
+      "status": "active"
     }
   ]
 }

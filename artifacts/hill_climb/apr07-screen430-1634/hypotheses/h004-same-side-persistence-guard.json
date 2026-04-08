@@ -1,0 +1,19 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-08T00:04:47+00:00",
+  "eval_ids": [
+    "screen_0008"
+  ],
+  "expected_effect": "Reduce arb streak exploitation while keeping the quiet-gap passive recapture gains.",
+  "hypothesis_id": "h004-same-side-persistence-guard",
+  "mutation_family": "coherent-persistence-guard",
+  "parent_hypothesis_id": "h003-passive-recapture-memory",
+  "rationale": "The passive-recapture surface increased retail participation but also invited too many same-direction toxic trades. Add a bounded same-side surcharge only when persistent flow pressure is already elevated.",
+  "research_refs": [
+    "docs/plans/active/apr07-screen430-1634.md"
+  ],
+  "seed_eval_id": "screen_0008",
+  "status": "abandoned",
+  "title": "Same-side persistence guard",
+  "updated_at": "2026-04-08T00:05:55+00:00"
+}
