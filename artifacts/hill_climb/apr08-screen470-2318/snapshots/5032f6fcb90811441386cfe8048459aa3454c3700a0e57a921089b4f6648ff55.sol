@@ -7,7 +7,7 @@ import {TradeInfo} from "./IAMMStrategy.sol";
 /// @title Latent State Quote Engine
 /// @notice Estimate fair value and market state first, then map state into spread, side risk, and side opportunity.
 contract Strategy is AMMStrategyBase {
-    uint256 internal constant BASE_FEE = 18 * BPS;
+    uint256 internal constant BASE_FEE = 16 * BPS;
 
     uint256 internal constant DECAY_VOL = 9000 * BPS;
     uint256 internal constant DECAY_FLOW = 8700 * BPS;
@@ -131,7 +131,7 @@ contract Strategy is AMMStrategyBase {
         );
         if (gap >= 3) {
             uint256 quietRecenter =
-                wmul(quietGate, gap >= 5 ? 1100 * BPS : gap >= 4 ? 750 * BPS : 550 * BPS);
+                wmul(quietGate, gap >= 5 ? 1050 * BPS : gap >= 4 ? 750 * BPS : 550 * BPS);
             latentSpot = _blend(latentSpot, currentSpot, quietRecenter);
         }
         if (gap >= 4) {
@@ -225,12 +225,12 @@ contract Strategy is AMMStrategyBase {
         if (eventSignal > WAD) {
             eventSignal = WAD;
         }
-        uint256 eventCarry = wmul(eventSignal, 300 * BPS);
+        uint256 eventCarry = wmul(eventSignal, 350 * BPS);
         uint256 directionalBurstFee = 0;
         if (eventSignal > 8 * BPS) {
             uint256 burstSignal = eventSignal - 8 * BPS;
-            eventCarry += wmul(burstSignal, 650 * BPS);
-            directionalBurstFee = wmul(burstSignal, 850 * BPS);
+            eventCarry += wmul(burstSignal, 725 * BPS);
+            directionalBurstFee = wmul(burstSignal, 950 * BPS);
         }
         sharedSpread += eventCarry;
 

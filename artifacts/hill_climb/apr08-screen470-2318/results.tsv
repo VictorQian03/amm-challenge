@@ -1,0 +1,2 @@
+eval_id	stage	status	mean_edge	incumbent_mean_edge	delta_vs_incumbent	strategy_name	label	description	snapshot_path
+screen_0001	screen	seed	463.167329			LatentStateQuoteEngine	seed-from-apr08-screen470-2242-screen-0004	Fresh retained screen run seeded from the best raw normal-regime compression source found under apr08-screen470-2242 after the prior lane hit the refine-now trigger.	artifacts/hill_climb/apr08-screen470-2318/snapshots/5032f6fcb90811441386cfe8048459aa3454c3700a0e57a921089b4f6648ff55.sol

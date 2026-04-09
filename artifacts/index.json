@@ -1,6 +1,6 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-09T05:38:11+00:00",
+  "generated_at": "2026-04-09T06:24:04+00:00",
   "hill_climb_runs": [
     {
       "active_stage": "screen",
@@ -8,41 +8,19 @@
         "screen": "screen_0001"
       },
       "best_mean_edges": {
-        "screen": 461.25039501650576
+        "screen": 463.16732923699794
       },
-      "created_at": "2026-04-09T01:19:41+00:00",
+      "created_at": "2026-04-09T06:18:36+00:00",
       "notes": [
-        "passed (screen incumbent 461.250395 cleared target 460.000000)"
+        "pending (screen incumbent 463.167329 is below target 470.000000)"
       ],
       "research_artifact_paths": [
-        "docs/plans/active/apr08-screen460-1813-cont1.md",
-        "docs/plans/active/apr08-screen460-1819-cont1.md",
-        "docs/plans/active/apr08-screen460-1819.md",
-        "https://app.uniswap.org/whitepaper-v4.pdf",
-        "https://people.orie.cornell.edu/sfs33/LimitOrderBook.pdf",
-        "https://www.math.columbia.edu/~mnutz/docs/AMM_fees.pdf"
+        "docs/plans/active/apr08-screen470-2242.md",
+        "docs/plans/active/apr08-screen470-2318.md",
+        "https://arxiv.org/abs/2508.08152",
+        "https://docs.bunni.xyz/docs/v2/concepts/fees/"
       ],
-      "run_id": "apr08-screen460-1819",
-      "status": "goal-passed"
-    },
-    {
-      "active_stage": "screen",
-      "best_eval_ids": {
-        "screen": "screen_0001"
-      },
-      "best_mean_edges": {
-        "screen": 461.25039501650576
-      },
-      "created_at": "2026-04-09T05:23:10+00:00",
-      "notes": [
-        "pending (screen incumbent 461.250395 is below target 470.000000)"
-      ],
-      "research_artifact_paths": [
-        "artifacts/research/amm_dynamic_fee_apr01-screen420-2134/memo.md",
-        "docs/plans/active/apr08-screen460-1819.md",
-        "docs/plans/active/apr08-screen470-2222.md"
-      ],
-      "run_id": "apr08-screen470-2222",
+      "run_id": "apr08-screen470-2318",
       "status": "active"
     }
   ]
