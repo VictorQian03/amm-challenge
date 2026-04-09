@@ -1,0 +1,19 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-09T00:09:27+00:00",
+  "eval_ids": [
+    "screen_0002",
+    "screen_0003",
+    "screen_0004"
+  ],
+  "expected_effect": "Recover low-retail and low-volatility edge by clearing stale rich-cheap carry after genuine quiet re-convergence without broad active-state fee cuts.",
+  "hypothesis_id": "h001-quiet-divergence-relaxation",
+  "mutation_family": "state-dynamics-divergence",
+  "parent_hypothesis_id": "h000-live-baseline",
+  "rationale": "The current line fixes stale latent anchoring, but stored divergence can still linger after the anchor has re-converged. Relax divergence memory only after quiet recentering and bias the effect toward longer quiet gaps.",
+  "research_refs": [],
+  "seed_eval_id": "screen_0002",
+  "status": "completed",
+  "title": "Quiet divergence relaxation",
+  "updated_at": "2026-04-09T00:12:23+00:00"
+}

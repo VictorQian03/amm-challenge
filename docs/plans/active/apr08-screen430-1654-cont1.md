@@ -1,0 +1,6 @@
+# Archived Redirect
+
+Historical retained-run references point at this path.
+
+Canonical archived plan:
+- [`docs/plans/completed/apr08-screen430-1654-cont1.md`](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/plans/completed/apr08-screen430-1654-cont1.md)

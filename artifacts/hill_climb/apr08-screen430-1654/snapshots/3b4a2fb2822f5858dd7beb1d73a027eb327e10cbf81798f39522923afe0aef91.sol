@@ -194,13 +194,13 @@ contract Strategy is AMMStrategyBase {
             wmul(divergenceMemory, 650 * BPS) +
             wmul(wmul(flowImbalance, _max(volMemory, hazardMemory)), 2500 * BPS);
 
-        uint256 eventSignal = volObservation + hazardObservation;
+        uint256 eventSignal = hazardObservation + wmul(volObservation, 5000 * BPS);
         if (eventSignal > WAD) {
             eventSignal = WAD;
         }
         uint256 eventCarry = wmul(eventSignal, 300 * BPS);
         if (eventSignal > 8 * BPS) {
-            eventCarry += wmul(eventSignal - 8 * BPS, 1500 * BPS);
+            eventCarry += wmul(eventSignal - 8 * BPS, 1650 * BPS);
         }
         sharedSpread += eventCarry;
 

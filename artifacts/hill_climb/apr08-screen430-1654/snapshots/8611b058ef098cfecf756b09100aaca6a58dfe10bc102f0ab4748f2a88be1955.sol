@@ -198,9 +198,9 @@ contract Strategy is AMMStrategyBase {
         if (eventSignal > WAD) {
             eventSignal = WAD;
         }
-        uint256 eventCarry = wmul(eventSignal, 300 * BPS);
+        uint256 eventCarry = wmul(eventSignal, 275 * BPS);
         if (eventSignal > 8 * BPS) {
-            eventCarry += wmul(eventSignal - 8 * BPS, 1500 * BPS);
+            eventCarry += wmul(eventSignal - 8 * BPS, 1525 * BPS);
         }
         sharedSpread += eventCarry;
 

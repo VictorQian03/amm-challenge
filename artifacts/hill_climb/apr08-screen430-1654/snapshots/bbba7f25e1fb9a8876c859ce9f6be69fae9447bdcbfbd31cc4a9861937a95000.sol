@@ -199,8 +199,11 @@ contract Strategy is AMMStrategyBase {
             eventSignal = WAD;
         }
         uint256 eventCarry = wmul(eventSignal, 300 * BPS);
+        uint256 directionalBurstFee = 0;
         if (eventSignal > 8 * BPS) {
-            eventCarry += wmul(eventSignal - 8 * BPS, 1500 * BPS);
+            uint256 burstSignal = eventSignal - 8 * BPS;
+            eventCarry += wmul(burstSignal, 700 * BPS);
+            directionalBurstFee = wmul(burstSignal, 800 * BPS);
         }
         sharedSpread += eventCarry;
 
@@ -213,6 +216,11 @@ contract Strategy is AMMStrategyBase {
         askFee =
             sharedSpread +
             wmul(askRiskSignal, 4800 * BPS);
+        if (currentSpot >= latentSpot) {
+            bidFee += directionalBurstFee;
+        } else {
+            askFee += directionalBurstFee;
+        }
 
         uint256 bidOpportunityCut = wmul(bidOpportunitySignal, 8200 * BPS);
         uint256 askOpportunityCut = wmul(askOpportunitySignal, 8200 * BPS);

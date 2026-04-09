@@ -194,18 +194,21 @@ contract Strategy is AMMStrategyBase {
             wmul(divergenceMemory, 650 * BPS) +
             wmul(wmul(flowImbalance, _max(volMemory, hazardMemory)), 2500 * BPS);
 
-        uint256 eventSignal = volObservation + hazardObservation;
-        if (eventSignal > WAD) {
-            eventSignal = WAD;
-        }
-        uint256 eventCarry = wmul(eventSignal, 300 * BPS);
-        if (eventSignal > 8 * BPS) {
-            eventCarry += wmul(eventSignal - 8 * BPS, 1500 * BPS);
-        }
-        sharedSpread += eventCarry;
+        sharedSpread += wmul(volObservation, 650 * BPS);
+        sharedSpread += wmul(hazardObservation, 1100 * BPS);
 
         uint256 sharedRebate = wmul(calmMemory, 180 * BPS);
         sharedSpread = sharedSpread > sharedRebate ? sharedSpread - sharedRebate : MIN_FEE;
+        if (
+            gap >= 4 &&
+            quietGate > 8000 * BPS &&
+            hazardMemory < 1000 * BPS &&
+            flowPressure < 550 * BPS &&
+            spotJump < 500 * BPS
+        ) {
+            uint256 calmStepDown = gap >= 6 ? 5 * BPS : 3 * BPS;
+            sharedSpread = sharedSpread > calmStepDown ? sharedSpread - calmStepDown : MIN_FEE;
+        }
 
         bidFee =
             sharedSpread +

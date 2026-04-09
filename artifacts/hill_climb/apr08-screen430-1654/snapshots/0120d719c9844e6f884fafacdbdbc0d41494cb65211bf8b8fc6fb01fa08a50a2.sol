@@ -132,6 +132,18 @@ contract Strategy is AMMStrategyBase {
             uint256 quietRecenter = wmul(quietGate, gap >= 4 ? 700 * BPS : 450 * BPS);
             latentSpot = _blend(latentSpot, currentSpot, quietRecenter);
         }
+        if (gap >= 4 && hazardMemory < 1100 * BPS && flowPressure < 650 * BPS) {
+            uint256 postRecenterDivergence =
+                latentSpot == 0 ? 0 : wdiv(absDiff(currentSpot, latentSpot), latentSpot);
+            uint256 reconvergenceGate = _oneMinus(
+                clamp(wmul(postRecenterDivergence, 10000 * BPS), 0, WAD)
+            );
+            uint256 quietReconvergence = wmul(wmul(quietGate, reconvergenceGate), gapLong);
+            divergenceMemory = wmul(
+                divergenceMemory,
+                _oneMinus(clamp(wmul(quietReconvergence, 3000 * BPS), 0, WAD))
+            );
+        }
 
         uint256 richSignal = 0;
         uint256 cheapSignal = 0;
@@ -194,15 +206,8 @@ contract Strategy is AMMStrategyBase {
             wmul(divergenceMemory, 650 * BPS) +
             wmul(wmul(flowImbalance, _max(volMemory, hazardMemory)), 2500 * BPS);
 
-        uint256 eventSignal = volObservation + hazardObservation;
-        if (eventSignal > WAD) {
-            eventSignal = WAD;
-        }
-        uint256 eventCarry = wmul(eventSignal, 300 * BPS);
-        if (eventSignal > 8 * BPS) {
-            eventCarry += wmul(eventSignal - 8 * BPS, 1500 * BPS);
-        }
-        sharedSpread += eventCarry;
+        sharedSpread += wmul(volObservation, 650 * BPS);
+        sharedSpread += wmul(hazardObservation, 1100 * BPS);
 
         uint256 sharedRebate = wmul(calmMemory, 180 * BPS);
         sharedSpread = sharedSpread > sharedRebate ? sharedSpread - sharedRebate : MIN_FEE;

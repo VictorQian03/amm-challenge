@@ -1,0 +1,17 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-09T00:22:03+00:00",
+  "eval_ids": [
+    "screen_0005"
+  ],
+  "expected_effect": "Improve low-retail and low-volatility slices by modestly undercutting the normal-condition fee without changing toxic-state behavior.",
+  "hypothesis_id": "h002-threshold-calm-step",
+  "mutation_family": "threshold-fee-normal-regime",
+  "parent_hypothesis_id": "h000-live-baseline",
+  "rationale": "Recent evidence says the current line is close to optimal but likely still a bit expensive in genuinely calm normal conditions. External fee papers suggest a stable low fee in normal markets and much higher protection only in stressed regimes, so test a tiny direct fee step-down only after long, already-quiet conditions.",
+  "research_refs": [],
+  "seed_eval_id": "screen_0005",
+  "status": "completed",
+  "title": "Threshold calm fee step",
+  "updated_at": "2026-04-09T00:23:40+00:00"
+}
