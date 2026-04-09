@@ -170,11 +170,23 @@ contract Strategy is AMMStrategyBase {
 
         uint256 flowDirectionalRisk = 0;
         if (flowPressure > 500 * BPS) {
-            uint256 toxicFlowSignal = flowPressure + wmul(divergenceMemory, 2200 * BPS);
-            flowDirectionalRisk = wmul(toxicFlowSignal, 320 * BPS);
+            uint256 extensionSignal = _max(divergenceMemory, spotJump);
+            if (extensionSignal > 3 * BPS) {
+                uint256 toxicFlowSignal = flowPressure + wmul(extensionSignal, 2200 * BPS);
+                flowDirectionalRisk = wmul(toxicFlowSignal, 320 * BPS);
+            }
         }
-        uint256 bidFlowRisk = buyFlow >= sellFlow ? 0 : flowDirectionalRisk;
-        uint256 askFlowRisk = buyFlow >= sellFlow ? flowDirectionalRisk : 0;
+        uint256 bidFlowRisk = 0;
+        uint256 askFlowRisk = 0;
+        if (flowDirectionalRisk > 0) {
+            if (currentSpot >= latentSpot) {
+                if (buyFlow >= sellFlow) {
+                    askFlowRisk = flowDirectionalRisk;
+                }
+            } else if (sellFlow > buyFlow) {
+                bidFlowRisk = flowDirectionalRisk;
+            }
+        }
 
         uint256 passiveRecaptureObservation = wmul(
             gapLong,

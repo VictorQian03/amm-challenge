@@ -1,2 +1,0 @@
-eval_id	stage	status	mean_edge	incumbent_mean_edge	delta_vs_incumbent	strategy_name	label	description	snapshot_path
-screen_0001	screen	seed	467.711725			LatentStateQuoteEngine	baseline-convex-vol-rebate-v1	Fresh retained screen seed from apr09-screen470-1430 screen_0002 stronger raw convex-volatility branch.	artifacts/hill_climb/apr09-screen470-1443/snapshots/1c54680fd002e0bf0c328e5e6da0962ef7f97387c58ac185407cb0c8414a729a.sol
