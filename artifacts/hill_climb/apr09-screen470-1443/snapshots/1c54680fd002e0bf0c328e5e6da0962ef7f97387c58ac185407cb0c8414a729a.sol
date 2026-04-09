@@ -88,10 +88,17 @@ contract Strategy is AMMStrategyBase {
             slots[8],
             _gapAdjustedDecay(DECAY_DIVERGENCE, gapShort, 1200 * BPS)
         );
-
-        uint256 volObservation = _max(tradeSize, spotJump);
+        uint256 spotJumpVol = spotJump;
+        if (spotJump > 6 * BPS) {
+            spotJumpVol += wmul(spotJump - 6 * BPS, spotJump);
+        }
+        uint256 divergenceVol = divergence;
+        if (divergence > 6 * BPS) {
+            divergenceVol += wmul(divergence - 6 * BPS, divergence);
+        }
+        uint256 volObservation = _max(tradeSize, _max(spotJumpVol, divergenceVol));
         uint256 clusterObservation = wmul(volObservation, _oneMinus(gapShort));
-        uint256 hazardObservation = _max(divergence, volObservation + wmul(clusterObservation, 7000 * BPS));
+        uint256 hazardObservation = _max(divergenceVol, volObservation + wmul(clusterObservation, 7000 * BPS));
         uint256 calmObservation = wmul(
             gapLong,
             _oneMinus(clamp(hazardObservation * 6, 0, WAD))
@@ -234,7 +241,7 @@ contract Strategy is AMMStrategyBase {
         }
         sharedSpread += eventCarry;
 
-        uint256 sharedRebate = wmul(calmMemory, 220 * BPS);
+        uint256 sharedRebate = wmul(calmMemory, 300 * BPS);
         sharedSpread = sharedSpread > sharedRebate ? sharedSpread - sharedRebate : MIN_FEE;
 
         bidFee =
