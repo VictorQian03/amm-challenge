@@ -130,8 +130,7 @@ contract Strategy is AMMStrategyBase {
             )
         );
         if (gap >= 3) {
-            uint256 quietRecenter =
-                wmul(quietGate, gap >= 5 ? 1050 * BPS : gap >= 4 ? 750 * BPS : 550 * BPS);
+            uint256 quietRecenter = wmul(quietGate, gap >= 4 ? 700 * BPS : 450 * BPS);
             latentSpot = _blend(latentSpot, currentSpot, quietRecenter);
         }
         if (gap >= 4) {
@@ -140,8 +139,7 @@ contract Strategy is AMMStrategyBase {
             uint256 reconvergenceGate = _oneMinus(
                 clamp(wmul(postRecenterDivergence, 10000 * BPS), 0, WAD)
             );
-            uint256 benignGapGate = wmul(gapLong, calmMemory);
-            uint256 quietRelease = wmul(wmul(quietGate, reconvergenceGate), benignGapGate);
+            uint256 quietRelease = wmul(wmul(quietGate, reconvergenceGate), gapLong);
             divergenceMemory = wmul(
                 divergenceMemory,
                 _oneMinus(clamp(wmul(quietRelease, 1200 * BPS), 0, WAD))
@@ -180,20 +178,9 @@ contract Strategy is AMMStrategyBase {
                 )
             )
         );
-        if (gap >= 4) {
-            uint256 passiveRecenterDivergence =
-                latentSpot == 0 ? 0 : wdiv(absDiff(currentSpot, latentSpot), latentSpot);
-            uint256 passiveRecenterGate = _oneMinus(
-                clamp(wmul(passiveRecenterDivergence, 10000 * BPS), 0, WAD)
-            );
-            passiveRecaptureObservation = wmul(
-                passiveRecaptureObservation,
-                wmul(quietGate, passiveRecenterGate)
-            );
-        }
         uint256 passiveRecaptureMemory = _blend(slots[10], passiveRecaptureObservation, ALPHA_PASSIVE);
         if (gap >= 4) {
-            passiveRecaptureMemory = wmul(passiveRecaptureMemory, 9600 * BPS);
+            passiveRecaptureMemory = wmul(passiveRecaptureMemory, 7600 * BPS);
         } else if (gap >= 2) {
             passiveRecaptureMemory = wmul(passiveRecaptureMemory, 9000 * BPS);
         }

@@ -14,6 +14,7 @@ contract Strategy is AMMStrategyBase {
     uint256 internal constant DECAY_HAZARD = 8900 * BPS;
     uint256 internal constant DECAY_CALM = 9300 * BPS;
     uint256 internal constant DECAY_DIVERGENCE = 9150 * BPS;
+    uint256 internal constant DECAY_JUMP = 7600 * BPS;
 
     uint256 internal constant ALPHA_SPOT = 12 * BPS;
     uint256 internal constant ALPHA_VOL = 26 * BPS;
@@ -22,6 +23,7 @@ contract Strategy is AMMStrategyBase {
     uint256 internal constant ALPHA_DIVERGENCE = 22 * BPS;
     uint256 internal constant ALPHA_FLOW = 18 * BPS;
     uint256 internal constant ALPHA_PASSIVE = 18 * BPS;
+    uint256 internal constant ALPHA_JUMP = 36 * BPS;
 
     function afterInitialize(uint256 initialX, uint256 initialY)
         external
@@ -41,6 +43,7 @@ contract Strategy is AMMStrategyBase {
         slots[8] = 0; // latent divergence memory
         slots[9] = 0; // directional flow pressure memory
         slots[10] = 0; // passive recapture memory
+        slots[11] = 0; // clustered spot-jump memory
 
         return (BASE_FEE, BASE_FEE);
     }
@@ -88,6 +91,10 @@ contract Strategy is AMMStrategyBase {
             slots[8],
             _gapAdjustedDecay(DECAY_DIVERGENCE, gapShort, 1200 * BPS)
         );
+        uint256 jumpMemory = wmul(
+            slots[11],
+            _gapAdjustedDecay(DECAY_JUMP, gapShort, 2600 * BPS)
+        );
 
         uint256 volObservation = _max(tradeSize, spotJump);
         uint256 clusterObservation = wmul(volObservation, _oneMinus(gapShort));
@@ -101,6 +108,7 @@ contract Strategy is AMMStrategyBase {
         hazardMemory = _blend(hazardMemory, hazardObservation, ALPHA_HAZARD);
         calmMemory = _blend(calmMemory, calmObservation, ALPHA_CALM);
         divergenceMemory = _blend(divergenceMemory, divergence, ALPHA_DIVERGENCE);
+        jumpMemory = _blend(jumpMemory, wmul(spotJump, _oneMinus(gapShort)), ALPHA_JUMP);
 
         uint256 flowPulse = tradeSize + wmul(volObservation, 4500 * BPS);
         uint256 crossPulse = wmul(flowPulse, 2200 * BPS);
@@ -220,6 +228,7 @@ contract Strategy is AMMStrategyBase {
             wmul(hazardMemory, 2400 * BPS) +
             wmul(divergenceMemory, 650 * BPS) +
             wmul(oneSidedFlow, 1700 * BPS);
+        sharedSpread += wmul(jumpMemory, 280 * BPS);
 
         uint256 eventSignal = volObservation + hazardObservation;
         if (eventSignal > WAD) {
@@ -278,6 +287,7 @@ contract Strategy is AMMStrategyBase {
         slots[8] = divergenceMemory;
         slots[9] = flowPressure;
         slots[10] = passiveRecaptureMemory;
+        slots[11] = jumpMemory;
 
         return (bidFee, askFee);
     }

@@ -1,0 +1,20 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-09T05:37:25+00:00",
+  "eval_ids": [
+    "screen_0007"
+  ],
+  "expected_effect": "Improve mean_edge by briefly widening common spread after short-gap spot jumps without changing the longer calm-state logic.",
+  "hypothesis_id": "h005-clustered-jump-memory",
+  "mutation_family": "transient-price-jump-memory",
+  "parent_hypothesis_id": "h004-selective-passive-recapture",
+  "rationale": "The current line improved calm benign regimes, but a separate fast transient price-jump state may still be underpriced relative to clustered markout risk.",
+  "research_refs": [
+    "docs/plans/active/apr08-screen470-2222.md",
+    "artifacts/research/amm_dynamic_fee_apr01-screen420-2134/memo.md"
+  ],
+  "seed_eval_id": "screen_0007",
+  "status": "abandoned",
+  "title": "Clustered jump memory",
+  "updated_at": "2026-04-09T05:38:11+00:00"
+}
