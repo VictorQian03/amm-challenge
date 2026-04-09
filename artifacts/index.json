@@ -1,6 +1,6 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-09T06:55:17+00:00",
+  "generated_at": "2026-04-09T07:18:01+00:00",
   "hill_climb_runs": [
     {
       "active_stage": "screen",
@@ -10,14 +10,15 @@
       "best_mean_edges": {
         "screen": 464.0869501027389
       },
-      "created_at": "2026-04-09T06:51:23+00:00",
+      "created_at": "2026-04-09T07:01:13+00:00",
       "notes": [
         "pending (screen incumbent 464.086950 is below target 470.000000)"
       ],
       "research_artifact_paths": [
-        "docs/plans/active/apr08-screen470-2350.md"
+        "artifacts/hill_climb/apr08-screen470-2359-w01-healing-flow/history.jsonl",
+        "docs/plans/active/apr08-screen470-2359.md"
       ],
-      "run_id": "apr08-screen470-2350",
+      "run_id": "apr08-screen470-2359",
       "status": "active"
     }
   ]

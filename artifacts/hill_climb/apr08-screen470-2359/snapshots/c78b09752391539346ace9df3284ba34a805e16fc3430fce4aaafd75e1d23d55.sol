@@ -243,7 +243,8 @@ contract Strategy is AMMStrategyBase {
         askFee =
             sharedSpread +
             wmul(askRiskSignal, 4800 * BPS);
-        uint256 healingRebate = wmul(directionalBurstFee, 5000 * BPS);
+        uint256 healingRebateScale = 3500 * BPS + wmul(opportunityGate, 3000 * BPS);
+        uint256 healingRebate = wmul(directionalBurstFee, healingRebateScale);
         if (currentSpot >= latentSpot) {
             bidFee += directionalBurstFee;
             askFee = askFee > healingRebate ? askFee - healingRebate : MIN_FEE;

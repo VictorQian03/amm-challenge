@@ -1,9 +1,9 @@
 {
   "artifact_version": "hill_climb.v3",
   "change_summary": null,
-  "created_at": "2026-04-09T06:51:28+00:00",
+  "created_at": "2026-04-09T07:01:27+00:00",
   "delta_vs_incumbent": null,
-  "description": "Fresh retained screen seed from the promoted calm-ramp source after quarantining apr08-screen470-2349.",
+  "description": "Fresh retained screen seed from apr08-screen470-2350 screen_0001 for a new breakout round.",
   "eval_id": "screen_0001",
   "hypothesis_id": null,
   "incumbent_before": null,
@@ -12,8 +12,10 @@
   "parent_eval_id": null,
   "parent_source_sha256": null,
   "replay_reason": null,
-  "research_refs": [],
-  "run_id": "apr08-screen470-2350",
+  "research_refs": [
+    "docs/plans/active/apr08-screen470-2359.md"
+  ],
+  "run_id": "apr08-screen470-2359",
   "scorecard": {
     "by_slice": {
       "mean_edge_deciles": {
@@ -504,7 +506,7 @@
     "promotion_margin": null,
     "rationale": "no incumbent for this stage"
   },
-  "snapshot_path": "artifacts/hill_climb/apr08-screen470-2350/snapshots/c5bcf142da1dc4f6dd81ca9eec31977ff59dbba2f19ea303bd0e6a7e728c3b84.sol",
+  "snapshot_path": "artifacts/hill_climb/apr08-screen470-2359/snapshots/c5bcf142da1dc4f6dd81ca9eec31977ff59dbba2f19ea303bd0e6a7e728c3b84.sol",
   "snapshot_relpath": "snapshots/c5bcf142da1dc4f6dd81ca9eec31977ff59dbba2f19ea303bd0e6a7e728c3b84.sol",
   "source_path": "/Users/victorqian/Desktop/opt_arena/simple_amm/contracts/src/Strategy.sol",
   "source_sha256": "c5bcf142da1dc4f6dd81ca9eec31977ff59dbba2f19ea303bd0e6a7e728c3b84",

@@ -1,0 +1,17 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-09T07:09:09+00:00",
+  "eval_ids": [
+    "screen_0002"
+  ],
+  "expected_effect": "Lift low-intensity edge by making divergence-reducing burst flow cheaper without reducing protection on divergence-extending flow.",
+  "hypothesis_id": "h001-healing-burst-asymmetry",
+  "mutation_family": "burst-asymmetry",
+  "parent_hypothesis_id": "h000-calm-ramp-seed",
+  "rationale": "Worker lane apr08-screen470-2359-w01-healing-flow found that keeping the toxic-side burst surcharge while rebating part of the healing side modestly improved raw screen edge.",
+  "research_refs": [],
+  "seed_eval_id": "screen_0002",
+  "status": "completed",
+  "title": "Healing burst asymmetry",
+  "updated_at": "2026-04-09T07:11:28+00:00"
+}
