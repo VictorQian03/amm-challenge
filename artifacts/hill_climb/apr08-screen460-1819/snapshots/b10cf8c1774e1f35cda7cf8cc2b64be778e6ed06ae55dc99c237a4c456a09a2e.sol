@@ -222,6 +222,14 @@ contract Strategy is AMMStrategyBase {
         sharedSpread += eventCarry;
 
         uint256 sharedRebate = wmul(calmMemory, 180 * BPS);
+        if (
+            gap >= 5 &&
+            hazardMemory < 900 * BPS &&
+            flowPressure < 550 * BPS &&
+            volMemory < 11 * BPS
+        ) {
+            sharedRebate += 6 * BPS;
+        }
         sharedSpread = sharedSpread > sharedRebate ? sharedSpread - sharedRebate : MIN_FEE;
 
         bidFee =

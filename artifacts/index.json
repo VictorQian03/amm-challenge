@@ -1,29 +1,28 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-09T00:39:03+00:00",
+  "generated_at": "2026-04-09T01:37:01+00:00",
   "hill_climb_runs": [
     {
       "active_stage": "screen",
       "best_eval_ids": {
-        "screen": "screen_0006"
+        "screen": "screen_0001"
       },
       "best_mean_edges": {
-        "screen": 457.85155954696194
+        "screen": 461.25039501650576
       },
-      "created_at": "2026-04-08T23:55:49+00:00",
+      "created_at": "2026-04-09T01:19:41+00:00",
       "notes": [
-        "passed (screen incumbent 457.851560 cleared target 430.000000)"
+        "passed (screen incumbent 461.250395 cleared target 460.000000)"
       ],
       "research_artifact_paths": [
-        "docs/plans/active/apr08-screen430-1654-cont1.md",
-        "docs/plans/active/apr08-screen430-1654-cont2.md",
-        "docs/plans/active/apr08-screen430-1654-cont3.md",
-        "docs/plans/active/apr08-screen430-1654.md",
+        "docs/plans/active/apr08-screen460-1813-cont1.md",
+        "docs/plans/active/apr08-screen460-1819-cont1.md",
+        "docs/plans/active/apr08-screen460-1819.md",
         "https://app.uniswap.org/whitepaper-v4.pdf",
-        "https://arxiv.org/abs/2508.08152",
+        "https://people.orie.cornell.edu/sfs33/LimitOrderBook.pdf",
         "https://www.math.columbia.edu/~mnutz/docs/AMM_fees.pdf"
       ],
-      "run_id": "apr08-screen430-1654",
+      "run_id": "apr08-screen460-1819",
       "status": "goal-passed"
     }
   ]

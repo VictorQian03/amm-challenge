@@ -7,18 +7,16 @@
 
 ## 2026-04-01
 
-- `artifacts/hill_climb/apr01-screen420-2134/`: retained coordinated hill-climb lane carrying the `LatentStateIncumbentGapAwareV4` winner through `screen`, `climb`, `confirm`, and `final`
 - `artifacts/hill_climb_smoke/apr01-audit-smoke/`: retained smoke-harness lane under the current protected-surface fingerprint
-- `artifacts/research/amm_dynamic_fee_apr01-screen420-2134/`: external AMM dynamic-fee evidence memo and hypothesis ranking linked to retained run `apr01-screen420-2134`
+- `artifacts/research/amm_dynamic_fee_apr01-screen420-2134/`: external AMM dynamic-fee evidence memo and hypothesis ranking
 
-## 2026-04-07
+## 2026-04-09
 
-- `artifacts/hill_climb/apr07-screen430-1749/`: archived screen-stage retained lane for the latent-state quote engine search that identified quiet latent-spot recentering as the strongest raw frontier before stop-policy exit
+- `artifacts/hill_climb/apr08-screen460-1819/`: retained coordinated hill-climb lane for the current `screen` frontier, ending at `461.250395` mean edge with stop guidance reached on that line
 
 Per-run contract:
 
 - keep only `run.json`, `state.json`, `results.jsonl`, `results.tsv`, `history.jsonl`, `hypotheses/`, `incumbents/`, and `snapshots/`
 - keep the machine-readable cross-run catalog at `artifacts/index.json`
 - do not recreate per-evaluation `evaluations/` trees
-- normalize any legacy run with `amm-match hill-climb compact --artifact-root <root>`
-- do not retain old probe, compare, or superseded baseline runs once the active lane is updated
+- do not retain old probe, compare, quarantine, or superseded baseline runs once the active lane is updated

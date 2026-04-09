@@ -1,0 +1,18 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-09T01:19:57+00:00",
+  "eval_ids": [],
+  "expected_effect": "Hold the stronger directional burst protection while releasing stale divergence more cleanly in quiet regimes, lifting raw screen mean edge above the prior retained seed.",
+  "hypothesis_id": "h001-quiet-release-directional-burst-combo",
+  "mutation_family": "directional-burst-skew",
+  "parent_hypothesis_id": null,
+  "rationale": "The previous retained lane improved further after three narrow refinements. The best raw source combined a gentle post-recenter divergence-memory release with a slightly more directional 650/850 above-threshold burst split on top of the lighter shared-flow tax line.",
+  "research_refs": [
+    "docs/plans/active/apr08-screen460-1819.md",
+    "docs/plans/active/apr08-screen460-1813-cont1.md"
+  ],
+  "seed_eval_id": "screen_0001",
+  "status": "promoted",
+  "title": "Quiet release plus more directional burst split",
+  "updated_at": "2026-04-09T01:19:57+00:00"
+}

@@ -1,0 +1,22 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-09T01:27:39+00:00",
+  "eval_ids": [
+    "screen_0002"
+  ],
+  "expected_effect": "Improve raw screen mean edge by moving more fee onto the inventory-worsening side while modestly easing the inventory-rebalancing side.",
+  "hypothesis_id": "h002-deadbanded-inventory-skew",
+  "mutation_family": "inventory-skew-controller",
+  "parent_hypothesis_id": "h001-quiet-release-directional-burst-combo",
+  "rationale": "Literature suggests dynamic fees should respond to inventory and external price changes, and market-making control suggests shifting quotes around a reservation price instead of widening symmetrically. Add a deadbanded side skew using divergence memory plus recent price change.",
+  "research_refs": [
+    "docs/plans/active/apr08-screen460-1819-cont1.md",
+    "https://app.uniswap.org/whitepaper-v4.pdf",
+    "https://people.orie.cornell.edu/sfs33/LimitOrderBook.pdf",
+    "https://www.math.columbia.edu/~mnutz/docs/AMM_fees.pdf"
+  ],
+  "seed_eval_id": "screen_0002",
+  "status": "discard",
+  "title": "Deadbanded inventory reservation skew",
+  "updated_at": "2026-04-09T01:28:05+00:00"
+}

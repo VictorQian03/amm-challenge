@@ -1,0 +1,20 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-09T01:31:52+00:00",
+  "eval_ids": [
+    "screen_0007"
+  ],
+  "expected_effect": "Recover mild-imbalance retail flow while preserving protection once one-sided flow becomes materially large.",
+  "hypothesis_id": "h007-shared-flow-deadband",
+  "mutation_family": "thresholded-common-flow-carry",
+  "parent_hypothesis_id": "h001-quiet-release-directional-burst-combo",
+  "rationale": "Microstructure theory says execution intensity decays rapidly with quote distance, so mild common-fee taxes can cost disproportionate flow. Pivot away from extra inventory skew and instead add a deadband to the shared one-sided flow carry so only larger imbalances widen the common spread.",
+  "research_refs": [
+    "docs/plans/active/apr08-screen460-1819-cont1.md",
+    "https://people.orie.cornell.edu/sfs33/LimitOrderBook.pdf"
+  ],
+  "seed_eval_id": "screen_0007",
+  "status": "discard",
+  "title": "Shared flow deadband pivot",
+  "updated_at": "2026-04-09T01:32:11+00:00"
+}

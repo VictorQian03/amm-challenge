@@ -166,6 +166,13 @@ contract Strategy is AMMStrategyBase {
         }
         uint256 bidFlowRisk = buyFlow >= sellFlow ? 0 : flowDirectionalRisk;
         uint256 askFlowRisk = buyFlow >= sellFlow ? flowDirectionalRisk : 0;
+        uint256 divergenceSkew = 0;
+        if (divergenceMemory > 5 * BPS) {
+            uint256 divergenceSignal =
+                (divergenceMemory - 5 * BPS) +
+                wmul(spotJump, 1800 * BPS);
+            divergenceSkew = wmul(divergenceSignal, 260 * BPS);
+        }
 
         uint256 passiveRecaptureObservation = wmul(
             gapLong,
@@ -205,7 +212,7 @@ contract Strategy is AMMStrategyBase {
             BASE_FEE +
             wmul(volMemory, 1800 * BPS) +
             wmul(hazardMemory, 2400 * BPS) +
-            wmul(divergenceMemory, 650 * BPS) +
+            wmul(divergenceMemory, 450 * BPS) +
             wmul(oneSidedFlow, 1700 * BPS);
 
         uint256 eventSignal = volObservation + hazardObservation;
@@ -234,6 +241,11 @@ contract Strategy is AMMStrategyBase {
             bidFee += directionalBurstFee;
         } else {
             askFee += directionalBurstFee;
+        }
+        if (currentSpot >= latentSpot) {
+            bidFee += divergenceSkew;
+        } else {
+            askFee += divergenceSkew;
         }
 
         uint256 bidOpportunityCut = wmul(bidOpportunitySignal, 8200 * BPS);

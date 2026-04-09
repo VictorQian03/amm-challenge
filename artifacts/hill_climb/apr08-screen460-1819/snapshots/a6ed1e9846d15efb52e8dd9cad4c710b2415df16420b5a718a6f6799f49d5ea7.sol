@@ -118,6 +118,7 @@ contract Strategy is AMMStrategyBase {
         uint256 flowImbalance = totalFlow == 0 ? 0 : wdiv(absDiff(buyFlow, sellFlow), totalFlow);
         uint256 flowPressure = _blend(slots[9], flowImbalance, ALPHA_FLOW);
         uint256 oneSidedFlow = wmul(flowImbalance, _max(volMemory, hazardMemory));
+        uint256 commonFlowCarry = oneSidedFlow > 4 * BPS ? oneSidedFlow - 4 * BPS : 0;
 
         uint256 quietGate = _oneMinus(
             clamp(
@@ -206,7 +207,7 @@ contract Strategy is AMMStrategyBase {
             wmul(volMemory, 1800 * BPS) +
             wmul(hazardMemory, 2400 * BPS) +
             wmul(divergenceMemory, 650 * BPS) +
-            wmul(oneSidedFlow, 1700 * BPS);
+            wmul(commonFlowCarry, 1700 * BPS);
 
         uint256 eventSignal = volObservation + hazardObservation;
         if (eventSignal > WAD) {

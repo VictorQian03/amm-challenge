@@ -214,8 +214,8 @@ contract Strategy is AMMStrategyBase {
         }
         uint256 eventCarry = wmul(eventSignal, 300 * BPS);
         uint256 directionalBurstFee = 0;
-        if (eventSignal > 8 * BPS) {
-            uint256 burstSignal = eventSignal - 8 * BPS;
+        if (eventSignal > 10 * BPS) {
+            uint256 burstSignal = eventSignal - 10 * BPS;
             eventCarry += wmul(burstSignal, 650 * BPS);
             directionalBurstFee = wmul(burstSignal, 850 * BPS);
         }

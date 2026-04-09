@@ -201,17 +201,20 @@ contract Strategy is AMMStrategyBase {
         uint256 bidOpportunitySignal = wmul(opportunityGate, cheapSignal);
         uint256 askOpportunitySignal = wmul(opportunityGate, richSignal);
 
-        uint256 sharedSpread =
-            BASE_FEE +
-            wmul(volMemory, 1800 * BPS) +
-            wmul(hazardMemory, 2400 * BPS) +
-            wmul(divergenceMemory, 650 * BPS) +
-            wmul(oneSidedFlow, 1700 * BPS);
-
         uint256 eventSignal = volObservation + hazardObservation;
         if (eventSignal > WAD) {
             eventSignal = WAD;
         }
+        uint256 pricedDivergence = divergenceMemory;
+        if (eventSignal > 8 * BPS) {
+            pricedDivergence = wmul(divergenceMemory, 7000 * BPS);
+        }
+        uint256 sharedSpread =
+            BASE_FEE +
+            wmul(volMemory, 1800 * BPS) +
+            wmul(hazardMemory, 2400 * BPS) +
+            wmul(pricedDivergence, 650 * BPS) +
+            wmul(oneSidedFlow, 1700 * BPS);
         uint256 eventCarry = wmul(eventSignal, 300 * BPS);
         uint256 directionalBurstFee = 0;
         if (eventSignal > 8 * BPS) {

@@ -166,6 +166,13 @@ contract Strategy is AMMStrategyBase {
         }
         uint256 bidFlowRisk = buyFlow >= sellFlow ? 0 : flowDirectionalRisk;
         uint256 askFlowRisk = buyFlow >= sellFlow ? flowDirectionalRisk : 0;
+        uint256 inventorySkew = 0;
+        if (divergenceMemory > 5 * BPS) {
+            uint256 inventorySignal =
+                (divergenceMemory - 5 * BPS) +
+                wmul(spotJump, 2200 * BPS);
+            inventorySkew = wmul(inventorySignal, 240 * BPS);
+        }
 
         uint256 passiveRecaptureObservation = wmul(
             gapLong,
@@ -235,6 +242,11 @@ contract Strategy is AMMStrategyBase {
         } else {
             askFee += directionalBurstFee;
         }
+        if (currentSpot >= latentSpot) {
+            bidFee += inventorySkew;
+        } else {
+            askFee += inventorySkew;
+        }
 
         uint256 bidOpportunityCut = wmul(bidOpportunitySignal, 8200 * BPS);
         uint256 askOpportunityCut = wmul(askOpportunitySignal, 8200 * BPS);
@@ -244,9 +256,9 @@ contract Strategy is AMMStrategyBase {
             calmDivergenceBonus = wmul(divergenceMemory, gap >= 4 ? 650 * BPS : 400 * BPS);
         }
         if (currentSpot >= latentSpot) {
-            askOpportunityCut += passiveRecaptureCut + calmDivergenceBonus;
+            askOpportunityCut += passiveRecaptureCut + calmDivergenceBonus + wmul(inventorySkew, 6500 * BPS);
         } else {
-            bidOpportunityCut += passiveRecaptureCut + calmDivergenceBonus;
+            bidOpportunityCut += passiveRecaptureCut + calmDivergenceBonus + wmul(inventorySkew, 6500 * BPS);
         }
         bidFee = bidFee > bidOpportunityCut ? bidFee - bidOpportunityCut : MIN_FEE;
         askFee = askFee > askOpportunityCut ? askFee - askOpportunityCut : MIN_FEE;
