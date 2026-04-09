@@ -12,7 +12,7 @@
 
 ## 2026-04-09
 
-- `artifacts/hill_climb/apr08-screen460-1819/`: retained coordinated hill-climb lane for the current `screen` frontier, ending at `461.250395` mean edge with stop guidance reached on that line
+- `artifacts/hill_climb/apr08-screen470-2350/`: retained coordinated hill-climb lane for the current `screen` frontier, seeded at `464.086950` mean edge and still below the `470` breakout gate
 
 Per-run contract:
 

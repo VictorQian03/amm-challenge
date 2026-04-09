@@ -1,0 +1,2 @@
+eval_id	stage	status	mean_edge	incumbent_mean_edge	delta_vs_incumbent	strategy_name	label	description	snapshot_path
+screen_0001	screen	seed	464.086950			LatentStateQuoteEngine	baseline-calm-ramp-v1	Fresh retained screen seed from the promoted calm-ramp source after quarantining apr08-screen470-2349.	artifacts/hill_climb/apr08-screen470-2350/snapshots/c5bcf142da1dc4f6dd81ca9eec31977ff59dbba2f19ea303bd0e6a7e728c3b84.sol

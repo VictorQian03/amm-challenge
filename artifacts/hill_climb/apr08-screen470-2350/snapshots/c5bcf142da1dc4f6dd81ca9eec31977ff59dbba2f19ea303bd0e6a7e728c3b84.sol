@@ -225,16 +225,16 @@ contract Strategy is AMMStrategyBase {
         if (eventSignal > WAD) {
             eventSignal = WAD;
         }
-        uint256 eventCarry = wmul(eventSignal, 350 * BPS);
+        uint256 eventCarry = wmul(eventSignal, 390 * BPS);
         uint256 directionalBurstFee = 0;
         if (eventSignal > 8 * BPS) {
             uint256 burstSignal = eventSignal - 8 * BPS;
-            eventCarry += wmul(burstSignal, 725 * BPS);
-            directionalBurstFee = wmul(burstSignal, 950 * BPS);
+            eventCarry += wmul(burstSignal, 800 * BPS);
+            directionalBurstFee = wmul(burstSignal, 1050 * BPS);
         }
         sharedSpread += eventCarry;
 
-        uint256 sharedRebate = wmul(calmMemory, 180 * BPS);
+        uint256 sharedRebate = wmul(calmMemory, 220 * BPS);
         sharedSpread = sharedSpread > sharedRebate ? sharedSpread - sharedRebate : MIN_FEE;
 
         bidFee =

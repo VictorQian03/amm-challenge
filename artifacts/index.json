@@ -1,6 +1,6 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-09T06:24:04+00:00",
+  "generated_at": "2026-04-09T06:55:17+00:00",
   "hill_climb_runs": [
     {
       "active_stage": "screen",
@@ -8,19 +8,16 @@
         "screen": "screen_0001"
       },
       "best_mean_edges": {
-        "screen": 463.16732923699794
+        "screen": 464.0869501027389
       },
-      "created_at": "2026-04-09T06:18:36+00:00",
+      "created_at": "2026-04-09T06:51:23+00:00",
       "notes": [
-        "pending (screen incumbent 463.167329 is below target 470.000000)"
+        "pending (screen incumbent 464.086950 is below target 470.000000)"
       ],
       "research_artifact_paths": [
-        "docs/plans/active/apr08-screen470-2242.md",
-        "docs/plans/active/apr08-screen470-2318.md",
-        "https://arxiv.org/abs/2508.08152",
-        "https://docs.bunni.xyz/docs/v2/concepts/fees/"
+        "docs/plans/active/apr08-screen470-2350.md"
       ],
-      "run_id": "apr08-screen470-2318",
+      "run_id": "apr08-screen470-2350",
       "status": "active"
     }
   ]
