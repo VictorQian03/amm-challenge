@@ -1,21 +1,21 @@
 {
   "artifact_version": "hill_climb.v3",
   "change_summary": null,
-  "created_at": "2026-04-10T16:31:53+00:00",
+  "created_at": "2026-04-10T16:48:35+00:00",
   "delta_vs_incumbent": null,
-  "description": "Fresh retained screen seed from apr09-screen470-1501 incumbent before apr10 exploration.",
+  "description": "Fresh retained screen seed from apr10-screen480-0931 incumbent before new exploration.",
   "eval_id": "screen_0001",
   "hypothesis_id": null,
   "incumbent_before": null,
-  "label": "baseline-aligned-toxic-gate-v1",
+  "label": "baseline-latent-toxic-v1",
   "mean_edge": 473.61639344802524,
   "parent_eval_id": null,
   "parent_source_sha256": null,
   "replay_reason": null,
   "research_refs": [
-    "docs/plans/active/apr09-screen470-1501.md"
+    "docs/plans/active/apr10-screen480-0931.md"
   ],
-  "run_id": "apr10-screen480-0931",
+  "run_id": "apr10-screen480-0947",
   "scorecard": {
     "by_slice": {
       "mean_edge_deciles": {
@@ -506,7 +506,7 @@
     "promotion_margin": null,
     "rationale": "no incumbent for this stage"
   },
-  "snapshot_path": "artifacts/hill_climb/apr10-screen480-0931/snapshots/ad6e03710c508578d0f8b64ac74a262503163569c2ad16c91e1a25677eda3af1.sol",
+  "snapshot_path": "artifacts/hill_climb/apr10-screen480-0947/snapshots/ad6e03710c508578d0f8b64ac74a262503163569c2ad16c91e1a25677eda3af1.sol",
   "snapshot_relpath": "snapshots/ad6e03710c508578d0f8b64ac74a262503163569c2ad16c91e1a25677eda3af1.sol",
   "source_path": "/Users/victorqian/Desktop/opt_arena/simple_amm/contracts/src/Strategy.sol",
   "source_sha256": "ad6e03710c508578d0f8b64ac74a262503163569c2ad16c91e1a25677eda3af1",

@@ -199,6 +199,13 @@ contract Strategy is AMMStrategyBase {
                 )
             )
         );
+        if (gap >= 3) {
+            bool continuationUp = currentSpot >= latentSpot && buyFlow > sellFlow && spotJump > divergence;
+            bool continuationDown = currentSpot < latentSpot && sellFlow > buyFlow && spotJump > divergence;
+            if (continuationUp || continuationDown) {
+                passiveRecaptureObservation = wmul(passiveRecaptureObservation, 7600 * BPS);
+            }
+        }
         if (gap >= 4) {
             uint256 passiveRecenterDivergence =
                 latentSpot == 0 ? 0 : wdiv(absDiff(currentSpot, latentSpot), latentSpot);
@@ -274,21 +281,17 @@ contract Strategy is AMMStrategyBase {
         uint256 bidOpportunityCut = wmul(bidOpportunitySignal, 8200 * BPS);
         uint256 askOpportunityCut = wmul(askOpportunitySignal, 8200 * BPS);
         uint256 passiveRecaptureCut = wmul(passiveRecaptureMemory, 1550 * BPS);
-        uint256 calmDivergenceBonus = 0;
-        if (gap >= 2) {
-            if (hazardMemory < 1100 * BPS && flowPressure < 650 * BPS) {
-                calmDivergenceBonus = wmul(divergenceMemory, gap >= 4 ? 650 * BPS : 400 * BPS);
-            } else if (
-                gap >= 3 &&
-                hazardMemory < 1800 * BPS &&
-                flowPressure < 850 * BPS &&
-                passiveRecaptureMemory > 3 * BPS
-            ) {
-                calmDivergenceBonus = wmul(
-                    _max(divergenceMemory, passiveRecaptureMemory),
-                    gap >= 4 ? 220 * BPS : 120 * BPS
-                );
+        if (gap >= 4 && flowPressure > 450 * BPS) {
+            bool continuationUp = currentSpot >= latentSpot && buyFlow > sellFlow && spotJump > divergence;
+            bool continuationDown =
+                currentSpot < latentSpot && sellFlow > buyFlow && spotJump > divergence;
+            if (continuationUp || continuationDown) {
+                passiveRecaptureCut = wmul(passiveRecaptureCut, 8200 * BPS);
             }
+        }
+        uint256 calmDivergenceBonus = 0;
+        if (hazardMemory < 1100 * BPS && flowPressure < 650 * BPS && gap >= 2) {
+            calmDivergenceBonus = wmul(divergenceMemory, gap >= 4 ? 650 * BPS : 400 * BPS);
         }
         if (currentSpot >= latentSpot) {
             askOpportunityCut += passiveRecaptureCut + calmDivergenceBonus;
