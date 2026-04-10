@@ -10,9 +10,10 @@
 - `artifacts/hill_climb_smoke/apr01-audit-smoke/`: retained smoke-harness lane under the current protected-surface fingerprint
 - `artifacts/research/amm_dynamic_fee_apr01-screen420-2134/`: external AMM dynamic-fee evidence memo and hypothesis ranking
 
-## 2026-04-09
+## 2026-04-10
 
-- `artifacts/hill_climb/apr08-screen470-2350/`: retained coordinated hill-climb lane for the current `screen` frontier, seeded at `464.086950` mean edge and still below the `470` breakout gate
+- `artifacts/hill_climb/apr10-screen480-0931/`: fresh retained `screen` lane seeded at `473.616393` with a recorded `480` breakout gate; one main-lane refinement tested and discarded
+- `artifacts/research/amm_dynamic_fee_apr10-screen480-0931/`: source-backed worker map and outcome log for the `480`-targeted round
 
 Per-run contract:
 

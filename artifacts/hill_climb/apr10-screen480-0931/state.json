@@ -5,19 +5,19 @@
   "incumbent_eval_ids": {
     "screen": "screen_0001"
   },
-  "last_completed_iteration": 1,
+  "last_completed_iteration": 2,
   "next_hypothesis_id": null,
   "next_hypothesis_note": null,
   "outcome_gate": {
-    "minimum_mean_edge": 470.0,
+    "minimum_mean_edge": 480.0,
     "stage": "screen"
   },
-  "run_id": "apr09-screen470-1501",
+  "run_id": "apr10-screen480-0931",
   "run_mode": "foreground",
   "stop_rules": {
     "pivot_after_non_improving_iterations": 5,
     "refine_after_non_improving_iterations": 3,
     "stop_after_non_improving_iterations": 8
   },
-  "updated_at": "2026-04-09T22:03:33+00:00"
+  "updated_at": "2026-04-10T16:39:57+00:00"
 }

@@ -1,2 +1,0 @@
-eval_id	stage	status	mean_edge	incumbent_mean_edge	delta_vs_incumbent	strategy_name	label	description	snapshot_path
-screen_0001	screen	seed	473.616393			LatentStateQuoteEngine	baseline-aligned-toxic-gate-v1	Fresh retained screen seed from apr09-screen470-1450 screen_0002 stronger raw alignment-aware hazard branch.	artifacts/hill_climb/apr09-screen470-1501/snapshots/ad6e03710c508578d0f8b64ac74a262503163569c2ad16c91e1a25677eda3af1.sol

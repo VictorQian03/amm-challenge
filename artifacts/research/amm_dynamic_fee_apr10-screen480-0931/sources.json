@@ -1,0 +1,53 @@
+[
+  {
+    "id": "uniswap-v4-whitepaper",
+    "title": "Uniswap v4 Core Whitepaper",
+    "url": "https://app.uniswap.org/whitepaper-v4.pdf",
+    "credibility": "high",
+    "notes": [
+      "Hooks can manage swap fees dynamically.",
+      "Volatility-shifting dynamic fees are an explicit example.",
+      "Supports modular overlays rather than one monolithic fee surface."
+    ]
+  },
+  {
+    "id": "optimal-fees-amm-2025",
+    "title": "Optimal Fees for Liquidity Provision in Automated Market Makers",
+    "url": "https://arxiv.org/abs/2508.08152",
+    "credibility": "high",
+    "notes": [
+      "Optimal fees are stable in normal conditions and high in very high volatility.",
+      "Threshold-type dynamic fee schedules are described as robust."
+    ]
+  },
+  {
+    "id": "predictable-loss-optimal-lp",
+    "title": "Decentralised Finance and Automated Market Making: Predictable Loss and Optimal Liquidity Provision",
+    "url": "https://arxiv.org/abs/2309.08431",
+    "credibility": "high",
+    "notes": [
+      "LP performance depends on predictable losses and concentration risk.",
+      "When drift is present, skewing liquidity can improve outcomes."
+    ]
+  },
+  {
+    "id": "flair-amm",
+    "title": "FLAIR: A Metric for Liquidity Provider Competitiveness in Automated Market Makers",
+    "url": "https://arxiv.org/abs/2306.09421",
+    "credibility": "high",
+    "notes": [
+      "Separates adverse selection from LP competitiveness.",
+      "Supports targeted repricing instead of broad fee floors."
+    ]
+  },
+  {
+    "id": "opengradient-dynamic-fee",
+    "title": "Mitigating Risk and Loss in AMM Liquidity Pools: A Dynamic Fee System Based on Risk Prediction",
+    "url": "https://www.opengradient.ai/blog/dynamic-amm-fee-research",
+    "credibility": "medium",
+    "notes": [
+      "Uses recent-price-range features and markouts to adapt fees.",
+      "Useful as supporting evidence for fast-decay price-jump memory."
+    ]
+  }
+]

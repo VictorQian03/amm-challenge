@@ -1,0 +1,9 @@
+{
+  "run_id": "apr10-screen480-0931",
+  "topic": "amm_dynamic_fee_apr10-screen480-0931",
+  "scope": "Screen-stage idea generation for contracts/src/Strategy.sol",
+  "seed_run": "apr10-screen480-0931",
+  "seed_mean_edge": 473.61639344802524,
+  "target_stage": "screen",
+  "breakout_threshold": 480.0
+}

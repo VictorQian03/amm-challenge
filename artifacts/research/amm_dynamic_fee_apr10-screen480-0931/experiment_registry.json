@@ -1,0 +1,30 @@
+[
+  {
+    "id": "H1",
+    "family": "price-jump-memory",
+    "worker_run_id": "apr10-screen480-0931-w01-price-jump-memory",
+    "status": "completed",
+    "best_mean_edge": 400.863108
+  },
+  {
+    "id": "H2",
+    "family": "inventory-lean-lite",
+    "worker_run_id": "apr10-screen480-0931-w02-inventory-lean-lite",
+    "status": "completed",
+    "best_mean_edge": 473.618280
+  },
+  {
+    "id": "H3",
+    "family": "healing-disagreement",
+    "worker_run_id": "apr10-screen480-0931-w03-healing-disagreement",
+    "status": "completed",
+    "best_mean_edge": 469.376043
+  },
+  {
+    "id": "H4",
+    "family": "phase-fee-synth",
+    "worker_run_id": "apr10-screen480-0931-w04-phase-fee-synth",
+    "status": "completed",
+    "best_mean_edge": 468.051308
+  }
+]
