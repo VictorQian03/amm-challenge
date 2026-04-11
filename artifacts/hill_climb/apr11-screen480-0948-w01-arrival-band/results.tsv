@@ -1,0 +1,4 @@
+eval_id	stage	status	mean_edge	incumbent_mean_edge	delta_vs_incumbent	strategy_name	label	description	snapshot_path
+screen_0001	screen	seed	473.616393			LatentStateQuoteEngine	baseline		artifacts/hill_climb/apr11-screen480-0948-w01-arrival-band/snapshots/ad6e03710c508578d0f8b64ac74a262503163569c2ad16c91e1a25677eda3af1.sol
+screen_0002	screen	discard	398.594999	473.616393	-75.021394	LatentStateQuoteEngine	arrival-band	Add expected-arrival memory and a benign calm competitive band near the 30 bps normalizer	artifacts/hill_climb/apr11-screen480-0948-w01-arrival-band/snapshots/6508f000fe89d54721a046096dd8cb29eb20fd24c272689ebd3781475d8b7b4d.sol
+screen_0003	screen	discard	399.069853	473.616393	-74.546541	LatentStateQuoteEngine	arrival-band-tight	Tighten the expected-arrival band to quiet recovery states only	artifacts/hill_climb/apr11-screen480-0948-w01-arrival-band/snapshots/be09c29e70f28ae29a5005d3b7cc0f2a01d782dfc6fe2cadb9301206ffb1e407.sol

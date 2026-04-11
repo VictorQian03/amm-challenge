@@ -13,8 +13,8 @@ from amm_competition.competition.match import LightweightSimResult, MatchResult
 SUBMISSION_KEY = "submission"
 NORMALIZER_KEY = "normalizer"
 EPSILON = 1e-9
-SCORECARD_VERSION = "1.2"
-TELEMETRY_VERSION = "1.1"
+SCORECARD_VERSION = "1.3"
+TELEMETRY_VERSION = "1.2"
 
 REQUIRED_GATE_METRIC_FIELDS = (
     "mean_edge",
@@ -71,6 +71,8 @@ class ScorecardRecord:
     benchmark_mean_edge: float
     mean_edge_delta: float
     gbm_sigma: float
+    retail_arrival_rate: float
+    retail_mean_size: float
     retail_intensity: float
     submission_retail_volume: float
     normalizer_retail_volume: float
@@ -99,6 +101,19 @@ def compute_scorecard(
             "stage": stage,
             "telemetry_version": TELEMETRY_VERSION,
         },
+        "seed_records": [
+            {
+                "seed": record.seed,
+                "mean_edge": record.mean_edge,
+                "benchmark_mean_edge": record.benchmark_mean_edge,
+                "mean_edge_delta": record.mean_edge_delta,
+                "gbm_sigma": record.gbm_sigma,
+                "retail_arrival_rate": record.retail_arrival_rate,
+                "retail_mean_size": record.retail_mean_size,
+                "retail_intensity": record.retail_intensity,
+            }
+            for record in records
+        ],
         "overall": overall,
         "by_slice": {
             "volatility_terciles": _bucket_summary(
@@ -106,10 +121,27 @@ def compute_scorecard(
                 value_key="gbm_sigma",
                 labels=("low", "mid", "high"),
             ),
+            "arrival_rate_terciles": _bucket_summary(
+                records,
+                value_key="retail_arrival_rate",
+                labels=("low", "mid", "high"),
+            ),
+            "retail_mean_size_terciles": _bucket_summary(
+                records,
+                value_key="retail_mean_size",
+                labels=("low", "mid", "high"),
+            ),
             "retail_intensity_terciles": _bucket_summary(
                 records,
                 value_key="retail_intensity",
                 labels=("low", "mid", "high"),
+            ),
+            "arrival_rate_x_volatility_terciles": _grid_bucket_summary(
+                records,
+                row_value_key="retail_arrival_rate",
+                row_labels=("low", "mid", "high"),
+                column_value_key="gbm_sigma",
+                column_labels=("low", "mid", "high"),
             ),
             "mean_edge_deciles": _bucket_summary(
                 records,
@@ -171,6 +203,8 @@ def _extract_records(match_result: MatchResult) -> list[ScorecardRecord]:
                 benchmark_mean_edge=benchmark_edge,
                 mean_edge_delta=submission_edge - benchmark_edge,
                 gbm_sigma=float(result.gbm_sigma),
+                retail_arrival_rate=float(result.retail_arrival_rate),
+                retail_mean_size=float(result.retail_mean_size),
                 retail_intensity=float(
                     result.retail_arrival_rate * result.retail_mean_size
                 ),
@@ -402,6 +436,62 @@ def _bucket_summary(
         label: _summarize_records(bucket_records)
         for label, bucket_records in buckets.items()
     }
+
+
+def _grid_bucket_summary(
+    records: list[ScorecardRecord],
+    *,
+    row_value_key: str,
+    row_labels: tuple[str, ...],
+    column_value_key: str,
+    column_labels: tuple[str, ...],
+) -> dict[str, dict[str, dict[str, float | int | None]]]:
+    row_buckets = _assign_bucket_labels(
+        records,
+        value_key=row_value_key,
+        labels=row_labels,
+    )
+    column_buckets = _assign_bucket_labels(
+        records,
+        value_key=column_value_key,
+        labels=column_labels,
+    )
+    grid: dict[str, dict[str, list[ScorecardRecord]]] = {
+        row_label: {column_label: [] for column_label in column_labels}
+        for row_label in row_labels
+    }
+
+    for record in records:
+        grid[row_buckets[record.seed]][column_buckets[record.seed]].append(record)
+
+    return {
+        row_label: {
+            column_label: _summarize_records(bucket_records)
+            for column_label, bucket_records in column_map.items()
+        }
+        for row_label, column_map in grid.items()
+    }
+
+
+def _assign_bucket_labels(
+    records: list[ScorecardRecord],
+    *,
+    value_key: str,
+    labels: tuple[str, ...],
+) -> dict[int, str]:
+    if not records:
+        return {}
+
+    ranked = sorted(
+        records, key=lambda record: (float(getattr(record, value_key)), record.seed)
+    )
+    bucket_count = len(labels)
+    assignments: dict[int, str] = {}
+    for index, record in enumerate(ranked):
+        assignments[record.seed] = labels[
+            min(bucket_count - 1, index * bucket_count // len(ranked))
+        ]
+    return assignments
 
 
 def _resolve_edge_shares(

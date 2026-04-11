@@ -1,0 +1,3 @@
+eval_id	stage	status	mean_edge	incumbent_mean_edge	delta_vs_incumbent	strategy_name	label	description	snapshot_path
+screen_0001	screen	seed	473.616393			LatentStateQuoteEngine	baseline	Worker baseline on live Strategy.sol before shock-spike mutation	artifacts/hill_climb/apr11-screen480-0948-w08-shock-spike/snapshots/ad6e03710c508578d0f8b64ac74a262503163569c2ad16c91e1a25677eda3af1.sol
+screen_0002	screen	discard	269.478650	473.616393	-204.137743	LatentStateShockSpike	threshold-shock-spike	Shock-spike candidate with thresholded event surcharge and lower calm carry	artifacts/hill_climb/apr11-screen480-0948-w08-shock-spike/snapshots/84e13ddfa1cbd0c45dc6e6f5bef747974e79039700db5bf4d76db9c3065781f1.sol

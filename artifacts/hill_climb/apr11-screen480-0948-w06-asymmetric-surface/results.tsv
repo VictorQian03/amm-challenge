@@ -1,0 +1,3 @@
+eval_id	stage	status	mean_edge	incumbent_mean_edge	delta_vs_incumbent	strategy_name	label	description	snapshot_path
+screen_0001	screen	seed	473.616393			LatentStateQuoteEngine	baseline-live	Baseline current live latent-state quote engine before asymmetric-surface mutation.	artifacts/hill_climb/apr11-screen480-0948-w06-asymmetric-surface/snapshots/ad6e03710c508578d0f8b64ac74a262503163569c2ad16c91e1a25677eda3af1.sol
+screen_0002	screen	discard	391.270943	473.616393	-82.345450	AsymmetricSurface	h001-asymmetric-surface-simple-map	Simplified asymmetric surface with separate bid/ask anchors and signed-state toxic widening.	artifacts/hill_climb/apr11-screen480-0948-w06-asymmetric-surface/snapshots/fa9419c816ea1f0b9e00ad26ed2b74fc9c9cdf060b5f6c976b6333f7e075b102.sol

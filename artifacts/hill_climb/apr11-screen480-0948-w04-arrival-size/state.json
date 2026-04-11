@@ -1,0 +1,23 @@
+{
+  "artifact_version": "hill_climb.state.v2",
+  "baseline_eval_id": "screen_0001",
+  "current_target_stage": "screen",
+  "incumbent_eval_ids": {
+    "screen": "screen_0001"
+  },
+  "last_completed_iteration": 3,
+  "next_hypothesis_id": null,
+  "next_hypothesis_note": null,
+  "outcome_gate": {
+    "minimum_mean_edge": 480.0,
+    "stage": "screen"
+  },
+  "run_id": "apr11-screen480-0948-w04-arrival-size",
+  "run_mode": "foreground",
+  "stop_rules": {
+    "pivot_after_non_improving_iterations": 5,
+    "refine_after_non_improving_iterations": 3,
+    "stop_after_non_improving_iterations": 8
+  },
+  "updated_at": "2026-04-11T16:56:26+00:00"
+}

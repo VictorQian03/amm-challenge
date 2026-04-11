@@ -1,0 +1,20 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-11T17:10:57+00:00",
+  "eval_ids": [
+    "screen_0002"
+  ],
+  "expected_effect": "Preserve calm quotes on the passive side while widening only the toxic side during directional pressure.",
+  "hypothesis_id": "h001-asymmetric-surface-simple-map",
+  "mutation_family": "asymmetric-surface",
+  "parent_hypothesis_id": null,
+  "rationale": "Replace shared common-spread carry with a side-consistent bid/ask surface that reacts to signed flow and trend instead of latent additive memory.",
+  "research_refs": [
+    "contracts/src/candidates/AsymmetricSurfaceCandidate.sol",
+    "docs/hill_climb_loop.md"
+  ],
+  "seed_eval_id": "screen_0002",
+  "status": "discard",
+  "title": "Simple asymmetric surface",
+  "updated_at": "2026-04-11T17:11:45+00:00"
+}

@@ -130,8 +130,8 @@ def test_compute_scorecard_is_deterministic_and_json_ready():
     second = compute_scorecard(match_result, stage="fast_screen")
 
     assert first == second
-    assert first["scorecard_version"] == "1.2"
-    assert first["run_metadata"]["telemetry_version"] == "1.1"
+    assert first["scorecard_version"] == "1.3"
+    assert first["run_metadata"]["telemetry_version"] == "1.2"
     assert first["overall"]["mean_edge"] == pytest.approx(3.5)
     assert first["overall"]["benchmark_mean_edge"] == pytest.approx(2.5)
     assert first["overall"]["mean_edge_delta"] == pytest.approx(1.0)
@@ -155,10 +155,35 @@ def test_compute_scorecard_is_deterministic_and_json_ready():
     assert first["gate"]["passed"] is True
     assert first["gate"]["thresholds"] == {"mean_edge": 0.0}
 
+    assert len(first["seed_records"]) == 6
+    assert first["seed_records"][0] == {
+        "seed": 0,
+        "mean_edge": 1.0,
+        "benchmark_mean_edge": 0.0,
+        "mean_edge_delta": 1.0,
+        "gbm_sigma": 0.1,
+        "retail_arrival_rate": 1.0,
+        "retail_mean_size": 2.0,
+        "retail_intensity": 2.0,
+    }
+
     volatility = first["by_slice"]["volatility_terciles"]
+    arrival_rate = first["by_slice"]["arrival_rate_terciles"]
+    retail_mean_size = first["by_slice"]["retail_mean_size_terciles"]
+    arrival_rate_x_volatility = first["by_slice"]["arrival_rate_x_volatility_terciles"]
     assert volatility["low"]["simulation_count"] == 2
     assert volatility["mid"]["simulation_count"] == 2
     assert volatility["high"]["simulation_count"] == 2
+    assert arrival_rate["low"]["simulation_count"] == 2
+    assert arrival_rate["mid"]["simulation_count"] == 2
+    assert arrival_rate["high"]["simulation_count"] == 2
+    assert retail_mean_size["low"]["simulation_count"] == 2
+    assert retail_mean_size["mid"]["simulation_count"] == 2
+    assert retail_mean_size["high"]["simulation_count"] == 2
+    assert arrival_rate_x_volatility["low"]["low"]["simulation_count"] == 2
+    assert arrival_rate_x_volatility["mid"]["mid"]["simulation_count"] == 2
+    assert arrival_rate_x_volatility["high"]["high"]["simulation_count"] == 2
+    assert arrival_rate_x_volatility["low"]["mid"]["simulation_count"] == 0
     assert (
         sum(
             bucket["simulation_count"]
@@ -313,3 +338,104 @@ def test_compute_scorecard_enforces_same_seed_delta_threshold() -> None:
     assert worse["overall"]["mean_edge_delta"] == pytest.approx(-0.5)
     assert worse["gate"]["passed"] is False
     assert "mean_edge_delta" in worse["gate"]["failures"][0]
+
+
+def test_compute_scorecard_separates_arrival_rate_and_size_slices() -> None:
+    sim_results = [
+        _make_sim_result(
+            seed=0,
+            submission_edge="1.0",
+            normalizer_edge="0.0",
+            gbm_sigma=0.1,
+            retail_arrival_rate=0.5,
+            retail_mean_size=10.0,
+            submission_retail_volume=10.0,
+            normalizer_retail_volume=5.0,
+            submission_arb_volume=2.0,
+        ),
+        _make_sim_result(
+            seed=1,
+            submission_edge="2.0",
+            normalizer_edge="0.0",
+            gbm_sigma=0.11,
+            retail_arrival_rate=0.5,
+            retail_mean_size=10.0,
+            submission_retail_volume=10.0,
+            normalizer_retail_volume=5.0,
+            submission_arb_volume=2.0,
+        ),
+        _make_sim_result(
+            seed=2,
+            submission_edge="3.0",
+            normalizer_edge="0.0",
+            gbm_sigma=0.2,
+            retail_arrival_rate=1.0,
+            retail_mean_size=20.0,
+            submission_retail_volume=10.0,
+            normalizer_retail_volume=5.0,
+            submission_arb_volume=2.0,
+        ),
+        _make_sim_result(
+            seed=3,
+            submission_edge="4.0",
+            normalizer_edge="0.0",
+            gbm_sigma=0.21,
+            retail_arrival_rate=1.0,
+            retail_mean_size=20.0,
+            submission_retail_volume=10.0,
+            normalizer_retail_volume=5.0,
+            submission_arb_volume=2.0,
+        ),
+        _make_sim_result(
+            seed=4,
+            submission_edge="5.0",
+            normalizer_edge="0.0",
+            gbm_sigma=0.3,
+            retail_arrival_rate=1.5,
+            retail_mean_size=30.0,
+            submission_retail_volume=10.0,
+            normalizer_retail_volume=5.0,
+            submission_arb_volume=2.0,
+        ),
+        _make_sim_result(
+            seed=5,
+            submission_edge="6.0",
+            normalizer_edge="0.0",
+            gbm_sigma=0.31,
+            retail_arrival_rate=1.5,
+            retail_mean_size=30.0,
+            submission_retail_volume=10.0,
+            normalizer_retail_volume=5.0,
+            submission_arb_volume=2.0,
+        ),
+    ]
+
+    scorecard = compute_scorecard(_make_match_result(sim_results), stage="fast_screen")
+
+    assert scorecard["by_slice"]["arrival_rate_terciles"]["low"][
+        "simulation_count"
+    ] == 2
+    assert scorecard["by_slice"]["arrival_rate_terciles"]["mid"][
+        "simulation_count"
+    ] == 2
+    assert scorecard["by_slice"]["arrival_rate_terciles"]["high"][
+        "simulation_count"
+    ] == 2
+    assert scorecard["by_slice"]["retail_mean_size_terciles"]["low"][
+        "simulation_count"
+    ] == 2
+    assert scorecard["by_slice"]["retail_mean_size_terciles"]["mid"][
+        "simulation_count"
+    ] == 2
+    assert scorecard["by_slice"]["retail_mean_size_terciles"]["high"][
+        "simulation_count"
+    ] == 2
+    assert scorecard["by_slice"]["arrival_rate_x_volatility_terciles"]["low"][
+        "low"
+    ]["simulation_count"] == 2
+    assert scorecard["by_slice"]["arrival_rate_x_volatility_terciles"]["mid"][
+        "mid"
+    ]["simulation_count"] == 2
+    assert scorecard["by_slice"]["arrival_rate_x_volatility_terciles"]["high"][
+        "high"
+    ]["simulation_count"] == 2

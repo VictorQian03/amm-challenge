@@ -1,0 +1,3 @@
+eval_id	stage	status	mean_edge	incumbent_mean_edge	delta_vs_incumbent	strategy_name	label	description	snapshot_path
+screen_0001	screen	seed	473.616393			LatentStateQuoteEngine	baseline	Baseline on current latent-state quote engine before pulse/streak mutation	artifacts/hill_climb/apr11-screen480-0948-w05-pulse-streak/snapshots/ad6e03710c508578d0f8b64ac74a262503163569c2ad16c91e1a25677eda3af1.sol
+screen_0002	screen	discard	394.906156	473.616393	-78.710238	QuietStepPulseV2Cluster	cluster-burst-1	Copy QuietStepPulseV2 into Strategy.sol and add a narrow same-step / short-gap burst boost with slightly cheaper calm base fee	artifacts/hill_climb/apr11-screen480-0948-w05-pulse-streak/snapshots/36484fa834a070b534d2553627064d184f28f727d47dc36af723139b84fbf417.sol

@@ -1,0 +1,18 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-11T16:54:47+00:00",
+  "eval_ids": [
+    "screen_0002",
+    "screen_0003"
+  ],
+  "expected_effect": "Lower fees in many-small-trade regimes while preserving large-print protection.",
+  "hypothesis_id": "arrival-size-split",
+  "mutation_family": "arrival-vs-size-split",
+  "parent_hypothesis_id": null,
+  "rationale": "Track arrival cadence separately from trade magnitude so frequent small prints can earn cheaper quotes without diluting defenses for isolated large prints.",
+  "research_refs": [],
+  "seed_eval_id": "screen_0001",
+  "status": "discard",
+  "title": "Arrival-size split memory",
+  "updated_at": "2026-04-11T16:56:26+00:00"
+}

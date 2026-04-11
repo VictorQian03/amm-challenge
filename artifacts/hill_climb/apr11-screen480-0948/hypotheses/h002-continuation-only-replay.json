@@ -1,0 +1,17 @@
+{
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-11T16:59:16+00:00",
+  "eval_ids": [
+    "screen_0003"
+  ],
+  "expected_effect": "Slight raw screen lift versus baseline without broad calm fee collapse.",
+  "hypothesis_id": "h002-continuation-only-replay",
+  "mutation_family": "passive-recapture-continuation",
+  "parent_hypothesis_id": null,
+  "rationale": "Replay the strongest known raw branch from the prior round in the fresh retained lane after new worker ideas underperformed, to preserve best-known calm protection tradeoff.",
+  "research_refs": [],
+  "seed_eval_id": "screen_0001",
+  "status": "completed",
+  "title": "Continuation-gated passive recapture",
+  "updated_at": "2026-04-11T17:00:12+00:00"
+}
