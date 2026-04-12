@@ -6,7 +6,7 @@ Primary references:
 
 1. [Hill-Climb Harness](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/plans/active/hill_climb_harness.md)
 2. [Program Loop](/Users/victorqian/Desktop/opt_arena/simple_amm/program.md)
-3. [Iterative Loop Review And PRD](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/plans/active/iterative_loop_review_and_prd.md)
+3. [Current Retained Run](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/plans/active/apr11-screen480-0948.md)
 
 Core contract:
 

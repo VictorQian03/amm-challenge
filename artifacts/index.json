@@ -1,6 +1,6 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-10T17:04:46+00:00",
+  "generated_at": "2026-04-12T01:26:10+00:00",
   "hill_climb_runs": [
     {
       "active_stage": "screen",
@@ -10,16 +10,72 @@
       "best_mean_edges": {
         "screen": 473.61639344802524
       },
-      "created_at": "2026-04-10T16:48:29+00:00",
+      "created_at": "2026-04-11T16:52:11+00:00",
+      "failure_clusters": {},
+      "frontier_bank": {
+        "best_anti_arb": null,
+        "best_fee_discipline": null,
+        "best_low_retail": null,
+        "best_low_volatility": null,
+        "best_raw": [
+          {
+            "eval_id": "screen_0003",
+            "failure_tags": [],
+            "hypothesis_id": "h002-continuation-only-replay",
+            "label": "continuation-gated-recapture-v1",
+            "mean_edge": 473.6689250706817,
+            "profile": {},
+            "stage": "screen",
+            "status": "discard"
+          },
+          {
+            "eval_id": "screen_0002",
+            "failure_tags": [],
+            "hypothesis_id": "h001-continuation-skew-synth",
+            "label": "continuation-skew-synth-v1",
+            "mean_edge": 473.66700301950374,
+            "profile": {},
+            "stage": "screen",
+            "status": "discard"
+          },
+          {
+            "eval_id": "screen_0001",
+            "failure_tags": [],
+            "hypothesis_id": null,
+            "label": "baseline-latent-toxic-v1",
+            "mean_edge": 473.61639344802524,
+            "profile": {},
+            "stage": "screen",
+            "status": "seed"
+          }
+        ],
+        "incumbents": [
+          {
+            "eval_id": "screen_0001",
+            "failure_tags": [],
+            "hypothesis_id": null,
+            "label": "baseline-latent-toxic-v1",
+            "mean_edge": 473.61639344802524,
+            "profile": {},
+            "stage": "screen",
+            "status": "seed"
+          }
+        ]
+      },
       "notes": [
         "pending (screen incumbent 473.616393 is below target 480.000000)"
       ],
-      "research_artifact_paths": [
-        "docs/plans/active/apr10-screen480-0931.md",
-        "docs/plans/active/apr10-screen480-0947.md",
-        "https://cdn.arenafi.org/papers/arxiv/2502.18625.pdf"
+      "portfolio_gaps": [
+        "anti_arb",
+        "weak_slice",
+        "fee_discipline",
+        "structural_pivot"
       ],
-      "run_id": "apr10-screen480-0947",
+      "research_artifact_paths": [
+        "docs/plans/completed/apr10-screen480-0947.md",
+        "https://moallemi.com/ciamac/papers/mm-amm-2024.pdf"
+      ],
+      "run_id": "apr11-screen480-0948",
       "status": "active"
     }
   ]

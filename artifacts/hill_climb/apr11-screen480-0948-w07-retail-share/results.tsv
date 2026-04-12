@@ -1,3 +1,0 @@
-eval_id	stage	status	mean_edge	incumbent_mean_edge	delta_vs_incumbent	strategy_name	label	description	snapshot_path
-screen_0001	screen	seed	473.616393			LatentStateQuoteEngine	baseline-retail-share	Worker baseline from current live strategy before retail-share mutation.	artifacts/hill_climb/apr11-screen480-0948-w07-retail-share/snapshots/ad6e03710c508578d0f8b64ac74a262503163569c2ad16c91e1a25677eda3af1.sol
-screen_0002	screen	discard	467.379218	473.616393	-6.237176	LatentStateQuoteEngine	retail-share-classifier-v1	Bounded retail-share mutation derived from the candidate family; no shared-spread rebate and no protected mechanics changes.	artifacts/hill_climb/apr11-screen480-0948-w07-retail-share/snapshots/a01cc81a2468d42cde8031c0625cea1cfa46107fa050ad813f6994d585316f14.sol

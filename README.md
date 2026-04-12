@@ -184,8 +184,17 @@ amm-match validate contracts/src/Strategy.sol
 # Record a hill-climb eval
 amm-match hill-climb eval contracts/src/Strategy.sol --run-id mar26 --stage screen --label baseline
 
+# Register a branch hypothesis so planning surfaces stay meaningful
+amm-match hill-climb set-hypothesis --run-id mar26 --hypothesis-id anti-arb-01 --title "Anti-arb branch" --rationale "Reduce toxic-flow leakage without fee spikes" --expected-effect "Improve arb discipline while preserving screen mean_edge" --mutation-family anti-arb --target-metrics arb_loss_to_retail_gain=-0.03 --hard-guardrails max_fee_jump=0.005 --expected-failure-mode arb_leak_regression
+
 # Inspect the current stage incumbent
-amm-match hill-climb status --run-id mar26 --stage screen
+amm-match hill-climb status --run-id mar26 --stage screen --json
+
+# Inspect the run with machine-readable output
+amm-match hill-climb analyze-run --run-id mar26 --json
+
+# Compare two stored evals on the same stage
+amm-match hill-climb compare-profiles --run-id mar26 --stage screen --baseline-eval-id screen_0001 --candidate-eval-id screen_0002
 
 # Restore the current stage incumbent into the active file
 amm-match hill-climb pull-best --run-id mar26 --stage screen --destination contracts/src/Strategy.sol
@@ -208,6 +217,7 @@ This repo now uses a formal hill-climbing harness inspired by single-file autore
 Stage presets:
 
 - `smoke`: 8 sims
+- `prescreen`: 12 sims with extra arb-leak / fee-jump guardrails for risky pivots
 - `screen`: 32 sims
 - `climb`: 128 sims
 - `confirm`: 512 sims
@@ -221,6 +231,13 @@ Decision rule:
 - the first gate-passing result for a stage is `seed`,
 - later results are `keep` only if `delta_vs_incumbent` clears the promotion margin derived from candidate and incumbent uncertainty,
 - otherwise the result is `discard`.
+
+Agent-facing read surfaces:
+
+- `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, `compare-profiles`, and `pull-best` all support `--json`.
+- `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, and `compare-profiles` support `--read-only` so old runs remain inspectable after protected-surface drift.
+- `analyze-run` planning outputs depend on maintained hypothesis records; update branches with `set-hypothesis` if you want `intent_coverage`, `portfolio_gaps`, and `recommended_next_batch` to reflect the real search portfolio.
+- `analyze-run` now exposes failure clusters, phenotype intent coverage, portfolio gaps, and a recommended next-batch scaffold instead of only raw frontier ids.
 
 See `docs/hill_climb_loop.md` for the canonical artifact schema, progression policy, and stop rules.
 

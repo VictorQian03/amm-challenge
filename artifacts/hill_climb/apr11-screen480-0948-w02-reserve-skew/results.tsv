@@ -1,3 +1,0 @@
-eval_id	stage	status	mean_edge	incumbent_mean_edge	delta_vs_incumbent	strategy_name	label	description	snapshot_path
-screen_0001	screen	seed	473.616393			LatentStateQuoteEngine	baseline		artifacts/hill_climb/apr11-screen480-0948-w02-reserve-skew/snapshots/ad6e03710c508578d0f8b64ac74a262503163569c2ad16c91e1a25677eda3af1.sol
-screen_0002	screen	discard	473.641283	473.616393	0.024889	LatentStateQuoteEngine	reserve-skew-tie-breaker		artifacts/hill_climb/apr11-screen480-0948-w02-reserve-skew/snapshots/11c8ea574fd805c2bc1a673db485a6c0ee2ae33b21e93996bfac7337c2e34d7f.sol

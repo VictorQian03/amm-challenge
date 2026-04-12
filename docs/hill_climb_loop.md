@@ -15,6 +15,7 @@ Each eval makes two decisions in order:
 
 1. Stage gate:
    - `smoke` has no minimum `mean_edge`.
+   - `prescreen` requires `mean_edge >= 0.0`, `arb_loss_to_retail_gain <= 0.20`, and `max_fee_jump <= 0.0075`.
    - `screen`, `climb`, `confirm`, and `final` require `mean_edge >= 0.0`.
    - If the stage gate fails, the result is `discard`.
 2. Incumbent replacement:
@@ -71,6 +72,7 @@ Derived fields such as `snapshot_relpath`, `incumbent_before`, `history.jsonl`, 
 ## Stage Progression
 
 - `smoke`: compile/runtime sanity and fast idea pruning.
+- `prescreen`: cheap viability filter for risky pivots before the full screen block.
 - `screen`: first comparable stage for baseline establishment and broad mutation search.
 - `climb`: larger fixed screening block for incumbent replacement.
 - `confirm`: holdout confirmation on separate seeds.
@@ -91,6 +93,15 @@ Promotion policy:
 - `amm-match hill-climb set-hypothesis --run-id <id> --hypothesis-id <id> ...`: create or update the first-class hypothesis registry.
 - `amm-match hill-climb show-hypothesis --run-id <id> --hypothesis-id <id>`: one hypothesis with linked evals.
 - `amm-match hill-climb summarize-run --run-id <id>`: incumbent chain, unresolved ideas, abandoned families, and notable failures.
+- `amm-match hill-climb analyze-run --run-id <id>`: structured frontier bank, failure clusters, intent coverage, portfolio gaps, and recommended next-batch coverage.
+- `amm-match hill-climb compare-profiles --stage <stage> ...`: stage-aligned phenotype deltas for baseline, candidate, and optional anchor inputs.
+
+Agent-facing contract:
+
+- Prefer `--json` for all read commands and `pull-best` when another agent or harness is consuming the output.
+- Keep `set-hypothesis` current for active branches; `intent_coverage`, `portfolio_gaps`, and `recommended_next_batch` are derived from the hypothesis registry, not only from raw eval history.
+- Use `--read-only` on `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, and `compare-profiles` when protected-surface drift should block mutation but not historical analysis.
+- `compare-profiles` is fail-fast: each slot must provide exactly one of `--*-eval-id` or `--*-source`, and stored evals must match the requested `--stage`.
 
 ## Stop Policy
 

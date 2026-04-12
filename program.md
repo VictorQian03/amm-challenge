@@ -26,16 +26,28 @@ Keep this file reviewable. Prefer small, explicit mutations over broad rewrites 
 2. Pick a `run_id` such as `mar26`.
 3. Establish the baseline first:
    - `uv run amm-match hill-climb eval contracts/src/Strategy.sol --run-id mar26 --stage screen --label baseline`
-4. For each new idea:
+4. Before each new branch:
+   - inspect the retained run in machine-readable form:
+     - `uv run amm-match hill-climb analyze-run --run-id mar26 --json`
+     - `uv run amm-match hill-climb status --run-id mar26 --stage screen --json`
+   - register or update the branch with `set-hypothesis` so intent coverage, portfolio gaps, and recommended-next-batch planning stay meaningful:
+     - `uv run amm-match hill-climb set-hypothesis --run-id mar26 --hypothesis-id anti-arb-01 --title "Anti-arb branch" --rationale "Reduce toxic-flow leakage without blowing out calm-flow fees" --expected-effect "Improve arb discipline while preserving screen mean_edge" --mutation-family anti-arb --target-metrics arb_loss_to_retail_gain=-0.03 --hard-guardrails max_fee_jump=0.005 --expected-failure-mode arb_leak_regression`
+5. For each new idea:
    - edit `contracts/src/Strategy.sol`
-   - run `uv run amm-match hill-climb eval contracts/src/Strategy.sol --run-id mar26 --stage screen --label <short-label> --description "<what changed>"`
-   - if status is `discard`, restore the incumbent before the next idea:
+   - run `uv run amm-match hill-climb eval contracts/src/Strategy.sol --run-id mar26 --stage prescreen --label <short-label> --description "<what changed>"` for risky pivots
+   - run `uv run amm-match hill-climb eval contracts/src/Strategy.sol --run-id mar26 --stage screen --label <short-label> --description "<what changed>"` once the shape survives or if the change is already local and low-risk
+   - after any surviving `screen` candidate, compare it against the current screen incumbent before continuing that line:
+     - `uv run amm-match hill-climb compare-profiles --run-id mar26 --stage screen --baseline-eval-id screen_0001 --candidate-eval-id screen_0002 --json`
+   - if status is `discard` or `invalid`, restore the incumbent before the next idea:
      - `uv run amm-match hill-climb pull-best --run-id mar26 --stage screen`
-5. Inspect current state at any time:
-   - `uv run amm-match hill-climb status --run-id mar26 --stage screen`
+6. Inspect current state at any time:
+   - `uv run amm-match hill-climb status --run-id mar26 --stage screen --json`
+   - `uv run amm-match hill-climb analyze-run --run-id mar26 --json`
+   - `uv run amm-match hill-climb compare-profiles --run-id mar26 --stage screen --baseline-eval-id screen_0001 --candidate-eval-id screen_0002`
+   - `uv run amm-match hill-climb show-hypothesis --run-id mar26 --hypothesis-id anti-arb-01 --json`
    - If the user asked for a specific breakout threshold, record it once:
      - `uv run amm-match hill-climb set-state --run-id mar26 --breakout-stage screen --breakout-threshold 424`
-6. Promote surviving ideas through higher-simulation stages:
+7. Promote surviving ideas through higher-simulation stages:
    - `screen` -> `climb` -> `confirm` -> `final`
 
 See `docs/hill_climb_loop.md` for the canonical artifact schema, stage progression policy, and stop rules.
@@ -45,6 +57,7 @@ See `docs/hill_climb_loop.md` for the canonical artifact schema, stage progressi
 - Every stage uses full competition-length simulations (`10000` steps).
 - Only `n_simulations` changes by stage.
 - Stages use explicit canonical seed blocks so results are comparable within a stage.
+- `prescreen` is the fail-fast gate for risky pivots and rejects obvious arb-leak or fee-spike shapes before a full `screen` spend.
 
 ## Decision Rule
 
@@ -54,5 +67,12 @@ See `docs/hill_climb_loop.md` for the canonical artifact schema, stage progressi
 - `invalid`: validation, compilation, or runtime failure.
 
 Strictly higher `mean_edge` is not enough on noisy stages.
+
+## Agent Read Surface
+
+- Prefer `--json` for agent automation on `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, `compare-profiles`, and `pull-best`.
+- Keep hypothesis records current with `set-hypothesis`; otherwise `intent_coverage`, `portfolio_gaps`, and `recommended_next_batch` are incomplete planning signals.
+- Use `analyze-run` to inspect failure clusters, intent coverage, portfolio gaps, and the recommended next-batch scaffold before proposing workers.
+- Use `--read-only` on analysis commands when protected-surface drift blocks normal mutation flows but historical reasoning is still needed.
 
 If a retained run fails continuity or append-only validation, do not repair the ledgers by hand. Quarantine that run and start a fresh `run_id`.

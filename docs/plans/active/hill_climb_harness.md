@@ -46,7 +46,7 @@ These define the competition mechanics and must remain stable during research:
   - compares `mean_edge` against the prior incumbent using a promotion margin derived from candidate and incumbent uncertainty
   - records `seed`, `keep`, `discard`, or `invalid`
 - `amm_competition/cli.py`
-  - exposes `hill-climb eval`, `hill-climb status`, and `hill-climb pull-best`
+  - exposes `hill-climb eval`, `status`, `history`, `show-eval`, `set-hypothesis`, `show-hypothesis`, `summarize-run`, `analyze-run`, `compare-profiles`, and `pull-best`
 
 ## Artifact Layout
 
@@ -55,7 +55,10 @@ Canonical retained runs:
 - at most one active research lane under `artifacts/hill_climb/<run_id>/`
 - at most one current smoke sanity lane under `artifacts/hill_climb_smoke/<run_id>/`
 
-As of the latest artifact hygiene cleanup, there is no retained active research lane. Start a fresh `run_id` before resuming hill climbing.
+As of the latest artifact hygiene cleanup, the sole retained hill-climb lane is
+`artifacts/hill_climb/apr11-screen480-0948/`.
+Because the current checkout has protected-surface drift relative to that run's recorded
+fingerprint, treat it as read-only history and start a fresh `run_id` before resuming mutation.
 
 The active research artifact layout is `artifacts/hill_climb/<run_id>/`.
 
@@ -78,17 +81,25 @@ Retention policy:
 
 - keep one active hill-climb run under `artifacts/hill_climb/`
 - keep one smoke run under `artifacts/hill_climb_smoke/`
+- treat detached worker lanes and their temporary git worktrees as scratch space; once their conclusions are folded into the retained lane and plan docs, prune them
 - delete probe, compare, and superseded baseline runs once their conclusions have been folded into the active lane
-
-Legacy runs can be normalized with:
 
 ## Stage Ladder
 
 - `smoke`: 8 sims on screening seeds
+- `prescreen`: 12 sims on screening seeds with extra arb-leak and fee-jump guardrails for risky pivots
 - `screen`: 32 sims on screening seeds
 - `climb`: 128 sims on screening seeds
 - `confirm`: 512 sims on holdout seeds
 - `final`: 1000 sims on final-confidence seeds
+
+## Current Operator Loop
+
+- prefer `status --json` and `analyze-run --json` as the default read surfaces
+- register active branches with `set-hypothesis` so intent coverage and recommended-next-batch analysis stay meaningful
+- use `prescreen` before `screen` for risky or structural pivots
+- use `compare-profiles` after any surviving `screen` candidate before spending more iterations on that line
+- use `--read-only` on read surfaces when protected-surface drift should block mutation but not historical analysis
 
 ## Non-Negotiables
 

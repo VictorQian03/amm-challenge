@@ -1,8 +1,11 @@
 """Command-line interface for running AMM simulations and hill climbing."""
 
 import argparse
+from dataclasses import asdict, is_dataclass
+import json
 import sys
 from pathlib import Path
+from typing import Any, cast
 
 from amm_sim_rs import SimulationConfig
 from amm_competition.competition.match import MatchRunner, HyperparameterVariance
@@ -43,6 +46,95 @@ def _compiled_bytecode_or_raise(compilation, *, context: str) -> bytes:
     if compilation.bytecode is None:
         raise RuntimeError(f"{context} succeeded without deployment bytecode")
     return compilation.bytecode
+
+
+def _print_warnings(warnings: list[str]) -> None:
+    for warning in warnings:
+        print(f"Warning: {warning}")
+
+
+def _json_default(value: object) -> object:
+    if isinstance(value, Path):
+        return str(value)
+    if is_dataclass(value) and not isinstance(value, type):
+        return asdict(cast(Any, value))
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
+
+def _print_json(payload: object) -> None:
+    print(json.dumps(payload, indent=2, sort_keys=True, default=_json_default))
+
+
+def _parse_float_pairs(
+    pairs: list[str] | None, *, field_name: str
+) -> dict[str, float] | None:
+    if not pairs:
+        return None
+    payload: dict[str, float] = {}
+    for raw_pair in pairs:
+        if "=" not in raw_pair:
+            raise HillClimbHarnessError(
+                f"Expected {field_name} entry in key=value form, found {raw_pair!r}"
+            )
+        key, raw_value = raw_pair.split("=", 1)
+        key = key.strip()
+        if not key:
+            raise HillClimbHarnessError(
+                f"Expected non-empty key in {field_name} entry {raw_pair!r}"
+            )
+        if key in payload:
+            raise HillClimbHarnessError(
+                f"Duplicate {field_name} metric {key!r} is not allowed"
+            )
+        try:
+            payload[key] = float(raw_value)
+        except ValueError as exc:
+            raise HillClimbHarnessError(
+                f"Expected finite numeric value for {field_name} metric {key!r}, found {raw_value!r}"
+            ) from exc
+    return payload
+
+
+def _parse_json_object(
+    raw_payload: str | None, *, field_name: str
+) -> dict[str, object] | None:
+    if raw_payload is None:
+        return None
+    try:
+        payload = json.loads(raw_payload)
+    except json.JSONDecodeError as exc:
+        raise HillClimbHarnessError(
+            f"Expected {field_name} to be a JSON object, found invalid JSON: {exc.msg}"
+        ) from exc
+    if not isinstance(payload, dict):
+        raise HillClimbHarnessError(f"Expected {field_name} to be a JSON object")
+    return payload
+
+
+def _profile_slot_input(
+    *,
+    label: str,
+    eval_id: str | None,
+    source_path: str | None,
+    required: bool,
+) -> tuple[str | None, str | None]:
+    if eval_id and source_path:
+        raise HillClimbHarnessError(
+            f"Choose either --{label}-eval-id or --{label}-source, not both"
+        )
+    if required and eval_id is None and source_path is None:
+        raise HillClimbHarnessError(
+            f"Provide one of --{label}-eval-id or --{label}-source"
+        )
+    return eval_id, source_path
+
+
+def _add_json_argument(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit a machine-readable JSON payload instead of human text",
+    )
 
 
 def run_match_command(args: argparse.Namespace) -> int:
@@ -265,6 +357,15 @@ def hill_climb_eval_command(args: argparse.Namespace) -> int:
         print(f"Hill-climb evaluation failed: {exc}")
         return 1
 
+    if getattr(args, "json", False):
+        _print_json(
+            {
+                "summary": summary,
+                "state": None if state is None else asdict(state),
+            }
+        )
+        return 0
+
     print(f"Run: {summary['run_id']}")
     print(f"Eval: {summary['eval_id']}")
     print(f"Stage: {summary['stage']}")
@@ -300,15 +401,34 @@ def hill_climb_status_command(args: argparse.Namespace) -> int:
             artifact_root=Path(args.artifact_root),
             n_workers=resolve_n_workers(),
         )
+        warnings = harness.get_read_warnings(
+            run_id=args.run_id,
+            allow_protected_surface_drift=getattr(args, "read_only", False),
+        )
         status = harness.get_stage_status(
             run_id=args.run_id,
             stage=args.stage,
+            allow_protected_surface_drift=getattr(args, "read_only", False),
         )
-        state = harness.get_run_state(run_id=args.run_id)
+        state = harness.get_run_state(
+            run_id=args.run_id,
+            allow_protected_surface_drift=getattr(args, "read_only", False),
+        )
     except (HillClimbHarnessError, RuntimeError, ValueError) as exc:
         print(f"Hill-climb status failed: {exc}")
         return 1
 
+    if getattr(args, "json", False):
+        _print_json(
+            {
+                "warnings": warnings,
+                "stage_status": asdict(status),
+                "run_state": asdict(state),
+            }
+        )
+        return 0
+
+    _print_warnings(warnings)
     print(f"Run: {status.run_id}")
     print(f"Stage: {status.stage}")
     if status.incumbent is None:
@@ -440,6 +560,10 @@ def hill_climb_set_state_command(args: argparse.Namespace) -> int:
         print(f"Hill-climb state update failed: {exc}")
         return 1
 
+    if getattr(args, "json", False):
+        _print_json(asdict(state))
+        return 0
+
     print(f"Run: {state.run_id}")
     print(f"Current Target Stage: {state.current_target_stage}")
     print(f"Run Mode: {state.run_mode}")
@@ -482,10 +606,35 @@ def hill_climb_set_hypothesis_command(args: argparse.Namespace) -> int:
             parent_hypothesis_id=args.parent_hypothesis_id,
             seed_eval_id=args.seed_eval_id,
             research_refs=list(args.research_refs or []),
+            target_metrics=_parse_float_pairs(
+                getattr(args, "target_metrics", None),
+                field_name="target_metrics",
+            ),
+            hard_guardrails=_parse_float_pairs(
+                getattr(args, "hard_guardrails", None),
+                field_name="hard_guardrails",
+            ),
+            expected_failure_mode=getattr(args, "expected_failure_mode", None),
+            actual_failure_mode=getattr(args, "actual_failure_mode", None),
+            novelty_coordinates=_parse_json_object(
+                getattr(args, "novelty_coordinates", None),
+                field_name="novelty_coordinates",
+            ),
+            synthesis_eligible=getattr(args, "synthesis_eligible", None),
+            nearest_prior_failures=list(
+                getattr(args, "nearest_prior_failures", []) or []
+            ),
+            nearest_prior_successes=list(
+                getattr(args, "nearest_prior_successes", []) or []
+            ),
         )
     except (HillClimbHarnessError, RuntimeError, ValueError) as exc:
         print(f"Hill-climb hypothesis update failed: {exc}")
         return 1
+
+    if getattr(args, "json", False):
+        _print_json(payload)
+        return 0
 
     print(f"Run: {args.run_id}")
     print(f"Hypothesis: {payload['hypothesis_id']}")
@@ -498,14 +647,27 @@ def hill_climb_set_hypothesis_command(args: argparse.Namespace) -> int:
 def hill_climb_history_command(args: argparse.Namespace) -> int:
     """Show the compact history view for a run."""
     try:
-        history = HillClimbHarness(
+        harness = HillClimbHarness(
             artifact_root=Path(args.artifact_root),
             n_workers=resolve_n_workers(),
-        ).get_history(run_id=args.run_id)
+        )
+        warnings = harness.get_read_warnings(
+            run_id=args.run_id,
+            allow_protected_surface_drift=getattr(args, "read_only", False),
+        )
+        history = harness.get_history(
+            run_id=args.run_id,
+            allow_protected_surface_drift=getattr(args, "read_only", False),
+        )
     except (HillClimbHarnessError, RuntimeError, ValueError) as exc:
         print(f"Hill-climb history failed: {exc}")
         return 1
 
+    if getattr(args, "json", False):
+        _print_json({"warnings": warnings, "history": history})
+        return 0
+
+    _print_warnings(warnings)
     print("eval_id\tstage\tstatus\tmean_edge\thypothesis_id\tparent_eval_id\tdecision")
     for entry in history:
         mean_edge = entry["mean_edge"]
@@ -529,14 +691,28 @@ def hill_climb_history_command(args: argparse.Namespace) -> int:
 def hill_climb_show_eval_command(args: argparse.Namespace) -> int:
     """Show one evaluation with lineage metadata."""
     try:
-        summary = HillClimbHarness(
+        harness = HillClimbHarness(
             artifact_root=Path(args.artifact_root),
             n_workers=resolve_n_workers(),
-        ).get_evaluation(run_id=args.run_id, eval_id=args.eval_id)
+        )
+        warnings = harness.get_read_warnings(
+            run_id=args.run_id,
+            allow_protected_surface_drift=getattr(args, "read_only", False),
+        )
+        summary = harness.get_evaluation(
+            run_id=args.run_id,
+            eval_id=args.eval_id,
+            allow_protected_surface_drift=getattr(args, "read_only", False),
+        )
     except (HillClimbHarnessError, RuntimeError, ValueError) as exc:
         print(f"Hill-climb show-eval failed: {exc}")
         return 1
 
+    if getattr(args, "json", False):
+        _print_json({"warnings": warnings, "evaluation": summary})
+        return 0
+
+    _print_warnings(warnings)
     print(f"Run: {summary['run_id']}")
     print(f"Eval: {summary['eval_id']}")
     print(f"Stage: {summary['stage']}")
@@ -551,20 +727,36 @@ def hill_climb_show_eval_command(args: argparse.Namespace) -> int:
     print(f"Mean Edge: {'n/a' if mean_edge is None else f'{mean_edge:.6f}'}")
     selection = summary.get("selection", {})
     print(f"Decision: {selection.get('rationale') or summary.get('error') or 'none'}")
+    failure = summary.get("derived_analysis", {}).get("failure_signature", {})
+    print("Failure Tags: " + (", ".join(failure.get("tags", [])) or "none"))
     return 0
 
 
 def hill_climb_show_hypothesis_command(args: argparse.Namespace) -> int:
     """Show one hypothesis and its linked evaluations."""
     try:
-        payload = HillClimbHarness(
+        harness = HillClimbHarness(
             artifact_root=Path(args.artifact_root),
             n_workers=resolve_n_workers(),
-        ).get_hypothesis(run_id=args.run_id, hypothesis_id=args.hypothesis_id)
+        )
+        warnings = harness.get_read_warnings(
+            run_id=args.run_id,
+            allow_protected_surface_drift=getattr(args, "read_only", False),
+        )
+        payload = harness.get_hypothesis(
+            run_id=args.run_id,
+            hypothesis_id=args.hypothesis_id,
+            allow_protected_surface_drift=getattr(args, "read_only", False),
+        )
     except (HillClimbHarnessError, RuntimeError, ValueError) as exc:
         print(f"Hill-climb show-hypothesis failed: {exc}")
         return 1
 
+    if getattr(args, "json", False):
+        _print_json({"warnings": warnings, "hypothesis": payload})
+        return 0
+
+    _print_warnings(warnings)
     print(f"Run: {args.run_id}")
     print(f"Hypothesis: {payload['hypothesis_id']}")
     print(f"Title: {payload['title']}")
@@ -576,6 +768,23 @@ def hill_climb_show_hypothesis_command(args: argparse.Namespace) -> int:
     print(f"Seed Eval: {payload.get('seed_eval_id') or 'none'}")
     print("Eval IDs: " + (", ".join(payload.get("eval_ids", [])) or "none"))
     print("Research Refs: " + (", ".join(payload.get("research_refs", [])) or "none"))
+    print(
+        "Target Metrics: "
+        + json.dumps(payload.get("target_metrics", {}), sort_keys=True)
+    )
+    print(
+        "Hard Guardrails: "
+        + json.dumps(payload.get("hard_guardrails", {}), sort_keys=True)
+    )
+    print(
+        "Novelty Coordinates: "
+        + json.dumps(payload.get("novelty_coordinates", {}), sort_keys=True)
+    )
+    print(
+        f"Synthesis Eligible: {'yes' if payload.get('synthesis_eligible', True) else 'no'}"
+    )
+    print(f"Expected Failure Mode: {payload.get('expected_failure_mode') or 'none'}")
+    print(f"Actual Failure Mode: {payload.get('actual_failure_mode') or 'none'}")
     return 0
 
 
@@ -585,11 +794,19 @@ def hill_climb_summarize_run_command(args: argparse.Namespace) -> int:
         summary = HillClimbHarness(
             artifact_root=Path(args.artifact_root),
             n_workers=resolve_n_workers(),
-        ).summarize_run(run_id=args.run_id)
+        ).summarize_run(
+            run_id=args.run_id,
+            allow_protected_surface_drift=getattr(args, "read_only", False),
+        )
     except (HillClimbHarnessError, RuntimeError, ValueError) as exc:
         print(f"Hill-climb summarize-run failed: {exc}")
         return 1
 
+    if getattr(args, "json", False):
+        _print_json(summary)
+        return 0
+
+    _print_warnings(summary.get("warnings", []))
     print(f"Run: {summary['run_id']}")
     print(f"Current Target Stage: {summary['current_target_stage']}")
     outcome_gate = summary.get("outcome_gate")
@@ -605,16 +822,181 @@ def hill_climb_summarize_run_command(args: argparse.Namespace) -> int:
             f"  {entry['eval_id']} {entry['stage']} {entry['status']} {mean_edge_text}"
         )
     print("Abandoned Families: " + (", ".join(summary["abandoned_families"]) or "none"))
+    print(
+        "Frontier Bank: "
+        + ", ".join(entry["eval_id"] for entry in summary["frontier_bank"]["best_raw"])
+    )
+    print("Portfolio Gaps: " + (", ".join(summary["portfolio_gaps"]) or "none"))
     print("Unresolved Hypotheses:")
     for payload in summary["unresolved_hypotheses"]:
         print(
             f"  {payload['hypothesis_id']} {payload['status']} {payload['mutation_family']}"
         )
+    print("Recommended Next Batch:")
+    for entry in summary["recommended_next_batch"]:
+        covered = "covered" if entry["covered"] else "missing"
+        print(f"  {entry['intent']} [{covered}] {entry['reason']}")
     print("Notable Failures:")
     for entry in summary["notable_failures"]:
         print(
             f"  {entry['eval_id']} {entry['status']} {entry.get('decision_summary') or ''}"
         )
+    return 0
+
+
+def hill_climb_analyze_run_command(args: argparse.Namespace) -> int:
+    """Show structured phenotype and frontier analysis for a run."""
+    try:
+        payload = HillClimbHarness(
+            artifact_root=Path(args.artifact_root),
+            n_workers=resolve_n_workers(),
+        ).analyze_run(
+            run_id=args.run_id,
+            allow_protected_surface_drift=getattr(args, "read_only", False),
+        )
+    except (HillClimbHarnessError, RuntimeError, ValueError) as exc:
+        print(f"Hill-climb analyze-run failed: {exc}")
+        return 1
+
+    if getattr(args, "json", False):
+        _print_json(payload)
+        return 0
+
+    _print_warnings(payload.get("warnings", []))
+    print(f"Run: {payload['run_id']}")
+    print("Failure Clusters:")
+    for tag, count in sorted(payload["failure_clusters"].items()):
+        print(f"  {tag}: {count}")
+    print("Portfolio Gaps: " + (", ".join(payload["portfolio_gaps"]) or "none"))
+    print("Intent Coverage:")
+    for intent, coverage in payload["intent_coverage"].items():
+        open_ids = coverage["open_hypothesis_ids"]
+        print(f"  {intent}: " + (", ".join(open_ids) or "none"))
+    print("Best Raw Frontier:")
+    for entry in payload["frontier_bank"]["best_raw"]:
+        print(f"  {entry['eval_id']} {entry['stage']} {entry['mean_edge']:.6f}")
+    print("Recommended Next Batch:")
+    for entry in payload["recommended_next_batch"]:
+        covered = "covered" if entry["covered"] else "missing"
+        print(f"  {entry['intent']} [{covered}] {entry['reason']}")
+    return 0
+
+
+def hill_climb_compare_profiles_command(args: argparse.Namespace) -> int:
+    """Compare profile deltas between baseline, candidate, and optional anchor."""
+    try:
+        _profile_slot_input(
+            label="baseline",
+            eval_id=args.baseline_eval_id,
+            source_path=args.baseline_source,
+            required=True,
+        )
+        _profile_slot_input(
+            label="candidate",
+            eval_id=args.candidate_eval_id,
+            source_path=args.candidate_source,
+            required=True,
+        )
+        _profile_slot_input(
+            label="anchor",
+            eval_id=args.anchor_eval_id,
+            source_path=args.anchor_source,
+            required=False,
+        )
+        stored_eval_ids = [
+            eval_id
+            for eval_id in (
+                args.baseline_eval_id,
+                args.candidate_eval_id,
+                args.anchor_eval_id,
+            )
+            if eval_id is not None
+        ]
+        if stored_eval_ids and not args.run_id:
+            raise HillClimbHarnessError(
+                "--run-id is required when comparing stored eval ids"
+            )
+        harness = HillClimbHarness(
+            artifact_root=Path(args.artifact_root),
+            n_workers=resolve_n_workers(),
+        )
+        warnings: list[str] = []
+        if args.run_id:
+            warnings = harness.get_read_warnings(
+                run_id=args.run_id,
+                allow_protected_surface_drift=getattr(args, "read_only", False),
+            )
+        baseline_summary = None
+        candidate_summary = None
+        anchor_summary = None
+        if args.run_id and args.baseline_eval_id:
+            baseline_summary = harness.get_evaluation(
+                run_id=args.run_id,
+                eval_id=args.baseline_eval_id,
+                allow_protected_surface_drift=getattr(args, "read_only", False),
+            )
+        if args.run_id and args.candidate_eval_id:
+            candidate_summary = harness.get_evaluation(
+                run_id=args.run_id,
+                eval_id=args.candidate_eval_id,
+                allow_protected_surface_drift=getattr(args, "read_only", False),
+            )
+        if args.run_id and args.anchor_eval_id:
+            anchor_summary = harness.get_evaluation(
+                run_id=args.run_id,
+                eval_id=args.anchor_eval_id,
+                allow_protected_surface_drift=getattr(args, "read_only", False),
+            )
+        payload = harness.compare_profiles(
+            stage=args.stage,
+            baseline_summary=baseline_summary,
+            candidate_summary=candidate_summary,
+            baseline_source_path=args.baseline_source,
+            candidate_source_path=args.candidate_source,
+            anchor_summary=anchor_summary,
+            anchor_source_path=args.anchor_source,
+        )
+    except (
+        HillClimbHarnessError,
+        RuntimeError,
+        ValueError,
+        json.JSONDecodeError,
+    ) as exc:
+        print(f"Hill-climb compare-profiles failed: {exc}")
+        return 1
+
+    if getattr(args, "json", False):
+        _print_json({"warnings": warnings, **payload})
+        return 0
+
+    _print_warnings(warnings)
+    print(f"Stage: {payload['stage']}")
+    baseline_label = payload["baseline"].get("eval_id") or payload["baseline"].get(
+        "source_path"
+    )
+    candidate_label = payload["candidate"].get("eval_id") or payload["candidate"].get(
+        "source_path"
+    )
+    print(f"Baseline: {baseline_label}")
+    print(f"Candidate: {candidate_label}")
+    print("Candidate vs Baseline:")
+    for key, value in sorted(payload["candidate_vs_baseline"].items()):
+        if value is not None:
+            print(f"  {key}: {value:.6f}")
+    if "candidate_vs_anchor" in payload:
+        anchor_label = payload["anchor"].get("eval_id") or payload["anchor"].get(
+            "source_path"
+        )
+        print(f"Anchor: {anchor_label}")
+        print("Candidate vs Anchor:")
+        for key, value in sorted(payload["candidate_vs_anchor"].items()):
+            if value is not None:
+                print(f"  {key}: {value:.6f}")
+    if "baseline_vs_anchor" in payload:
+        print("Baseline vs Anchor:")
+        for key, value in sorted(payload["baseline_vs_anchor"].items()):
+            if value is not None:
+                print(f"  {key}: {value:.6f}")
     return 0
 
 
@@ -632,6 +1014,10 @@ def hill_climb_pull_best_command(args: argparse.Namespace) -> int:
     except (HillClimbHarnessError, RuntimeError, ValueError) as exc:
         print(f"Hill-climb restore failed: {exc}")
         return 1
+
+    if getattr(args, "json", False):
+        _print_json({"destination": str(destination)})
+        return 0
 
     print(f"Restored: {destination}")
     return 0
@@ -788,6 +1174,7 @@ Examples:
         default=None,
         help="Required when intentionally replaying the same stage/source snapshot",
     )
+    _add_json_argument(hill_climb_eval_parser)
     hill_climb_eval_parser.set_defaults(func=hill_climb_eval_command)
 
     hill_climb_status_parser = hill_climb_subparsers.add_parser(
@@ -808,6 +1195,12 @@ Examples:
         default="artifacts/hill_climb",
         help="Artifact root for hill-climb run outputs",
     )
+    hill_climb_status_parser.add_argument(
+        "--read-only",
+        action="store_true",
+        help="Allow read-only inspection even if the protected surface fingerprint drifted",
+    )
+    _add_json_argument(hill_climb_status_parser)
     hill_climb_status_parser.set_defaults(func=hill_climb_status_command)
 
     hill_climb_set_state_parser = hill_climb_subparsers.add_parser(
@@ -884,6 +1277,7 @@ Examples:
         action="store_true",
         help="Clear any recorded breakout outcome gate",
     )
+    _add_json_argument(hill_climb_set_state_parser)
     hill_climb_set_state_parser.set_defaults(func=hill_climb_set_state_command)
 
     hill_climb_set_hypothesis_parser = hill_climb_subparsers.add_parser(
@@ -942,6 +1336,52 @@ Examples:
         default=[],
         help="Repeatable research or plan reference linked to this hypothesis",
     )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--target-metrics",
+        action="append",
+        default=[],
+        help="Repeatable key=value target metric for this experiment object",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--hard-guardrails",
+        action="append",
+        default=[],
+        help="Repeatable key=value hard guardrail for this experiment object",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--expected-failure-mode",
+        default=None,
+        help="Expected machine-readable failure signature for this experiment",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--actual-failure-mode",
+        default=None,
+        help="Optional explicit actual failure mode override",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--novelty-coordinates",
+        default=None,
+        help="JSON object describing novelty axes for batch planning",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--synthesis-eligible",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Whether this hypothesis remains eligible for synthesis",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--nearest-prior-failures",
+        action="append",
+        default=[],
+        help="Repeatable nearest prior failure hypothesis id",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--nearest-prior-successes",
+        action="append",
+        default=[],
+        help="Repeatable nearest prior success hypothesis id",
+    )
+    _add_json_argument(hill_climb_set_hypothesis_parser)
     hill_climb_set_hypothesis_parser.set_defaults(
         func=hill_climb_set_hypothesis_command
     )
@@ -958,6 +1398,12 @@ Examples:
         default="artifacts/hill_climb",
         help="Artifact root for hill-climb run outputs",
     )
+    hill_climb_history_parser.add_argument(
+        "--read-only",
+        action="store_true",
+        help="Allow read-only inspection even if the protected surface fingerprint drifted",
+    )
+    _add_json_argument(hill_climb_history_parser)
     hill_climb_history_parser.set_defaults(func=hill_climb_history_command)
 
     hill_climb_show_eval_parser = hill_climb_subparsers.add_parser(
@@ -975,6 +1421,12 @@ Examples:
         default="artifacts/hill_climb",
         help="Artifact root for hill-climb run outputs",
     )
+    hill_climb_show_eval_parser.add_argument(
+        "--read-only",
+        action="store_true",
+        help="Allow read-only inspection even if the protected surface fingerprint drifted",
+    )
+    _add_json_argument(hill_climb_show_eval_parser)
     hill_climb_show_eval_parser.set_defaults(func=hill_climb_show_eval_command)
 
     hill_climb_show_hypothesis_parser = hill_climb_subparsers.add_parser(
@@ -992,6 +1444,12 @@ Examples:
         default="artifacts/hill_climb",
         help="Artifact root for hill-climb run outputs",
     )
+    hill_climb_show_hypothesis_parser.add_argument(
+        "--read-only",
+        action="store_true",
+        help="Allow read-only inspection even if the protected surface fingerprint drifted",
+    )
+    _add_json_argument(hill_climb_show_hypothesis_parser)
     hill_climb_show_hypothesis_parser.set_defaults(
         func=hill_climb_show_hypothesis_command
     )
@@ -1008,7 +1466,69 @@ Examples:
         default="artifacts/hill_climb",
         help="Artifact root for hill-climb run outputs",
     )
+    hill_climb_summarize_run_parser.add_argument(
+        "--read-only",
+        action="store_true",
+        help="Allow read-only inspection even if the protected surface fingerprint drifted",
+    )
+    _add_json_argument(hill_climb_summarize_run_parser)
     hill_climb_summarize_run_parser.set_defaults(func=hill_climb_summarize_run_command)
+
+    hill_climb_analyze_run_parser = hill_climb_subparsers.add_parser(
+        "analyze-run",
+        help="Show structured phenotype clusters and frontier-bank analysis",
+    )
+    hill_climb_analyze_run_parser.add_argument(
+        "--run-id", required=True, help="Stable run identifier"
+    )
+    hill_climb_analyze_run_parser.add_argument(
+        "--artifact-root",
+        default="artifacts/hill_climb",
+        help="Artifact root for hill-climb run outputs",
+    )
+    hill_climb_analyze_run_parser.add_argument(
+        "--read-only",
+        action="store_true",
+        help="Allow read-only inspection even if the protected surface fingerprint drifted",
+    )
+    _add_json_argument(hill_climb_analyze_run_parser)
+    hill_climb_analyze_run_parser.set_defaults(func=hill_climb_analyze_run_command)
+
+    hill_climb_compare_profiles_parser = hill_climb_subparsers.add_parser(
+        "compare-profiles",
+        help="Compare incumbent/candidate/anchor phenotype profiles on one stage",
+    )
+    hill_climb_compare_profiles_parser.add_argument(
+        "--run-id",
+        default=None,
+        help="Optional run id when referencing stored eval ids",
+    )
+    hill_climb_compare_profiles_parser.add_argument(
+        "--stage",
+        choices=list(HILL_CLIMB_STAGES.keys()),
+        required=True,
+        help="Hill-climb stage preset",
+    )
+    hill_climb_compare_profiles_parser.add_argument(
+        "--artifact-root",
+        default="artifacts/hill_climb",
+        help="Artifact root for hill-climb run outputs",
+    )
+    hill_climb_compare_profiles_parser.add_argument("--baseline-eval-id", default=None)
+    hill_climb_compare_profiles_parser.add_argument("--candidate-eval-id", default=None)
+    hill_climb_compare_profiles_parser.add_argument("--anchor-eval-id", default=None)
+    hill_climb_compare_profiles_parser.add_argument("--baseline-source", default=None)
+    hill_climb_compare_profiles_parser.add_argument("--candidate-source", default=None)
+    hill_climb_compare_profiles_parser.add_argument("--anchor-source", default=None)
+    hill_climb_compare_profiles_parser.add_argument(
+        "--read-only",
+        action="store_true",
+        help="Allow read-only inspection even if the protected surface fingerprint drifted",
+    )
+    _add_json_argument(hill_climb_compare_profiles_parser)
+    hill_climb_compare_profiles_parser.set_defaults(
+        func=hill_climb_compare_profiles_command
+    )
 
     hill_climb_pull_parser = hill_climb_subparsers.add_parser(
         "pull-best",
@@ -1033,6 +1553,7 @@ Examples:
         default=str(DEFAULT_ACTIVE_STRATEGY_PATH),
         help="Destination Solidity file to overwrite with the incumbent snapshot",
     )
+    _add_json_argument(hill_climb_pull_parser)
     hill_climb_pull_parser.set_defaults(func=hill_climb_pull_best_command)
 
     args = parser.parse_args()

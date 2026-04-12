@@ -11,6 +11,8 @@ from typing import Any, cast
 import pytest
 
 from amm_competition.cli import (
+    hill_climb_analyze_run_command,
+    hill_climb_compare_profiles_command,
     hill_climb_eval_command,
     hill_climb_history_command,
     hill_climb_set_state_command,
@@ -279,6 +281,8 @@ def test_evaluate_records_seed_keep_and_discard(tmp_path):
     incumbent = json.loads(incumbent_path.read_text())
     assert incumbent["eval_id"] == second["eval_id"]
     assert incumbent["status"] == "keep"
+    assert second["derived_analysis"]["profile"]["mean_edge"] == pytest.approx(6.0)
+    assert "failure_signature" in third["derived_analysis"]
 
 
 def test_evaluate_writes_current_manifest_and_state(tmp_path):
@@ -493,6 +497,32 @@ def test_evaluate_discards_when_stage_gate_fails(tmp_path):
     assert "below stage threshold" in summary["scorecard"]["gate"]["failures"][0]
 
 
+def test_prescreen_stage_rejects_spiky_or_arb_leaky_candidates(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    result = _make_match_result(mean_edges=[1.0, 1.0, 1.0, 1.0])
+    for simulation in result.simulation_results:
+        simulation.arb_edge["submission"] = -5.0
+        simulation.retail_edge["submission"] = 10.0
+        simulation.max_fee_jump["submission"] = 0.02
+
+    harness = _build_test_harness(tmp_path, match_results=[result])
+    summary = harness.evaluate(
+        run_id="mar26",
+        stage="prescreen",
+        source_path=source_path,
+        label="risky-pivot",
+    )
+
+    assert summary["status"] == "discard"
+    assert summary["scorecard"]["gate"]["passed"] is False
+    assert any(
+        "max_fee_jump" in failure
+        for failure in summary["scorecard"]["gate"]["failures"]
+    )
+
+
 def test_evaluate_discards_small_noisy_improvement(tmp_path):
     source_path = tmp_path / "Strategy.sol"
     source_path.write_text("// candidate")
@@ -699,6 +729,52 @@ def test_get_stage_status_rejects_changed_protected_surface_fingerprint_for_exis
         harness.get_stage_status(run_id="mar26", stage="screen")
 
 
+def test_status_and_summary_allow_read_only_analysis_on_protected_surface_drift(
+    tmp_path, capsys
+):
+    repo_root, strategy_path, protected_path = _build_protected_repo(tmp_path)
+    harness = HillClimbHarness(
+        artifact_root=repo_root / "artifacts",
+        n_workers=1,
+        strategy_loader=cast(Any, _FixedStrategyLoader()),
+        baseline_loader=lambda: object(),
+        stage_runner_factory=_SequentialRunnerFactory(
+            [_make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0])]
+        ),
+        protected_surface_checker=ProtectedSurfaceChecker(repo_root=repo_root),
+    )
+
+    harness.evaluate(run_id="mar26", stage="screen", source_path=strategy_path)
+    protected_path.write_text("BASELINE = 3\n")
+
+    status_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(repo_root / "artifacts"),
+        stage="screen",
+        read_only=True,
+    )
+    summarize_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(repo_root / "artifacts"),
+        read_only=True,
+    )
+
+    assert hill_climb_status_command(status_args) == 0
+    status_output = capsys.readouterr().out
+    assert (
+        "Warning: Run 'mar26' is pinned to a different protected competition mechanics surface"
+        in status_output
+    )
+
+    assert hill_climb_summarize_run_command(summarize_args) == 0
+    summarize_output = capsys.readouterr().out
+    assert "Frontier Bank:" in summarize_output
+    assert (
+        "Warning: Run 'mar26' is pinned to a different protected competition mechanics surface"
+        in summarize_output
+    )
+
+
 def test_get_stage_status_requires_existing_run(tmp_path):
     harness = HillClimbHarness(artifact_root=tmp_path / "artifacts", n_workers=1)
     with pytest.raises(HillClimbHarnessError, match="Unknown hill-climb run"):
@@ -753,6 +829,34 @@ def test_get_stage_status_rejects_duplicate_eval_ids(tmp_path):
     assert "Quarantine the run directory and start a fresh run_id instead." in str(
         excinfo.value
     )
+
+
+def test_get_stage_status_rejects_malformed_results_jsonl(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(tmp_path)
+
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    run_dir = tmp_path / "artifacts" / "mar26"
+    (run_dir / "results.jsonl").write_text("{not valid json}\n")
+
+    with pytest.raises(HillClimbHarnessError, match="Invalid JSON in .*results.jsonl"):
+        harness.get_stage_status(run_id="mar26", stage="screen")
+
+
+def test_get_stage_status_rejects_malformed_incumbent_json(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(tmp_path)
+
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    run_dir = tmp_path / "artifacts" / "mar26"
+    (run_dir / "incumbents" / "screen.json").write_text("{not valid json}\n")
+
+    with pytest.raises(HillClimbHarnessError, match="Invalid JSON in .*screen.json"):
+        harness.get_stage_status(run_id="mar26", stage="screen")
 
 
 def test_parallel_evaluations_get_distinct_eval_ids(tmp_path):
@@ -922,6 +1026,165 @@ def test_set_state_updates_loop_metadata_and_status_reports_guidance(
     assert "Stop-Rule Guidance: pivot now" in output
 
 
+def test_set_hypothesis_supports_structured_experiment_fields(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+    harness = _build_test_harness(tmp_path)
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    payload = harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="anti-arb-pivot",
+        title="Anti-arb pivot",
+        rationale="Tighten toxic-flow discrimination before lowering fees",
+        expected_effect="Reduce arb leakage in calm states",
+        mutation_family="anti-arb",
+        target_metrics={"arb_edge": -20.0},
+        hard_guardrails={"max_fee_jump": 0.005},
+        expected_failure_mode="arb_leak_regression",
+        novelty_coordinates={"intent": "anti-arb"},
+        synthesis_eligible=False,
+        nearest_prior_failures=["timing-overlay"],
+        nearest_prior_successes=["screen-seed"],
+    )
+
+    assert payload["target_metrics"] == {"arb_edge": -20.0}
+    assert payload["hard_guardrails"] == {"max_fee_jump": 0.005}
+    assert payload["expected_failure_mode"] == "arb_leak_regression"
+    assert payload["novelty_coordinates"] == {"intent": "anti-arb"}
+    assert payload["synthesis_eligible"] is False
+    assert payload["nearest_prior_failures"] == ["timing-overlay"]
+    assert payload["nearest_prior_successes"] == ["screen-seed"]
+
+
+def test_set_hypothesis_rejects_unknown_failure_mode_and_nonserializable_novelty(
+    tmp_path,
+):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+    harness = _build_test_harness(tmp_path)
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    with pytest.raises(HillClimbHarnessError, match="unknown expected_failure_mode"):
+        harness.upsert_hypothesis(
+            run_id="mar26",
+            hypothesis_id="bad-failure-mode",
+            title="Bad failure mode",
+            rationale="Exercise validation",
+            expected_effect="None",
+            mutation_family="validation",
+            expected_failure_mode="made_up_mode",
+        )
+
+    with pytest.raises(HillClimbHarnessError, match="JSON-serializable object"):
+        harness.upsert_hypothesis(
+            run_id="mar26",
+            hypothesis_id="bad-novelty",
+            title="Bad novelty",
+            rationale="Exercise validation",
+            expected_effect="None",
+            mutation_family="validation",
+            novelty_coordinates={"bad": {1, 2, 3}},
+        )
+
+
+def test_set_hypothesis_rejects_unknown_metric_keys(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+    harness = _build_test_harness(tmp_path)
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    with pytest.raises(HillClimbHarnessError, match="Unknown target_metrics metric"):
+        harness.upsert_hypothesis(
+            run_id="mar26",
+            hypothesis_id="bad-metric",
+            title="Bad metric",
+            rationale="Exercise metric validation",
+            expected_effect="None",
+            mutation_family="validation",
+            target_metrics={"made_up_metric": 1.0},
+        )
+
+
+def test_set_hypothesis_command_parses_structured_experiment_fields(
+    tmp_path, capsys, monkeypatch
+):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+    harness = _build_test_harness(tmp_path)
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    monkeypatch.setattr(
+        "amm_competition.hill_climb.harness.ProtectedSurfaceChecker.discover",
+        lambda: _NoopProtectedSurfaceChecker(),
+    )
+
+    args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+        hypothesis_id="cli-shaped",
+        title="CLI shaped",
+        rationale="Exercise parser wiring",
+        expected_effect="Keep the command path covered",
+        mutation_family="cli-test",
+        status="queued",
+        parent_hypothesis_id=None,
+        seed_eval_id=None,
+        research_refs=["docs/plans/active/apr01-screen420-2134.md"],
+        target_metrics=["arb_edge=-20"],
+        hard_guardrails=["max_fee_jump=0.005"],
+        expected_failure_mode="arb_leak_regression",
+        actual_failure_mode=None,
+        novelty_coordinates='{"intent":"parser"}',
+        synthesis_eligible=False,
+        nearest_prior_failures=["timing-overlay"],
+        nearest_prior_successes=["screen-seed"],
+    )
+
+    assert hill_climb_set_hypothesis_command(args) == 0
+    output = capsys.readouterr().out
+    assert "Hypothesis: cli-shaped" in output
+    payload = harness.get_hypothesis(run_id="mar26", hypothesis_id="cli-shaped")
+    assert payload["target_metrics"] == {"arb_edge": -20.0}
+    assert payload["hard_guardrails"] == {"max_fee_jump": 0.005}
+    assert payload["novelty_coordinates"] == {"intent": "parser"}
+    assert payload["synthesis_eligible"] is False
+
+
+def test_successful_eval_does_not_overwrite_actual_failure_mode(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            _make_match_result(mean_edges=[6.0, 6.0, 6.0, 6.0]),
+        ],
+    )
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="protect-failure-mode",
+        title="Protect failure mode",
+        rationale="Do not clobber recorded failure labels on success",
+        expected_effect="Keep taxonomy stable",
+        mutation_family="validation",
+        actual_failure_mode="arb_leak_regression",
+    )
+
+    source_path.write_text("// improved")
+    harness.evaluate(
+        run_id="mar26",
+        stage="screen",
+        source_path=source_path,
+        hypothesis_id="protect-failure-mode",
+    )
+
+    payload = harness.get_hypothesis(
+        run_id="mar26", hypothesis_id="protect-failure-mode"
+    )
+    assert payload["actual_failure_mode"] == "arb_leak_regression"
+
+
 def test_set_state_rejects_partial_breakout_goal_configuration(
     tmp_path, capsys, monkeypatch
 ):
@@ -1055,3 +1318,167 @@ def test_hill_climb_history_and_lookup_commands_surface_agent_facing_read_models
     summarize_output = capsys.readouterr().out
     assert "Incumbent Chain:" in summarize_output
     assert "screen_0002 screen keep 6.000000" in summarize_output
+
+
+def test_analyze_run_and_compare_profiles_commands_surface_frontier_and_profile_deltas(
+    tmp_path, capsys, monkeypatch
+):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// baseline")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            _make_match_result(mean_edges=[6.0, 6.0, 6.0, 6.0]),
+        ],
+    )
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    source_path.write_text("// improved")
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    monkeypatch.setattr(
+        "amm_competition.hill_climb.harness.ProtectedSurfaceChecker.discover",
+        lambda: _NoopProtectedSurfaceChecker(),
+    )
+
+    analyze_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+        read_only=False,
+        json=False,
+    )
+    assert hill_climb_analyze_run_command(analyze_args) == 0
+    analyze_output = capsys.readouterr().out
+    assert "Best Raw Frontier:" in analyze_output
+    assert "screen_0002 screen 6.000000" in analyze_output
+    assert (
+        "Portfolio Gaps: anti_arb, weak_slice, fee_discipline, structural_pivot"
+        in analyze_output
+    )
+
+    compare_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+        stage="screen",
+        baseline_eval_id="screen_0001",
+        candidate_eval_id="screen_0002",
+        anchor_eval_id="screen_0001",
+        baseline_source=None,
+        candidate_source=None,
+        anchor_source=None,
+        read_only=False,
+        json=False,
+    )
+    assert hill_climb_compare_profiles_command(compare_args) == 0
+    compare_output = capsys.readouterr().out
+    assert "Baseline: screen_0001" in compare_output
+    assert "Candidate vs Baseline:" in compare_output
+    assert "mean_edge: 1.000000" in compare_output
+    assert "Baseline vs Anchor:" in compare_output
+
+
+def test_compare_profiles_command_requires_run_id_for_stored_eval_ids(tmp_path, capsys):
+    args = argparse.Namespace(
+        run_id=None,
+        artifact_root=str(tmp_path / "artifacts"),
+        stage="screen",
+        baseline_eval_id="screen_0001",
+        candidate_eval_id="screen_0002",
+        anchor_eval_id=None,
+        baseline_source=None,
+        candidate_source=None,
+        anchor_source=None,
+        read_only=False,
+        json=False,
+    )
+
+    assert hill_climb_compare_profiles_command(args) == 1
+    assert (
+        "--run-id is required when comparing stored eval ids" in capsys.readouterr().out
+    )
+
+
+def test_analyze_run_command_json_surfaces_planning_payload(
+    tmp_path, capsys, monkeypatch
+):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// baseline")
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[_make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0])],
+    )
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    monkeypatch.setattr(
+        "amm_competition.hill_climb.harness.ProtectedSurfaceChecker.discover",
+        lambda: _NoopProtectedSurfaceChecker(),
+    )
+
+    args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+        read_only=False,
+        json=True,
+    )
+
+    assert hill_climb_analyze_run_command(args) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["portfolio_gaps"] == [
+        "anti_arb",
+        "weak_slice",
+        "fee_discipline",
+        "structural_pivot",
+    ]
+    assert payload["recommended_next_batch"][0]["intent"] == "local_refine"
+
+
+def test_compare_profiles_command_rejects_mixed_inputs_and_stage_mismatch(
+    tmp_path, capsys, monkeypatch
+):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// baseline")
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[_make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0])],
+    )
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    monkeypatch.setattr(
+        "amm_competition.hill_climb.harness.ProtectedSurfaceChecker.discover",
+        lambda: _NoopProtectedSurfaceChecker(),
+    )
+
+    mixed_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+        stage="screen",
+        baseline_eval_id="screen_0001",
+        candidate_eval_id=None,
+        anchor_eval_id=None,
+        baseline_source=str(source_path),
+        candidate_source=str(source_path),
+        anchor_source=None,
+        read_only=False,
+        json=False,
+    )
+    assert hill_climb_compare_profiles_command(mixed_args) == 1
+    assert (
+        "Choose either --baseline-eval-id or --baseline-source, not both"
+        in capsys.readouterr().out
+    )
+
+    stage_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+        stage="climb",
+        baseline_eval_id="screen_0001",
+        candidate_eval_id="screen_0001",
+        anchor_eval_id=None,
+        baseline_source=None,
+        candidate_source=None,
+        anchor_source=None,
+        read_only=False,
+        json=False,
+    )
+    assert hill_climb_compare_profiles_command(stage_args) == 1
+    assert (
+        "is for stage 'screen', not requested stage 'climb'" in capsys.readouterr().out
+    )

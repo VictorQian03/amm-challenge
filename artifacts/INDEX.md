@@ -12,8 +12,13 @@
 
 ## 2026-04-10
 
-- `artifacts/hill_climb/apr10-screen480-0931/`: fresh retained `screen` lane seeded at `473.616393` with a recorded `480` breakout gate; one main-lane refinement tested and discarded
 - `artifacts/research/amm_dynamic_fee_apr10-screen480-0931/`: source-backed worker map and outcome log for the `480`-targeted round
+
+## 2026-04-11
+
+- `artifacts/hill_climb/apr11-screen480-0948/`: sole retained `screen` lane after artifact hygiene cleanup; baseline `473.616393`, best raw replay `473.668925`, breakout gate still pending at `480.0`
+- under the current checkout it is read-only because protected-surface drift now requires a fresh `run_id` before any further mutation/resume
+- transient `apr11-screen480-0948-w0*` worker lanes and superseded retained run `apr10-screen480-0947/` were pruned after their findings were folded into the retained lane and plan docs
 
 Per-run contract:
 

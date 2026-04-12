@@ -29,6 +29,8 @@ class HillClimbStage:
     seed_block: tuple[int, ...]
     description: str
     min_mean_edge: float | None
+    max_arb_loss_to_retail_gain: float | None = None
+    max_fee_jump: float | None = None
 
 
 def _stage_seed_block(
@@ -48,6 +50,15 @@ HILL_CLIMB_STAGES: dict[str, HillClimbStage] = {
         seed_block=_stage_seed_block(CANONICAL_SCREENING_SEEDS, 8),
         description="Quick compile/runtime sanity check on competition-length simulations.",
         min_mean_edge=None,
+    ),
+    "prescreen": HillClimbStage(
+        name="prescreen",
+        n_simulations=12,
+        seed_block=_stage_seed_block(CANONICAL_SCREENING_SEEDS, 12),
+        description="Cheap viability filter for risky pivots before the full screen block.",
+        min_mean_edge=0.0,
+        max_arb_loss_to_retail_gain=0.20,
+        max_fee_jump=0.0075,
     ),
     "screen": HillClimbStage(
         name="screen",

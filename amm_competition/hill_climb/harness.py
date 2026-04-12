@@ -35,6 +35,7 @@ SNAPSHOT_LAYOUT_VERSION = "flat_snapshots.v1"
 HISTORY_VERSION = "hill_climb.history.v1"
 HYPOTHESIS_VERSION = "hill_climb.hypothesis.v1"
 CROSS_RUN_INDEX_VERSION = "hill_climb.index.v1"
+ANALYSIS_VERSION = "hill_climb.analysis.v1"
 INCUMBENT_EPSILON = 1e-9
 NEXT_EVAL_INDEX_FILENAME = ".next_eval_index"
 LEGACY_NEXT_EVAL_ID_FILENAME = ".next_eval_id"
@@ -61,10 +62,67 @@ HYPOTHESIS_STATUSES = {
     "discard",
     "invalid",
 }
+PROFILE_FIELDS = (
+    "mean_edge",
+    "retail_edge",
+    "arb_edge",
+    "arb_loss_to_retail_gain",
+    "time_weighted_bid_fee",
+    "time_weighted_ask_fee",
+    "max_fee_jump",
+)
+SLICE_PROFILE_FIELDS = (
+    "low_decile_mean_edge",
+    "median_decile_mean_edge",
+    "high_decile_mean_edge",
+    "low_retail_mean_edge",
+    "low_volatility_mean_edge",
+)
+EXPERIMENT_METRIC_FIELDS = PROFILE_FIELDS + SLICE_PROFILE_FIELDS
+FAILURE_TAGS = {
+    "arb_leak_regression",
+    "overpriced_calm_flow",
+    "over_spiky_fee_surface",
+    "tail_protection_loss",
+    "weak_slice_improvement_without_overall_gain",
+}
+VALID_FAILURE_MODES = FAILURE_TAGS | {"invalid_eval", "improving_variant"}
+PLANNING_INTENTS = (
+    "local_refine",
+    "anti_arb",
+    "weak_slice",
+    "fee_discipline",
+    "structural_pivot",
+)
 
 
 class HillClimbHarnessError(RuntimeError):
     """Raised when hill-climb setup or execution is invalid."""
+
+
+def _safe_float(value: Any) -> float | None:
+    if value is None or isinstance(value, bool):
+        return None
+    if not isinstance(value, (int, float)):
+        return None
+    converted = float(value)
+    if not math.isfinite(converted):
+        return None
+    return converted
+
+
+def _delta(current: float | None, baseline: float | None) -> float | None:
+    if current is None or baseline is None:
+        return None
+    return current - baseline
+
+
+def _sorted_unique(values: list[str]) -> list[str]:
+    return sorted({value for value in values if value})
+
+
+def _json_search_blob(payload: dict[str, Any]) -> str:
+    return json.dumps(payload, sort_keys=True, separators=(",", ":")).lower()
 
 
 @dataclass(frozen=True)
@@ -300,6 +358,7 @@ class HillClimbHarness:
             scorecard["gate"] = self._build_gate(
                 mean_edge=float(scorecard["overall"]["mean_edge"]),
                 stage_config=stage_config,
+                scorecard=scorecard,
             )
             mean_edge = float(scorecard["overall"]["mean_edge"])
             strategy_name = strategy.get_name()
@@ -339,6 +398,10 @@ class HillClimbHarness:
                 },
                 "incumbent_before": incumbent_before,
                 "scorecard": scorecard,
+                "derived_analysis": self._build_derived_analysis(
+                    scorecard=scorecard,
+                    incumbent_before=incumbent_before,
+                ),
             }
         except Exception as exc:
             summary = {
@@ -366,6 +429,7 @@ class HillClimbHarness:
                 "delta_vs_incumbent": None,
                 "incumbent_before": self._read_incumbent(run_dir, stage_config.name),
                 "error": str(exc),
+                "derived_analysis": self._build_invalid_analysis(str(exc)),
             }
             with self._run_lock(run_dir):
                 try:
@@ -417,14 +481,23 @@ class HillClimbHarness:
                 )
         return summary
 
-    def get_stage_status(self, *, run_id: str, stage: str) -> StageStatus:
+    def get_stage_status(
+        self,
+        *,
+        run_id: str,
+        stage: str,
+        allow_protected_surface_drift: bool = False,
+    ) -> StageStatus:
         """Return the latest and incumbent summaries for a run stage."""
         normalized_run_id = _slug(run_id, fallback="run")
         stage_config = resolve_hill_climb_stage(stage)
         run_dir = self.artifact_root / normalized_run_id
         if not run_dir.exists():
             raise HillClimbHarnessError(f"Unknown hill-climb run: {normalized_run_id}")
-        self._validate_current_run(run_dir)
+        self._validate_current_run(
+            run_dir,
+            allow_protected_surface_drift=allow_protected_surface_drift,
+        )
         latest = self._read_latest(run_dir, stage_config.name)
         incumbent = self._read_incumbent(run_dir, stage_config.name)
         return StageStatus(
@@ -434,13 +507,21 @@ class HillClimbHarness:
             latest=latest,
         )
 
-    def get_run_state(self, *, run_id: str) -> RunStateStatus:
+    def get_run_state(
+        self,
+        *,
+        run_id: str,
+        allow_protected_surface_drift: bool = False,
+    ) -> RunStateStatus:
         """Return validated loop state and derived stop-rule guidance."""
         normalized_run_id = _slug(run_id, fallback="run")
         run_dir = self.artifact_root / normalized_run_id
         if not run_dir.exists():
             raise HillClimbHarnessError(f"Unknown hill-climb run: {normalized_run_id}")
-        self._validate_current_run(run_dir)
+        self._validate_current_run(
+            run_dir,
+            allow_protected_surface_drift=allow_protected_surface_drift,
+        )
         results = self._read_results(run_dir)
         state = self._load_state_payload(run_dir, require_current=True)
         return self._run_state_status_from_payload(state, results)
@@ -503,6 +584,14 @@ class HillClimbHarness:
         parent_hypothesis_id: str | None = None,
         seed_eval_id: str | None = None,
         research_refs: list[str] | None = None,
+        target_metrics: dict[str, float] | None = None,
+        hard_guardrails: dict[str, float] | None = None,
+        expected_failure_mode: str | None = None,
+        actual_failure_mode: str | None = None,
+        novelty_coordinates: dict[str, Any] | None = None,
+        synthesis_eligible: bool | None = None,
+        nearest_prior_failures: list[str] | None = None,
+        nearest_prior_successes: list[str] | None = None,
     ) -> dict[str, Any]:
         """Create or update a hypothesis record for a run."""
         normalized_run_id = _slug(run_id, fallback="run")
@@ -544,6 +633,28 @@ class HillClimbHarness:
                     "seed_eval_id": seed_eval_id,
                     "eval_ids": [],
                     "research_refs": self._normalize_string_list(research_refs),
+                    "target_metrics": self._normalize_float_mapping(
+                        target_metrics,
+                        field_name="target_metrics",
+                    ),
+                    "hard_guardrails": self._normalize_float_mapping(
+                        hard_guardrails,
+                        field_name="hard_guardrails",
+                    ),
+                    "expected_failure_mode": expected_failure_mode,
+                    "actual_failure_mode": actual_failure_mode,
+                    "novelty_coordinates": self._normalize_json_object(
+                        novelty_coordinates
+                    ),
+                    "synthesis_eligible": True
+                    if synthesis_eligible is None
+                    else synthesis_eligible,
+                    "nearest_prior_failures": self._normalize_string_list(
+                        nearest_prior_failures
+                    ),
+                    "nearest_prior_successes": self._normalize_string_list(
+                        nearest_prior_successes
+                    ),
                 }
             else:
                 payload = dict(payload)
@@ -565,6 +676,34 @@ class HillClimbHarness:
                     payload["research_refs"] = self._normalize_string_list(
                         research_refs
                     )
+                if target_metrics is not None:
+                    payload["target_metrics"] = self._normalize_float_mapping(
+                        target_metrics,
+                        field_name="target_metrics",
+                    )
+                if hard_guardrails is not None:
+                    payload["hard_guardrails"] = self._normalize_float_mapping(
+                        hard_guardrails,
+                        field_name="hard_guardrails",
+                    )
+                if expected_failure_mode is not None:
+                    payload["expected_failure_mode"] = expected_failure_mode
+                if actual_failure_mode is not None:
+                    payload["actual_failure_mode"] = actual_failure_mode
+                if novelty_coordinates is not None:
+                    payload["novelty_coordinates"] = self._normalize_json_object(
+                        novelty_coordinates
+                    )
+                if synthesis_eligible is not None:
+                    payload["synthesis_eligible"] = synthesis_eligible
+                if nearest_prior_failures is not None:
+                    payload["nearest_prior_failures"] = self._normalize_string_list(
+                        nearest_prior_failures
+                    )
+                if nearest_prior_successes is not None:
+                    payload["nearest_prior_successes"] = self._normalize_string_list(
+                        nearest_prior_successes
+                    )
                 payload["updated_at"] = created_at
             if (
                 payload.get("parent_hypothesis_id") is not None
@@ -580,22 +719,36 @@ class HillClimbHarness:
             self._sync_derived_views(run_dir)
         return payload
 
-    def get_history(self, *, run_id: str) -> list[dict[str, Any]]:
+    def get_history(
+        self, *, run_id: str, allow_protected_surface_drift: bool = False
+    ) -> list[dict[str, Any]]:
         """Return the compact derived history view for a run."""
         normalized_run_id = _slug(run_id, fallback="run")
         run_dir = self.artifact_root / normalized_run_id
         if not run_dir.exists():
             raise HillClimbHarnessError(f"Unknown hill-climb run: {normalized_run_id}")
-        self._validate_current_run(run_dir)
+        self._validate_current_run(
+            run_dir,
+            allow_protected_surface_drift=allow_protected_surface_drift,
+        )
         return self._build_history(self._read_results(run_dir))
 
-    def get_evaluation(self, *, run_id: str, eval_id: str) -> dict[str, Any]:
+    def get_evaluation(
+        self,
+        *,
+        run_id: str,
+        eval_id: str,
+        allow_protected_surface_drift: bool = False,
+    ) -> dict[str, Any]:
         """Return one evaluation summary by id."""
         normalized_run_id = _slug(run_id, fallback="run")
         run_dir = self.artifact_root / normalized_run_id
         if not run_dir.exists():
             raise HillClimbHarnessError(f"Unknown hill-climb run: {normalized_run_id}")
-        self._validate_current_run(run_dir)
+        self._validate_current_run(
+            run_dir,
+            allow_protected_surface_drift=allow_protected_surface_drift,
+        )
         for summary in self._read_results(run_dir):
             if summary["eval_id"] == eval_id:
                 return summary
@@ -603,13 +756,22 @@ class HillClimbHarness:
             f"Run '{normalized_run_id}' has no evaluation {eval_id!r}"
         )
 
-    def get_hypothesis(self, *, run_id: str, hypothesis_id: str) -> dict[str, Any]:
+    def get_hypothesis(
+        self,
+        *,
+        run_id: str,
+        hypothesis_id: str,
+        allow_protected_surface_drift: bool = False,
+    ) -> dict[str, Any]:
         """Return one hypothesis record by id."""
         normalized_run_id = _slug(run_id, fallback="run")
         run_dir = self.artifact_root / normalized_run_id
         if not run_dir.exists():
             raise HillClimbHarnessError(f"Unknown hill-climb run: {normalized_run_id}")
-        self._validate_current_run(run_dir)
+        self._validate_current_run(
+            run_dir,
+            allow_protected_surface_drift=allow_protected_surface_drift,
+        )
         payload = self._load_hypotheses(run_dir).get(hypothesis_id)
         if payload is None:
             raise HillClimbHarnessError(
@@ -617,14 +779,20 @@ class HillClimbHarness:
             )
         return payload
 
-    def summarize_run(self, *, run_id: str) -> dict[str, Any]:
+    def summarize_run(
+        self, *, run_id: str, allow_protected_surface_drift: bool = False
+    ) -> dict[str, Any]:
         """Return an agent-facing summary for one run."""
-        state = self.get_run_state(run_id=run_id)
-        history = self.get_history(run_id=run_id)
+        context = self._read_run_context(
+            run_id,
+            allow_protected_surface_drift=allow_protected_surface_drift,
+        )
+        state = self._run_state_status_from_payload(
+            context["state"], context["results"]
+        )
+        history = self._build_history(context["results"])
         hypotheses = sorted(
-            self._load_hypotheses(
-                self.artifact_root / _slug(run_id, fallback="run")
-            ).values(),
+            context["hypotheses"].values(),
             key=lambda payload: payload["hypothesis_id"],
         )
         promoted = [entry for entry in history if entry["status"] in {"seed", "keep"}]
@@ -636,6 +804,12 @@ class HillClimbHarness:
             for payload in hypotheses
             if payload["status"] in {"planned", "queued", "active"}
         ]
+        analysis = self._build_run_analysis(
+            run_dir=context["run_dir"],
+            results=context["results"],
+            hypotheses=context["hypotheses"],
+            warnings=context["warnings"],
+        )
         return {
             "run_id": state.run_id,
             "current_target_stage": state.current_target_stage,
@@ -647,7 +821,13 @@ class HillClimbHarness:
                 "passed": state.outcome_gate.passed,
                 "message": state.outcome_gate.message,
             },
+            "warnings": context["warnings"],
             "incumbent_chain": promoted,
+            "frontier_bank": analysis["frontier_bank"],
+            "failure_clusters": analysis["failure_clusters"],
+            "intent_coverage": analysis["intent_coverage"],
+            "portfolio_gaps": analysis["portfolio_gaps"],
+            "recommended_next_batch": analysis["recommended_next_batch"],
             "abandoned_families": sorted(
                 {
                     payload["mutation_family"]
@@ -658,6 +838,263 @@ class HillClimbHarness:
             "unresolved_hypotheses": unresolved,
             "notable_failures": notable_failures[-5:],
         }
+
+    def analyze_run(
+        self, *, run_id: str, allow_protected_surface_drift: bool = False
+    ) -> dict[str, Any]:
+        """Return a structured phenotype and frontier analysis for one run."""
+        context = self._read_run_context(
+            run_id,
+            allow_protected_surface_drift=allow_protected_surface_drift,
+        )
+        return self._build_run_analysis(
+            run_dir=context["run_dir"],
+            results=context["results"],
+            hypotheses=context["hypotheses"],
+            warnings=context["warnings"],
+        )
+
+    def compare_profiles(
+        self,
+        *,
+        stage: str,
+        baseline_summary: dict[str, Any] | None = None,
+        candidate_summary: dict[str, Any] | None = None,
+        baseline_source_path: Path | str | None = None,
+        candidate_source_path: Path | str | None = None,
+        anchor_summary: dict[str, Any] | None = None,
+        anchor_source_path: Path | str | None = None,
+    ) -> dict[str, Any]:
+        """Compare stage-aligned profiles from stored evals or ad hoc sources."""
+        baseline_profile = self._resolve_profile_input(
+            stage=stage,
+            summary=baseline_summary,
+            source_path=baseline_source_path,
+        )
+        candidate_profile = self._resolve_profile_input(
+            stage=stage,
+            summary=candidate_summary,
+            source_path=candidate_source_path,
+        )
+        anchor_profile = (
+            None
+            if anchor_summary is None and anchor_source_path is None
+            else self._resolve_profile_input(
+                stage=stage,
+                summary=anchor_summary,
+                source_path=anchor_source_path,
+            )
+        )
+        payload = {
+            "stage": stage,
+            "baseline": baseline_profile,
+            "candidate": candidate_profile,
+            "candidate_vs_baseline": self._compare_profile_maps(
+                candidate_profile["profile"],
+                baseline_profile["profile"],
+            ),
+        }
+        if anchor_profile is not None:
+            payload["anchor"] = anchor_profile
+            payload["candidate_vs_anchor"] = self._compare_profile_maps(
+                candidate_profile["profile"],
+                anchor_profile["profile"],
+            )
+            payload["baseline_vs_anchor"] = self._compare_profile_maps(
+                baseline_profile["profile"],
+                anchor_profile["profile"],
+            )
+        return payload
+
+    def _build_run_analysis(
+        self,
+        *,
+        run_dir: Path,
+        results: list[dict[str, Any]],
+        hypotheses: dict[str, dict[str, Any]],
+        warnings: list[str],
+    ) -> dict[str, Any]:
+        frontier_bank = self._build_frontier_bank(results)
+        failure_clusters = self._build_failure_clusters(results)
+        phenotype_coverage = {
+            payload["hypothesis_id"]: self._hypothesis_analysis_entry(payload)
+            for payload in sorted(
+                hypotheses.values(), key=lambda payload: payload["hypothesis_id"]
+            )
+        }
+        intent_coverage = self._build_intent_coverage(hypotheses)
+        return {
+            "artifact_version": ANALYSIS_VERSION,
+            "run_id": run_dir.name,
+            "warnings": warnings,
+            "frontier_bank": frontier_bank,
+            "failure_clusters": failure_clusters,
+            "recent_failures": [
+                summary
+                for summary in results
+                if summary.get("status") in {"discard", "invalid"}
+            ][-5:],
+            "phenotype_coverage": phenotype_coverage,
+            "intent_coverage": intent_coverage,
+            "portfolio_gaps": self._portfolio_gaps(intent_coverage),
+            "recommended_next_batch": self._recommended_next_batch(
+                frontier_bank=frontier_bank,
+                failure_clusters=failure_clusters,
+                intent_coverage=intent_coverage,
+            ),
+        }
+
+    def _build_failure_clusters(self, results: list[dict[str, Any]]) -> dict[str, int]:
+        failure_clusters: dict[str, int] = {}
+        for summary in results:
+            derived = summary.get("derived_analysis", {})
+            failure = derived.get("failure_signature", {})
+            for tag in failure.get("tags", []):
+                failure_clusters[tag] = failure_clusters.get(tag, 0) + 1
+        return dict(sorted(failure_clusters.items()))
+
+    def _hypothesis_analysis_entry(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "mutation_family": payload["mutation_family"],
+            "novelty_coordinates": payload.get("novelty_coordinates", {}),
+            "target_metrics": payload.get("target_metrics", {}),
+            "hard_guardrails": payload.get("hard_guardrails", {}),
+            "expected_failure_mode": payload.get("expected_failure_mode"),
+            "actual_failure_mode": payload.get("actual_failure_mode"),
+            "synthesis_eligible": payload.get("synthesis_eligible", True),
+            "intents": self._infer_hypothesis_intents(payload),
+        }
+
+    def _infer_hypothesis_intents(self, payload: dict[str, Any]) -> list[str]:
+        target_metrics = set(payload.get("target_metrics", {}))
+        hard_guardrails = set(payload.get("hard_guardrails", {}))
+        experiment_fields = target_metrics | hard_guardrails
+        search_blob = " ".join(
+            [
+                str(payload.get("mutation_family") or ""),
+                str(payload.get("title") or ""),
+                str(payload.get("rationale") or ""),
+                str(payload.get("expected_effect") or ""),
+                str(payload.get("expected_failure_mode") or ""),
+                str(payload.get("actual_failure_mode") or ""),
+                _json_search_blob(payload.get("novelty_coordinates", {})),
+            ]
+        ).lower()
+        intents: list[str] = []
+        if payload.get("seed_eval_id") is not None or any(
+            token in search_blob for token in ("refine", "continuation", "incumbent")
+        ):
+            intents.append("local_refine")
+        if experiment_fields & {"arb_edge", "arb_loss_to_retail_gain"} or any(
+            token in search_blob for token in ("anti-arb", "anti_arb", "arb", "toxic")
+        ):
+            intents.append("anti_arb")
+        if experiment_fields & {
+            "low_decile_mean_edge",
+            "median_decile_mean_edge",
+            "high_decile_mean_edge",
+            "low_retail_mean_edge",
+            "low_volatility_mean_edge",
+        } or any(
+            token in search_blob
+            for token in ("weak-slice", "weak_slice", "low-retail", "low-vol", "tail")
+        ):
+            intents.append("weak_slice")
+        if experiment_fields & {
+            "time_weighted_bid_fee",
+            "time_weighted_ask_fee",
+            "max_fee_jump",
+        } or any(
+            token in search_blob
+            for token in ("fee", "spike", "calm-flow", "calm_flow", "guardrail")
+        ):
+            intents.append("fee_discipline")
+        if payload.get("novelty_coordinates") or any(
+            token in search_blob
+            for token in ("structural", "orthogonal", "pivot", "novel", "synth")
+        ):
+            intents.append("structural_pivot")
+        return _sorted_unique(intents)
+
+    def _build_intent_coverage(
+        self, hypotheses: dict[str, dict[str, Any]]
+    ) -> dict[str, dict[str, Any]]:
+        open_statuses = {"planned", "queued", "active"}
+        coverage: dict[str, dict[str, Any]] = {
+            intent: {"all_hypothesis_ids": [], "open_hypothesis_ids": []}
+            for intent in PLANNING_INTENTS
+        }
+        for payload in hypotheses.values():
+            for intent in self._infer_hypothesis_intents(payload):
+                bucket = coverage.setdefault(
+                    intent, {"all_hypothesis_ids": [], "open_hypothesis_ids": []}
+                )
+                bucket["all_hypothesis_ids"].append(payload["hypothesis_id"])
+                if payload.get("status") in open_statuses:
+                    bucket["open_hypothesis_ids"].append(payload["hypothesis_id"])
+        for bucket in coverage.values():
+            bucket["all_hypothesis_ids"] = _sorted_unique(bucket["all_hypothesis_ids"])
+            bucket["open_hypothesis_ids"] = _sorted_unique(
+                bucket["open_hypothesis_ids"]
+            )
+        return coverage
+
+    def _portfolio_gaps(self, intent_coverage: dict[str, dict[str, Any]]) -> list[str]:
+        return [
+            intent
+            for intent in PLANNING_INTENTS
+            if intent != "local_refine"
+            and not intent_coverage.get(intent, {}).get("open_hypothesis_ids")
+        ]
+
+    def _recommended_next_batch(
+        self,
+        *,
+        frontier_bank: dict[str, Any],
+        failure_clusters: dict[str, int],
+        intent_coverage: dict[str, dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        recommendations: list[dict[str, Any]] = []
+        best_raw = frontier_bank.get("best_raw", [])
+        if best_raw:
+            recommendations.append(
+                {
+                    "intent": "local_refine",
+                    "covered": bool(
+                        intent_coverage.get("local_refine", {}).get(
+                            "open_hypothesis_ids"
+                        )
+                    ),
+                    "reason": f"Exploit the strongest raw survivor {best_raw[0]['eval_id']} before widening again.",
+                    "anchor_eval_id": best_raw[0]["eval_id"],
+                }
+            )
+        intent_reasons = {
+            "anti_arb": (
+                "Arb leakage remains a distinct failure mode; keep one branch directly targeting arb_edge or arb_loss_to_retail_gain."
+                if failure_clusters.get("arb_leak_regression", 0) > 0
+                else "Keep one branch explicitly aimed at arb-loss improvement so cheaper calm quoting is not selected blindly."
+            ),
+            "weak_slice": "Keep one branch focused on weak low-retail, low-volatility, or tail slices instead of only overall mean_edge.",
+            "fee_discipline": (
+                "Recent failures show fee-surface shape matters; keep one branch constrained on average fee drift or max_fee_jump."
+                if failure_clusters.get("over_spiky_fee_surface", 0) > 0
+                or failure_clusters.get("overpriced_calm_flow", 0) > 0
+                else "Keep one branch with explicit fee-discipline guardrails so structural pivots fail fast."
+            ),
+            "structural_pivot": "Reserve one orthogonal pivot so the batch does not collapse into semantically different versions of the same phenotype.",
+        }
+        for intent in ("anti_arb", "weak_slice", "fee_discipline", "structural_pivot"):
+            recommendations.append(
+                {
+                    "intent": intent,
+                    "covered": bool(
+                        intent_coverage.get(intent, {}).get("open_hypothesis_ids")
+                    ),
+                    "reason": intent_reasons[intent],
+                }
+            )
+        return recommendations
 
     def pull_best(self, *, run_id: str, stage: str, destination: Path | str) -> Path:
         """Copy the incumbent stage strategy snapshot into the destination path."""
@@ -765,19 +1202,38 @@ class HillClimbHarness:
         if not history_path.exists():
             history_path.write_text("")
         self._hypotheses_dir(run_dir).mkdir(parents=True, exist_ok=True)
+        analysis_path = self._analysis_path(run_dir)
+        if not analysis_path.exists():
+            analysis_path.write_text("")
 
     def _read_results(self, run_dir: Path) -> list[dict[str, Any]]:
-        results_path = run_dir / "results.jsonl"
-        if not results_path.exists():
-            return []
-        return [
-            json.loads(line)
-            for line in results_path.read_text().splitlines()
-            if line.strip()
-        ]
+        return self._read_jsonl_records(run_dir / "results.jsonl")
 
     def _history_path(self, run_dir: Path) -> Path:
         return run_dir / "history.jsonl"
+
+    def _analysis_path(self, run_dir: Path) -> Path:
+        return run_dir / "analysis.json"
+
+    def _read_jsonl_records(self, path: Path) -> list[dict[str, Any]]:
+        if not path.exists():
+            return []
+        records: list[dict[str, Any]] = []
+        for line_number, line in enumerate(path.read_text().splitlines(), start=1):
+            if not line.strip():
+                continue
+            try:
+                payload = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise HillClimbHarnessError(
+                    f"Invalid JSON in {path} line {line_number}: {exc.msg}"
+                ) from exc
+            if not isinstance(payload, dict):
+                raise HillClimbHarnessError(
+                    f"Expected JSON object in {path} line {line_number}"
+                )
+            records.append(payload)
+        return records
 
     def _hypotheses_dir(self, run_dir: Path) -> Path:
         return run_dir / "hypotheses"
@@ -788,7 +1244,9 @@ class HillClimbHarness:
     def _pending_sources_dir(self, run_dir: Path) -> Path:
         return run_dir / ".pending_sources"
 
-    def _pending_source_path(self, run_dir: Path, *, stage: str, source_sha256: str) -> Path:
+    def _pending_source_path(
+        self, run_dir: Path, *, stage: str, source_sha256: str
+    ) -> Path:
         return self._pending_sources_dir(run_dir) / f"{stage}--{source_sha256}"
 
     def _normalize_string_list(self, values: list[str] | None) -> list[str]:
@@ -802,6 +1260,382 @@ class HillClimbHarness:
             if text:
                 normalized.append(text)
         return normalized
+
+    def _normalize_float_mapping(
+        self,
+        values: dict[str, float] | None,
+        *,
+        field_name: str,
+        allowed_keys: tuple[str, ...] = EXPERIMENT_METRIC_FIELDS,
+    ) -> dict[str, float]:
+        if values is None:
+            return {}
+        if not isinstance(values, dict):
+            raise HillClimbHarnessError(
+                f"Expected {field_name} to be an object of finite numbers"
+            )
+        normalized: dict[str, float] = {}
+        for key, value in values.items():
+            if not isinstance(key, str) or not key.strip():
+                raise HillClimbHarnessError(
+                    f"Expected non-empty string keys in {field_name}"
+                )
+            if key not in allowed_keys:
+                allowed = ", ".join(sorted(allowed_keys))
+                raise HillClimbHarnessError(
+                    f"Unknown {field_name} metric {key!r}; expected one of: {allowed}"
+                )
+            converted = _safe_float(value)
+            if converted is None:
+                raise HillClimbHarnessError(
+                    f"Expected finite numeric value for {field_name} metric {key!r}"
+                )
+            normalized[key] = converted
+        return normalized
+
+    def _normalize_json_object(self, payload: dict[str, Any] | None) -> dict[str, Any]:
+        if payload is None:
+            return {}
+        if not isinstance(payload, dict):
+            raise HillClimbHarnessError("Expected a JSON object")
+        try:
+            json.dumps(payload, sort_keys=True)
+        except TypeError as exc:
+            raise HillClimbHarnessError("Expected a JSON-serializable object") from exc
+        return dict(payload)
+
+    def _slice_metric(
+        self,
+        scorecard: dict[str, Any],
+        *,
+        collection: str,
+        bucket: str,
+        metric: str = "mean_edge",
+    ) -> float | None:
+        by_slice = scorecard.get("by_slice", {})
+        group = by_slice.get(collection, {}) if isinstance(by_slice, dict) else {}
+        bucket_payload = group.get(bucket, {}) if isinstance(group, dict) else {}
+        if not isinstance(bucket_payload, dict):
+            return None
+        return _safe_float(bucket_payload.get(metric))
+
+    def _extract_profile(self, scorecard: dict[str, Any]) -> dict[str, float | None]:
+        overall = scorecard.get("overall", {})
+        if not isinstance(overall, dict):
+            overall = {}
+        profile = {field: _safe_float(overall.get(field)) for field in PROFILE_FIELDS}
+        profile.update(
+            {
+                "low_decile_mean_edge": self._slice_metric(
+                    scorecard,
+                    collection="mean_edge_deciles",
+                    bucket="d01",
+                ),
+                "median_decile_mean_edge": self._slice_metric(
+                    scorecard,
+                    collection="mean_edge_deciles",
+                    bucket="d05",
+                ),
+                "high_decile_mean_edge": self._slice_metric(
+                    scorecard,
+                    collection="mean_edge_deciles",
+                    bucket="d10",
+                ),
+                "low_retail_mean_edge": self._slice_metric(
+                    scorecard,
+                    collection="retail_intensity_terciles",
+                    bucket="low",
+                ),
+                "low_volatility_mean_edge": self._slice_metric(
+                    scorecard,
+                    collection="volatility_terciles",
+                    bucket="low",
+                ),
+            }
+        )
+        return profile
+
+    def _compare_profile_maps(
+        self,
+        current: dict[str, float | None],
+        baseline: dict[str, float | None],
+    ) -> dict[str, float | None]:
+        return {
+            key: _delta(current.get(key), baseline.get(key))
+            for key in sorted(set(current) | set(baseline))
+        }
+
+    def _build_failure_signature(
+        self,
+        *,
+        profile: dict[str, float | None],
+        deltas: dict[str, float | None],
+        overall_delta: float | None,
+    ) -> dict[str, Any]:
+        tags: list[str] = []
+        notes: list[str] = []
+        arb_edge_delta = deltas.get("arb_edge")
+        arb_loss_ratio_delta = deltas.get("arb_loss_to_retail_gain")
+        if (arb_edge_delta is not None and arb_edge_delta < -10.0) or (
+            arb_loss_ratio_delta is not None and arb_loss_ratio_delta > 0.03
+        ):
+            tags.append("arb_leak_regression")
+            notes.append("arb leakage worsened materially vs incumbent")
+        low_slice_delta = deltas.get("low_retail_mean_edge")
+        fee_delta = deltas.get("time_weighted_bid_fee")
+        if (
+            low_slice_delta is not None
+            and low_slice_delta < -5.0
+            and fee_delta is not None
+            and fee_delta > 0.0005
+        ):
+            tags.append("overpriced_calm_flow")
+            notes.append("calm-flow slice regressed while average fees moved up")
+        max_fee_jump_delta = deltas.get("max_fee_jump")
+        profile_max_fee_jump = _safe_float(profile.get("max_fee_jump"))
+        if (max_fee_jump_delta is not None and max_fee_jump_delta > 0.0025) or (
+            profile_max_fee_jump is not None and profile_max_fee_jump > 0.01
+        ):
+            tags.append("over_spiky_fee_surface")
+            notes.append("fee jumps look too abrupt for viable screening")
+        low_decile_delta = deltas.get("low_decile_mean_edge")
+        high_decile_delta = deltas.get("high_decile_mean_edge")
+        if (
+            low_decile_delta is not None
+            and low_decile_delta < -10.0
+            and high_decile_delta is not None
+            and high_decile_delta <= 0.0
+        ):
+            tags.append("tail_protection_loss")
+            notes.append(
+                "weak tail slices regressed without compensating strong-slice gain"
+            )
+        if overall_delta is not None and overall_delta <= 0.0:
+            if any(
+                (delta := deltas.get(field)) is not None and delta > 0.0
+                for field in ("low_retail_mean_edge", "low_volatility_mean_edge")
+            ):
+                tags.append("weak_slice_improvement_without_overall_gain")
+                notes.append(
+                    "some weak slices improved but not enough to move overall edge"
+                )
+        primary_tag = tags[0] if tags else None
+        if primary_tag is None and overall_delta is not None and overall_delta > 0.0:
+            primary_tag = "improving_variant"
+        return {
+            "tags": _sorted_unique(tags),
+            "primary_tag": primary_tag,
+            "notes": notes,
+        }
+
+    def _build_derived_analysis(
+        self,
+        *,
+        scorecard: dict[str, Any],
+        incumbent_before: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        profile = self._extract_profile(scorecard)
+        incumbent_profile = None
+        deltas: dict[str, float | None] = {}
+        if incumbent_before is not None:
+            incumbent_scorecard = incumbent_before.get("scorecard", {})
+            if isinstance(incumbent_scorecard, dict):
+                incumbent_profile = self._extract_profile(incumbent_scorecard)
+                deltas = self._compare_profile_maps(profile, incumbent_profile)
+        overall_delta = deltas.get("mean_edge")
+        return {
+            "profile": profile,
+            "incumbent_profile": incumbent_profile,
+            "delta_vs_incumbent_profile": deltas,
+            "failure_signature": self._build_failure_signature(
+                profile=profile,
+                deltas=deltas,
+                overall_delta=overall_delta,
+            ),
+        }
+
+    def _build_invalid_analysis(self, error: str) -> dict[str, Any]:
+        return {
+            "profile": {},
+            "incumbent_profile": None,
+            "delta_vs_incumbent_profile": {},
+            "failure_signature": {
+                "tags": ["invalid_eval"],
+                "primary_tag": "invalid_eval",
+                "notes": [error],
+            },
+        }
+
+    def _best_summary_for_metric(
+        self, summaries: list[dict[str, Any]], metric: str, *, reverse: bool = True
+    ) -> dict[str, Any] | None:
+        best: dict[str, Any] | None = None
+        best_value: float | None = None
+        for summary in summaries:
+            derived = summary.get("derived_analysis", {})
+            profile = derived.get("profile", {}) if isinstance(derived, dict) else {}
+            value = _safe_float(profile.get(metric))
+            if value is None:
+                continue
+            if (
+                best is None
+                or best_value is None
+                or (value > best_value if reverse else value < best_value)
+            ):
+                best = summary
+                best_value = value
+        return None if best is None else self._frontier_entry(best)
+
+    def _frontier_entry(self, summary: dict[str, Any]) -> dict[str, Any]:
+        derived = summary.get("derived_analysis", {})
+        failure = (
+            derived.get("failure_signature", {}) if isinstance(derived, dict) else {}
+        )
+        return {
+            "eval_id": summary["eval_id"],
+            "stage": summary["stage"],
+            "status": summary["status"],
+            "mean_edge": summary.get("mean_edge"),
+            "hypothesis_id": summary.get("hypothesis_id"),
+            "label": summary.get("label"),
+            "profile": derived.get("profile", {}),
+            "failure_tags": list(failure.get("tags", [])),
+        }
+
+    def _build_frontier_bank(self, results: list[dict[str, Any]]) -> dict[str, Any]:
+        valid = [
+            summary
+            for summary in results
+            if summary.get("mean_edge") is not None
+            and summary.get("status") != "invalid"
+        ]
+        sorted_by_edge = sorted(
+            valid,
+            key=lambda summary: float(summary["mean_edge"]),
+            reverse=True,
+        )
+        incumbents = [
+            self._frontier_entry(summary)
+            for summary in valid
+            if summary.get("status") in {"seed", "keep"}
+        ]
+        return {
+            "incumbents": incumbents,
+            "best_raw": [
+                self._frontier_entry(summary) for summary in sorted_by_edge[:5]
+            ],
+            "best_low_retail": self._best_summary_for_metric(
+                valid, "low_retail_mean_edge"
+            ),
+            "best_low_volatility": self._best_summary_for_metric(
+                valid, "low_volatility_mean_edge"
+            ),
+            "best_anti_arb": self._best_summary_for_metric(valid, "arb_edge"),
+            "best_fee_discipline": self._best_summary_for_metric(
+                valid, "arb_loss_to_retail_gain", reverse=False
+            ),
+        }
+
+    def _resolve_profile_input(
+        self,
+        *,
+        stage: str,
+        summary: dict[str, Any] | None,
+        source_path: Path | str | None,
+    ) -> dict[str, Any]:
+        if summary is not None:
+            summary_stage = summary.get("stage")
+            if summary_stage != stage:
+                raise HillClimbHarnessError(
+                    f"Stored eval {summary.get('eval_id')!r} is for stage {summary_stage!r}, "
+                    f"not requested stage {stage!r}"
+                )
+            derived = summary.get("derived_analysis", {})
+            profile = derived.get("profile", {}) if isinstance(derived, dict) else {}
+            if not isinstance(profile, dict):
+                raise HillClimbHarnessError(
+                    f"Stored eval {summary.get('eval_id')!r} is missing a usable profile"
+                )
+            return {
+                "kind": "stored_eval",
+                "eval_id": summary.get("eval_id"),
+                "stage": stage,
+                "label": summary.get("label"),
+                "hypothesis_id": summary.get("hypothesis_id"),
+                "profile": dict(profile),
+            }
+        if source_path is None:
+            raise HillClimbHarnessError(
+                "Expected either a stored summary or source path"
+            )
+        profile = self.profile_source(stage=stage, source_path=source_path)
+        return {
+            "kind": "ad_hoc_source",
+            "eval_id": None,
+            "stage": stage,
+            "source_path": profile["source_path"],
+            "strategy_name": profile["strategy_name"],
+            "profile": profile["profile"],
+        }
+
+    def _read_run_context(
+        self, run_id: str, *, allow_protected_surface_drift: bool
+    ) -> dict[str, Any]:
+        normalized_run_id = _slug(run_id, fallback="run")
+        run_dir = self.artifact_root / normalized_run_id
+        if not run_dir.exists():
+            raise HillClimbHarnessError(f"Unknown hill-climb run: {normalized_run_id}")
+        warnings = self._validate_current_run(
+            run_dir,
+            allow_protected_surface_drift=allow_protected_surface_drift,
+        )
+        return {
+            "run_dir": run_dir,
+            "results": self._read_results(run_dir),
+            "state": self._load_state_payload(run_dir, require_current=True),
+            "hypotheses": self._load_hypotheses(run_dir),
+            "warnings": warnings,
+        }
+
+    def get_read_warnings(
+        self, *, run_id: str, allow_protected_surface_drift: bool = False
+    ) -> list[str]:
+        """Return any non-fatal warnings for a read-only run inspection."""
+        return list(
+            self._read_run_context(
+                run_id,
+                allow_protected_surface_drift=allow_protected_surface_drift,
+            )["warnings"]
+        )
+
+    def profile_source(self, *, stage: str, source_path: Path | str) -> dict[str, Any]:
+        """Compile and evaluate a source without persisting a run artifact."""
+        stage_config = resolve_hill_climb_stage(stage)
+        source_path = Path(source_path)
+        source_text = self._read_source(source_path)
+        strategy = self._strategy_loader(source_text)
+        result = self._stage_runner_factory(
+            stage_config.name, self.n_workers
+        ).run_match(
+            strategy,
+            self._baseline_loader(),
+            store_results=True,
+        )
+        scorecard = compute_scorecard(result, stage=None)
+        scorecard["run_metadata"]["stage"] = stage_config.name
+        scorecard["run_metadata"]["seed_block"] = list(stage_config.seed_block)
+        scorecard["gate"] = self._build_gate(
+            mean_edge=float(scorecard["overall"]["mean_edge"]),
+            stage_config=stage_config,
+            scorecard=scorecard,
+        )
+        return {
+            "stage": stage_config.name,
+            "source_path": str(source_path.resolve()),
+            "strategy_name": strategy.get_name(),
+            "profile": self._extract_profile(scorecard),
+            "scorecard": scorecard,
+        }
 
     def _load_hypotheses(self, run_dir: Path) -> dict[str, dict[str, Any]]:
         hypotheses_dir = self._hypotheses_dir(run_dir)
@@ -829,6 +1663,12 @@ class HillClimbHarness:
             scorecard = summary.get("scorecard")
             gate = scorecard.get("gate", {}) if isinstance(scorecard, dict) else {}
             selection = summary.get("selection", {})
+            derived = summary.get("derived_analysis", {})
+            failure = (
+                derived.get("failure_signature", {})
+                if isinstance(derived, dict)
+                else {}
+            )
             history.append(
                 {
                     "artifact_version": HISTORY_VERSION,
@@ -851,6 +1691,8 @@ class HillClimbHarness:
                     "change_summary": summary.get("change_summary"),
                     "replay_reason": summary.get("replay_reason"),
                     "research_refs": list(summary.get("research_refs", [])),
+                    "failure_tags": list(failure.get("tags", [])),
+                    "primary_failure_tag": failure.get("primary_tag"),
                 }
             )
         return history
@@ -964,12 +1806,21 @@ class HillClimbHarness:
         merged_refs = set(updated.get("research_refs", []))
         merged_refs.update(summary.get("research_refs", []))
         updated["research_refs"] = sorted(merged_refs)
+        failure = summary.get("derived_analysis", {}).get("failure_signature", {})
+        primary_failure = failure.get("primary_tag")
+        if (
+            summary.get("status") in {"discard", "invalid"}
+            and isinstance(primary_failure, str)
+            and primary_failure in (FAILURE_TAGS | {"invalid_eval"})
+        ):
+            updated["actual_failure_mode"] = primary_failure
         self._validate_hypothesis(run_dir, updated, results=self._read_results(run_dir))
         self._write_hypothesis(run_dir, updated)
 
     def _sync_derived_views(self, run_dir: Path) -> None:
         self._ensure_read_surfaces(run_dir)
         results = self._read_results(run_dir)
+        hypotheses = self._load_hypotheses(run_dir)
         history_path = self._history_path(run_dir)
         history_lines = [
             json.dumps(entry, sort_keys=True) for entry in self._build_history(results)
@@ -977,6 +1828,14 @@ class HillClimbHarness:
         history_path.write_text(
             "" if not history_lines else "\n".join(history_lines) + "\n"
         )
+        analysis_payload = self._build_run_analysis(
+            run_dir=run_dir,
+            results=results,
+            hypotheses=hypotheses,
+            warnings=[],
+        )
+        analysis_payload["generated_at"] = _utc_now()
+        self._analysis_path(run_dir).write_text(_json_dump(analysis_payload))
         self._write_cross_run_index()
 
     def _collect_research_artifact_paths(self, run_dir: Path) -> list[str]:
@@ -1010,7 +1869,14 @@ class HillClimbHarness:
                     manifest = _json_load(manifest_path)
                     results = self._read_results(run_dir)
                     state = self._load_state_payload(run_dir, require_current=False)
+                    hypotheses = self._load_hypotheses(run_dir)
                     history = self._build_history(results)
+                    analysis = self._build_run_analysis(
+                        run_dir=run_dir,
+                        results=results,
+                        hypotheses=hypotheses,
+                        warnings=[],
+                    )
                     best_mean_edges = {
                         stage: float(summary["mean_edge"])
                         for stage, eval_id in state.get(
@@ -1050,6 +1916,9 @@ class HillClimbHarness:
                             "active_stage": state.get("current_target_stage"),
                             "best_eval_ids": dict(state.get("incumbent_eval_ids", {})),
                             "best_mean_edges": best_mean_edges,
+                            "frontier_bank": analysis["frontier_bank"],
+                            "failure_clusters": analysis["failure_clusters"],
+                            "portfolio_gaps": analysis["portfolio_gaps"],
                             "research_artifact_paths": self._collect_research_artifact_paths(
                                 run_dir
                             ),
@@ -1065,6 +1934,16 @@ class HillClimbHarness:
                             "active_stage": None,
                             "best_eval_ids": {},
                             "best_mean_edges": {},
+                            "frontier_bank": {
+                                "incumbents": [],
+                                "best_raw": [],
+                                "best_low_retail": None,
+                                "best_low_volatility": None,
+                                "best_anti_arb": None,
+                                "best_fee_discipline": None,
+                            },
+                            "failure_clusters": {},
+                            "portfolio_gaps": [],
                             "research_artifact_paths": [],
                             "notes": [str(exc)],
                         }
@@ -1170,7 +2049,13 @@ class HillClimbHarness:
             return None
         return float(edge_stddev) / math.sqrt(n)
 
-    def _build_gate(self, *, mean_edge: float, stage_config: Any) -> dict[str, Any]:
+    def _build_gate(
+        self,
+        *,
+        mean_edge: float,
+        stage_config: Any,
+        scorecard: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         thresholds: dict[str, float] = {}
         failures: list[str] = []
         if stage_config.min_mean_edge is not None:
@@ -1180,10 +2065,34 @@ class HillClimbHarness:
                     f"mean_edge={mean_edge:.6f} is below stage threshold "
                     f"{stage_config.min_mean_edge:.6f}"
                 )
+        overall = scorecard.get("overall", {}) if isinstance(scorecard, dict) else {}
+        arb_loss_ratio = _safe_float(overall.get("arb_loss_to_retail_gain"))
+        if getattr(stage_config, "max_arb_loss_to_retail_gain", None) is not None:
+            thresholds["arb_loss_to_retail_gain"] = float(
+                stage_config.max_arb_loss_to_retail_gain
+            )
+            if arb_loss_ratio is None:
+                failures.append("arb_loss_to_retail_gain is required for this stage")
+            elif arb_loss_ratio > float(stage_config.max_arb_loss_to_retail_gain):
+                failures.append(
+                    "arb_loss_to_retail_gain="
+                    f"{arb_loss_ratio:.6f} exceeds stage threshold "
+                    f"{float(stage_config.max_arb_loss_to_retail_gain):.6f}"
+                )
+        max_fee_jump = _safe_float(overall.get("max_fee_jump"))
+        if getattr(stage_config, "max_fee_jump", None) is not None:
+            thresholds["max_fee_jump"] = float(stage_config.max_fee_jump)
+            if max_fee_jump is None:
+                failures.append("max_fee_jump is required for this stage")
+            elif max_fee_jump > float(stage_config.max_fee_jump):
+                failures.append(
+                    f"max_fee_jump={max_fee_jump:.6f} exceeds stage threshold "
+                    f"{float(stage_config.max_fee_jump):.6f}"
+                )
         return {
             "stage": stage_config.name,
             "thresholds": thresholds,
-            "required_metric_fields": ["mean_edge"],
+            "required_metric_fields": sorted(thresholds),
             "passed": not failures,
             "failures": failures,
         }
@@ -1202,7 +2111,7 @@ class HillClimbHarness:
         incumbent_path = self._incumbent_path(run_dir, stage)
         if not incumbent_path.exists():
             return None
-        return json.loads(incumbent_path.read_text())
+        return _json_load(incumbent_path)
 
     def _read_latest(self, run_dir: Path, stage: str) -> dict[str, Any] | None:
         latest: dict[str, Any] | None = None
@@ -1400,7 +2309,10 @@ class HillClimbHarness:
         stage, raw_index = match.groups()
         return stage, int(raw_index)
 
-    def _validate_current_run(self, run_dir: Path) -> None:
+    def _validate_current_run(
+        self, run_dir: Path, *, allow_protected_surface_drift: bool = False
+    ) -> list[str]:
+        warnings: list[str] = []
         manifest_path = run_dir / "run.json"
         if not manifest_path.exists():
             raise HillClimbHarnessError(
@@ -1481,7 +2393,10 @@ class HillClimbHarness:
                 run_id=run_dir.name,
             )
         except ProtectedSurfaceError as exc:
-            raise HillClimbHarnessError(str(exc)) from exc
+            if not allow_protected_surface_drift:
+                raise HillClimbHarnessError(str(exc)) from exc
+            warnings.append(str(exc))
+        return warnings
 
     def _protected_surface(self) -> Any:
         if self._protected_surface_checker is None:
@@ -1645,6 +2560,14 @@ class HillClimbHarness:
         *,
         results: list[dict[str, Any]],
     ) -> None:
+        payload.setdefault("target_metrics", {})
+        payload.setdefault("hard_guardrails", {})
+        payload.setdefault("expected_failure_mode", None)
+        payload.setdefault("actual_failure_mode", None)
+        payload.setdefault("novelty_coordinates", {})
+        payload.setdefault("synthesis_eligible", True)
+        payload.setdefault("nearest_prior_failures", [])
+        payload.setdefault("nearest_prior_successes", [])
         required_fields = {
             "artifact_version",
             "hypothesis_id",
@@ -1659,6 +2582,14 @@ class HillClimbHarness:
             "seed_eval_id",
             "eval_ids",
             "research_refs",
+            "target_metrics",
+            "hard_guardrails",
+            "expected_failure_mode",
+            "actual_failure_mode",
+            "novelty_coordinates",
+            "synthesis_eligible",
+            "nearest_prior_failures",
+            "nearest_prior_successes",
         }
         missing = sorted(required_fields - set(payload))
         if missing:
@@ -1711,6 +2642,54 @@ class HillClimbHarness:
             raise HillClimbHarnessError(
                 f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has invalid research_refs"
             )
+        if not isinstance(payload["target_metrics"], dict) or any(
+            not isinstance(key, str)
+            or key not in EXPERIMENT_METRIC_FIELDS
+            or _safe_float(value) is None
+            for key, value in payload["target_metrics"].items()
+        ):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has invalid target_metrics"
+            )
+        if not isinstance(payload["hard_guardrails"], dict) or any(
+            not isinstance(key, str)
+            or key not in EXPERIMENT_METRIC_FIELDS
+            or _safe_float(value) is None
+            for key, value in payload["hard_guardrails"].items()
+        ):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has invalid hard_guardrails"
+            )
+        for field in ("expected_failure_mode", "actual_failure_mode"):
+            if payload[field] is not None and not isinstance(payload[field], str):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has invalid {field}"
+                )
+            if payload[field] is not None and payload[field] not in VALID_FAILURE_MODES:
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has unknown {field}"
+                )
+        if not isinstance(payload["novelty_coordinates"], dict):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has invalid novelty_coordinates"
+            )
+        try:
+            json.dumps(payload["novelty_coordinates"], sort_keys=True)
+        except TypeError as exc:
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has non-serializable novelty_coordinates"
+            ) from exc
+        if not isinstance(payload["synthesis_eligible"], bool):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has invalid synthesis_eligible"
+            )
+        for field in ("nearest_prior_failures", "nearest_prior_successes"):
+            if not isinstance(payload[field], list) or any(
+                not isinstance(value, str) for value in payload[field]
+            ):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has invalid {field}"
+                )
         result_eval_ids = {summary["eval_id"] for summary in results}
         if (
             payload["seed_eval_id"] is not None
@@ -1732,11 +2711,7 @@ class HillClimbHarness:
             raise HillClimbHarnessError(
                 f"Run '{run_dir.name}' is missing history.jsonl"
             )
-        actual = [
-            json.loads(line)
-            for line in history_path.read_text().splitlines()
-            if line.strip()
-        ]
+        actual = self._read_jsonl_records(history_path)
         expected = self._build_history(results)
         if actual != expected:
             raise HillClimbHarnessError(
