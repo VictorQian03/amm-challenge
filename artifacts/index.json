@@ -1,6 +1,6 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-12T01:26:10+00:00",
+  "generated_at": "2026-04-13T15:51:03+00:00",
   "hill_climb_runs": [
     {
       "active_stage": "screen",
@@ -63,6 +63,7 @@
         ]
       },
       "notes": [
+        "superseded by retained lane apr12-screen480-1130",
         "pending (screen incumbent 473.616393 is below target 480.000000)"
       ],
       "portfolio_gaps": [
@@ -76,6 +77,297 @@
         "https://moallemi.com/ciamac/papers/mm-amm-2024.pdf"
       ],
       "run_id": "apr11-screen480-0948",
+      "status": "historical"
+    },
+    {
+      "active_stage": "screen",
+      "best_eval_ids": {
+        "screen": "screen_0001"
+      },
+      "best_mean_edges": {
+        "screen": 473.61639344802524
+      },
+      "created_at": "2026-04-12T18:30:59+00:00",
+      "failure_clusters": {
+        "over_spiky_fee_surface": 8
+      },
+      "frontier_bank": {
+        "best_anti_arb": {
+          "eval_id": "prescreen_0002",
+          "failure_tags": [
+            "over_spiky_fee_surface"
+          ],
+          "hypothesis_id": "local-refine-hysteretic-release",
+          "label": "local-refine-hysteresis-v1",
+          "mean_edge": 477.3337207830145,
+          "profile": {
+            "arb_edge": -59.341286829595994,
+            "arb_loss_to_retail_gain": 0.11057210786389085,
+            "high_decile_mean_edge": 655.2688984212496,
+            "low_decile_mean_edge": 368.75003250855275,
+            "low_retail_mean_edge": 395.5165137921778,
+            "low_volatility_mean_edge": 493.94851413958634,
+            "max_fee_jump": 0.05653797702667527,
+            "mean_edge": 477.3337207830145,
+            "median_decile_mean_edge": 434.47535406845594,
+            "retail_edge": 536.6750076126103,
+            "time_weighted_ask_fee": 0.004780561409618463,
+            "time_weighted_bid_fee": 0.004746646600552653
+          },
+          "stage": "prescreen",
+          "status": "discard"
+        },
+        "best_fee_discipline": {
+          "eval_id": "prescreen_0002",
+          "failure_tags": [
+            "over_spiky_fee_surface"
+          ],
+          "hypothesis_id": "local-refine-hysteretic-release",
+          "label": "local-refine-hysteresis-v1",
+          "mean_edge": 477.3337207830145,
+          "profile": {
+            "arb_edge": -59.341286829595994,
+            "arb_loss_to_retail_gain": 0.11057210786389085,
+            "high_decile_mean_edge": 655.2688984212496,
+            "low_decile_mean_edge": 368.75003250855275,
+            "low_retail_mean_edge": 395.5165137921778,
+            "low_volatility_mean_edge": 493.94851413958634,
+            "max_fee_jump": 0.05653797702667527,
+            "mean_edge": 477.3337207830145,
+            "median_decile_mean_edge": 434.47535406845594,
+            "retail_edge": 536.6750076126103,
+            "time_weighted_ask_fee": 0.004780561409618463,
+            "time_weighted_bid_fee": 0.004746646600552653
+          },
+          "stage": "prescreen",
+          "status": "discard"
+        },
+        "best_low_retail": {
+          "eval_id": "screen_0003",
+          "failure_tags": [
+            "over_spiky_fee_surface"
+          ],
+          "hypothesis_id": "local-refine-hysteretic-release",
+          "label": "local-refine-hysteresis-v1",
+          "mean_edge": 473.9944809111753,
+          "profile": {
+            "arb_edge": -62.10633572962275,
+            "arb_loss_to_retail_gain": 0.11584823936434267,
+            "high_decile_mean_edge": 623.3307206642153,
+            "low_decile_mean_edge": 362.1046008930522,
+            "low_retail_mean_edge": 406.03512113576653,
+            "low_volatility_mean_edge": 451.76490309570437,
+            "max_fee_jump": 0.05570573674887606,
+            "mean_edge": 473.9944809111753,
+            "median_decile_mean_edge": 447.0035884134495,
+            "retail_edge": 536.100816640798,
+            "time_weighted_ask_fee": 0.004710544690489963,
+            "time_weighted_bid_fee": 0.004690644171114521
+          },
+          "stage": "screen",
+          "status": "discard"
+        },
+        "best_low_volatility": {
+          "eval_id": "prescreen_0002",
+          "failure_tags": [
+            "over_spiky_fee_surface"
+          ],
+          "hypothesis_id": "local-refine-hysteretic-release",
+          "label": "local-refine-hysteresis-v1",
+          "mean_edge": 477.3337207830145,
+          "profile": {
+            "arb_edge": -59.341286829595994,
+            "arb_loss_to_retail_gain": 0.11057210786389085,
+            "high_decile_mean_edge": 655.2688984212496,
+            "low_decile_mean_edge": 368.75003250855275,
+            "low_retail_mean_edge": 395.5165137921778,
+            "low_volatility_mean_edge": 493.94851413958634,
+            "max_fee_jump": 0.05653797702667527,
+            "mean_edge": 477.3337207830145,
+            "median_decile_mean_edge": 434.47535406845594,
+            "retail_edge": 536.6750076126103,
+            "time_weighted_ask_fee": 0.004780561409618463,
+            "time_weighted_bid_fee": 0.004746646600552653
+          },
+          "stage": "prescreen",
+          "status": "discard"
+        },
+        "best_raw": [
+          {
+            "eval_id": "prescreen_0002",
+            "failure_tags": [
+              "over_spiky_fee_surface"
+            ],
+            "hypothesis_id": "local-refine-hysteretic-release",
+            "label": "local-refine-hysteresis-v1",
+            "mean_edge": 477.3337207830145,
+            "profile": {
+              "arb_edge": -59.341286829595994,
+              "arb_loss_to_retail_gain": 0.11057210786389085,
+              "high_decile_mean_edge": 655.2688984212496,
+              "low_decile_mean_edge": 368.75003250855275,
+              "low_retail_mean_edge": 395.5165137921778,
+              "low_volatility_mean_edge": 493.94851413958634,
+              "max_fee_jump": 0.05653797702667527,
+              "mean_edge": 477.3337207830145,
+              "median_decile_mean_edge": 434.47535406845594,
+              "retail_edge": 536.6750076126103,
+              "time_weighted_ask_fee": 0.004780561409618463,
+              "time_weighted_bid_fee": 0.004746646600552653
+            },
+            "stage": "prescreen",
+            "status": "discard"
+          },
+          {
+            "eval_id": "prescreen_0005",
+            "failure_tags": [
+              "over_spiky_fee_surface"
+            ],
+            "hypothesis_id": "anti-arb-toxicity-budget",
+            "label": "anti-arb-toxicity-v1",
+            "mean_edge": 476.27982742652785,
+            "profile": {
+              "arb_edge": -63.96330615597463,
+              "arb_loss_to_retail_gain": 0.11839725890048097,
+              "high_decile_mean_edge": 653.3452205285618,
+              "low_decile_mean_edge": 367.88772100257836,
+              "low_retail_mean_edge": 394.2366235802896,
+              "low_volatility_mean_edge": 493.0877495290893,
+              "max_fee_jump": 0.05825145623686737,
+              "mean_edge": 476.27982742652785,
+              "median_decile_mean_edge": 434.1044544254175,
+              "retail_edge": 540.2431335825021,
+              "time_weighted_ask_fee": 0.004364549840507604,
+              "time_weighted_bid_fee": 0.004306279292475709
+            },
+            "stage": "prescreen",
+            "status": "discard"
+          },
+          {
+            "eval_id": "screen_0003",
+            "failure_tags": [
+              "over_spiky_fee_surface"
+            ],
+            "hypothesis_id": "local-refine-hysteretic-release",
+            "label": "local-refine-hysteresis-v1",
+            "mean_edge": 473.9944809111753,
+            "profile": {
+              "arb_edge": -62.10633572962275,
+              "arb_loss_to_retail_gain": 0.11584823936434267,
+              "high_decile_mean_edge": 623.3307206642153,
+              "low_decile_mean_edge": 362.1046008930522,
+              "low_retail_mean_edge": 406.03512113576653,
+              "low_volatility_mean_edge": 451.76490309570437,
+              "max_fee_jump": 0.05570573674887606,
+              "mean_edge": 473.9944809111753,
+              "median_decile_mean_edge": 447.0035884134495,
+              "retail_edge": 536.100816640798,
+              "time_weighted_ask_fee": 0.004710544690489963,
+              "time_weighted_bid_fee": 0.004690644171114521
+            },
+            "stage": "screen",
+            "status": "discard"
+          },
+          {
+            "eval_id": "screen_0001",
+            "failure_tags": [
+              "over_spiky_fee_surface"
+            ],
+            "hypothesis_id": null,
+            "label": "baseline-latent-toxic-v1",
+            "mean_edge": 473.61639344802524,
+            "profile": {
+              "arb_edge": -66.77135092827479,
+              "arb_loss_to_retail_gain": 0.12356192682596893,
+              "high_decile_mean_edge": 622.0080798306832,
+              "low_decile_mean_edge": 361.497702023848,
+              "low_retail_mean_edge": 405.47245008814957,
+              "low_volatility_mean_edge": 451.7047749173429,
+              "max_fee_jump": 0.05697810742895679,
+              "mean_edge": 473.61639344802524,
+              "median_decile_mean_edge": 446.61686784788895,
+              "retail_edge": 540.3877443763,
+              "time_weighted_ask_fee": 0.004259354004241511,
+              "time_weighted_bid_fee": 0.00423782106588683
+            },
+            "stage": "screen",
+            "status": "seed"
+          },
+          {
+            "eval_id": "screen_0007",
+            "failure_tags": [
+              "over_spiky_fee_surface"
+            ],
+            "hypothesis_id": "weak-slice-rebate-bucket",
+            "label": "weak-slice-bucket-v2",
+            "mean_edge": 473.61639344802524,
+            "profile": {
+              "arb_edge": -66.77135092827479,
+              "arb_loss_to_retail_gain": 0.12356192682596893,
+              "high_decile_mean_edge": 622.0080798306832,
+              "low_decile_mean_edge": 361.497702023848,
+              "low_retail_mean_edge": 405.47245008814957,
+              "low_volatility_mean_edge": 451.7047749173429,
+              "max_fee_jump": 0.05697810742895679,
+              "mean_edge": 473.61639344802524,
+              "median_decile_mean_edge": 446.61686784788895,
+              "retail_edge": 540.3877443763,
+              "time_weighted_ask_fee": 0.004259354004241511,
+              "time_weighted_bid_fee": 0.00423782106588683
+            },
+            "stage": "screen",
+            "status": "discard"
+          }
+        ],
+        "incumbents": [
+          {
+            "eval_id": "screen_0001",
+            "failure_tags": [
+              "over_spiky_fee_surface"
+            ],
+            "hypothesis_id": null,
+            "label": "baseline-latent-toxic-v1",
+            "mean_edge": 473.61639344802524,
+            "profile": {
+              "arb_edge": -66.77135092827479,
+              "arb_loss_to_retail_gain": 0.12356192682596893,
+              "high_decile_mean_edge": 622.0080798306832,
+              "low_decile_mean_edge": 361.497702023848,
+              "low_retail_mean_edge": 405.47245008814957,
+              "low_volatility_mean_edge": 451.7047749173429,
+              "max_fee_jump": 0.05697810742895679,
+              "mean_edge": 473.61639344802524,
+              "median_decile_mean_edge": 446.61686784788895,
+              "retail_edge": 540.3877443763,
+              "time_weighted_ask_fee": 0.004259354004241511,
+              "time_weighted_bid_fee": 0.00423782106588683
+            },
+            "stage": "screen",
+            "status": "seed"
+          }
+        ]
+      },
+      "notes": [
+        "pending (screen incumbent 473.616393 is below target 480.000000)",
+        "next hypothesis structural-pivot-two-mode-controller: Pause and re-check read surfaces before any wider structural retry: prescreen_0009 cut time-weighted fees to about 16.6 bps but failed with mean_edge 286.876, arb_loss_to_retail_gain 0.488874, low_retail_mean_edge 255.060, and max_fee_jump 0.008691."
+      ],
+      "portfolio_gaps": [
+        "anti_arb",
+        "weak_slice",
+        "fee_discipline",
+        "structural_pivot"
+      ],
+      "research_artifact_paths": [
+        "artifacts/research/amm_branch_portfolio_apr12-screen480-1130",
+        "artifacts/research/amm_branch_portfolio_apr12-screen480-1130/memo.md",
+        "docs/plans/active/apr12-screen480-1130.md",
+        "https://arxiv.org/abs/2011.02351",
+        "https://arxiv.org/abs/2508.08152",
+        "https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID4236377_code5235387.pdf?abstractid=4105954&mirid=1",
+        "https://uniswap.org/flair.pdf",
+        "https://www.rfc-editor.org/info/rfc2698"
+      ],
+      "run_id": "apr12-screen480-1130",
       "status": "active"
     }
   ]

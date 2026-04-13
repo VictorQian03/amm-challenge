@@ -1,0 +1,42 @@
+{
+  "actual_failure_mode": "over_spiky_fee_surface",
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-12T18:35:44+00:00",
+  "eval_ids": [
+    "prescreen_0002",
+    "screen_0003",
+    "screen_0004"
+  ],
+  "expected_effect": "Lift low-decile and low-retail slices enough to matter on screen without broad calm underpricing.",
+  "expected_failure_mode": "weak_slice_improvement_without_overall_gain",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.126,
+    "max_fee_jump": 0.06
+  },
+  "hypothesis_id": "local-refine-hysteretic-release",
+  "mutation_family": "passive-recapture-hysteresis",
+  "nearest_prior_failures": [],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "local_refinement",
+    "differs_from": "plain continuation-gated passive recapture",
+    "external_idea": "hysteresis_dwell_time_release",
+    "intent": "local_refine"
+  },
+  "parent_hypothesis_id": null,
+  "rationale": "Refine the best raw survivor by replacing linear long-gap passive recapture release with hysteretic deadband plus minimum dwell time, so release persists only after repeated reconvergence instead of any single benign gap.",
+  "research_refs": [
+    "artifacts/research/amm_branch_portfolio_apr12-screen480-1130/memo.md",
+    "docs/plans/active/apr12-screen480-1130.md"
+  ],
+  "seed_eval_id": "screen_0001",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "low_decile_mean_edge": 366.0,
+    "low_retail_mean_edge": 408.0,
+    "mean_edge": 480.0
+  },
+  "title": "Hysteretic continuation release refine",
+  "updated_at": "2026-04-12T18:49:26+00:00"
+}

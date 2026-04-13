@@ -1,0 +1,40 @@
+{
+  "actual_failure_mode": "over_spiky_fee_surface",
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-12T18:35:52+00:00",
+  "eval_ids": [
+    "prescreen_0005"
+  ],
+  "expected_effect": "Improve arb discipline and preserve mean edge without reviving broad calm fees.",
+  "expected_failure_mode": "overpriced_calm_flow",
+  "hard_guardrails": {
+    "low_retail_mean_edge": 400.0,
+    "max_fee_jump": 0.06
+  },
+  "hypothesis_id": "anti-arb-toxicity-budget",
+  "mutation_family": "toxic-flow-budget",
+  "nearest_prior_failures": [],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "differs_from": "retail-share classifier and broad shock-spike pricing",
+    "external_idea": "flow_toxicity_budget",
+    "intent": "anti_arb"
+  },
+  "parent_hypothesis_id": null,
+  "rationale": "Import flow-toxicity style control by accumulating a bounded toxic-side budget from signed-flow persistence plus price-response agreement, then spend it only on the toxic side instead of using a benign-flow classifier.",
+  "research_refs": [
+    "artifacts/research/amm_branch_portfolio_apr12-screen480-1130/memo.md",
+    "docs/plans/active/apr12-screen480-1130.md"
+  ],
+  "seed_eval_id": "screen_0001",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "arb_edge": -62.0,
+    "arb_loss_to_retail_gain": 0.118,
+    "mean_edge": 480.0
+  },
+  "title": "Toxic-side budget from flow persistence",
+  "updated_at": "2026-04-12T18:56:26+00:00"
+}

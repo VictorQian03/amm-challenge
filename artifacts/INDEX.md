@@ -20,6 +20,12 @@
 - under the current checkout it is read-only because protected-surface drift now requires a fresh `run_id` before any further mutation/resume
 - transient `apr11-screen480-0948-w0*` worker lanes and superseded retained run `apr10-screen480-0947/` were pruned after their findings were folded into the retained lane and plan docs
 
+## 2026-04-12
+
+- `artifacts/hill_climb/apr12-screen480-1130/`: current retained `screen` lane on the updated protected-surface fingerprint; baseline `473.616393`, breakout gate still pending at `480.0`, and `structural-pivot-two-mode-controller` is queued next
+- `artifacts/research/amm_branch_portfolio_apr12-screen480-1130/`: branch portfolio memo and source log for the five-hypothesis batch that seeded the current retained lane
+- `artifacts/hill_climb/apr11-screen480-0948/` remains read-only history and should not be resumed for mutation on this checkout
+
 Per-run contract:
 
 - keep only `run.json`, `state.json`, `results.jsonl`, `results.tsv`, `history.jsonl`, `hypotheses/`, `incumbents/`, and `snapshots/`

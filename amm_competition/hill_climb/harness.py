@@ -1948,6 +1948,27 @@ class HillClimbHarness:
                             "notes": [str(exc)],
                         }
                     )
+        current_run_id = None
+        current_candidates = [
+            entry
+            for entry in entries
+            if entry["status"] in {"active", "goal-passed"}
+            and entry["created_at"] is not None
+        ]
+        if current_candidates:
+            current_run_id = max(
+                current_candidates,
+                key=lambda entry: (entry["created_at"], entry["run_id"]),
+            )["run_id"]
+            for entry in entries:
+                if entry["run_id"] == current_run_id:
+                    continue
+                if entry["status"] in {"active", "goal-passed"}:
+                    entry["status"] = "historical"
+                    entry["notes"] = [
+                        f"superseded by retained lane {current_run_id}"
+                    ] + entry["notes"]
+
         payload = {
             "artifact_version": CROSS_RUN_INDEX_VERSION,
             "generated_at": _utc_now(),

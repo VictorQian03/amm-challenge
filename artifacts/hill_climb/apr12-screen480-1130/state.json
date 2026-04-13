@@ -1,0 +1,23 @@
+{
+  "artifact_version": "hill_climb.state.v2",
+  "baseline_eval_id": "screen_0001",
+  "current_target_stage": "screen",
+  "incumbent_eval_ids": {
+    "screen": "screen_0001"
+  },
+  "last_completed_iteration": 9,
+  "next_hypothesis_id": "structural-pivot-two-mode-controller",
+  "next_hypothesis_note": "Pause and re-check read surfaces before any wider structural retry: prescreen_0009 cut time-weighted fees to about 16.6 bps but failed with mean_edge 286.876, arb_loss_to_retail_gain 0.488874, low_retail_mean_edge 255.060, and max_fee_jump 0.008691.",
+  "outcome_gate": {
+    "minimum_mean_edge": 480.0,
+    "stage": "screen"
+  },
+  "run_id": "apr12-screen480-1130",
+  "run_mode": "foreground",
+  "stop_rules": {
+    "pivot_after_non_improving_iterations": 5,
+    "refine_after_non_improving_iterations": 3,
+    "stop_after_non_improving_iterations": 8
+  },
+  "updated_at": "2026-04-13T15:51:03+00:00"
+}

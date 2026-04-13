@@ -1,0 +1,49 @@
+{
+  "actual_failure_mode": "over_spiky_fee_surface",
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-12T18:36:02+00:00",
+  "eval_ids": [
+    "screen_0006",
+    "screen_0007"
+  ],
+  "expected_effect": "Improve low-decile and low-retail buckets without repeating broad calm-band regressions.",
+  "expected_failure_mode": "arb_leak_regression",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.126,
+    "max_fee_jump": 0.06
+  },
+  "hypothesis_id": "weak-slice-rebate-bucket",
+  "mutation_family": "rebate-budget-queueing",
+  "nearest_prior_failures": [
+    "apr11-w01-arrival-band",
+    "apr11-w04-arrival-size"
+  ],
+  "nearest_prior_successes": [
+    "h002-continuation-only-replay"
+  ],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "differs_from": "arrival-band, arrival-size, and quiet-band calm rebates",
+    "external_idea": "token_bucket_rebate_budget",
+    "intent": "weak_slice"
+  },
+  "parent_hypothesis_id": null,
+  "rationale": "Meter calm-side relief with a bounded token-bucket style rebate credit that fills only during benign long-gap, low-hazard periods and depletes quickly when used, so weak slices get sparse concentrated relief instead of a permanently cheaper surface.",
+  "research_refs": [
+    "artifacts/research/amm_branch_portfolio_apr12-screen480-1130/memo.md",
+    "docs/plans/active/apr12-screen480-1130.md",
+    "https://arxiv.org/abs/2508.08152",
+    "https://uniswap.org/flair.pdf",
+    "https://www.rfc-editor.org/info/rfc2698"
+  ],
+  "seed_eval_id": "screen_0001",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "low_decile_mean_edge": 370.0,
+    "low_retail_mean_edge": 412.0,
+    "mean_edge": 480.0
+  },
+  "title": "Token-bucket weak-slice rebate",
+  "updated_at": "2026-04-12T19:09:49+00:00"
+}

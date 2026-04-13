@@ -497,6 +497,43 @@ def test_evaluate_discards_when_stage_gate_fails(tmp_path):
     assert "below stage threshold" in summary["scorecard"]["gate"]["failures"][0]
 
 
+def test_cross_run_index_marks_only_newest_valid_lane_active(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            _make_match_result(mean_edges=[6.0, 6.0, 6.0, 6.0]),
+        ],
+    )
+
+    harness.evaluate(run_id="older", stage="screen", source_path=source_path)
+    older_manifest_path = tmp_path / "artifacts" / "older" / "run.json"
+    older_manifest = json.loads(older_manifest_path.read_text())
+    older_manifest["created_at"] = "2026-04-11T16:52:11+00:00"
+    older_manifest_path.write_text(json.dumps(older_manifest, indent=2, sort_keys=True))
+
+    harness.evaluate(run_id="newer", stage="screen", source_path=source_path)
+    newer_manifest_path = tmp_path / "artifacts" / "newer" / "run.json"
+    newer_manifest = json.loads(newer_manifest_path.read_text())
+    newer_manifest["created_at"] = "2026-04-12T18:30:59+00:00"
+    newer_manifest_path.write_text(json.dumps(newer_manifest, indent=2, sort_keys=True))
+
+    harness._write_cross_run_index()
+
+    index_payload = json.loads((tmp_path / "index.json").read_text())
+    statuses = {
+        run["run_id"]: {"status": run["status"], "notes": run["notes"]}
+        for run in index_payload["hill_climb_runs"]
+    }
+
+    assert statuses["newer"]["status"] == "active"
+    assert statuses["older"]["status"] == "historical"
+    assert statuses["older"]["notes"][0] == "superseded by retained lane newer"
+
+
 def test_prescreen_stage_rejects_spiky_or_arb_leaky_candidates(tmp_path):
     source_path = tmp_path / "Strategy.sol"
     source_path.write_text("// candidate")

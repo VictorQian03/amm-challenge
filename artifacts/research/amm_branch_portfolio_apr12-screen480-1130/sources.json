@@ -1,0 +1,72 @@
+[
+  {
+    "id": "optimal-fees-amm-2025",
+    "category": "amm_defi",
+    "title": "Optimal Fees for Liquidity Provision in Automated Market Makers",
+    "url": "https://arxiv.org/abs/2508.08152",
+    "borrowed_mechanism": "Threshold-like or regime-shaped fee schedules instead of broad always-on carry."
+  },
+  {
+    "id": "flair-amm",
+    "category": "amm_defi",
+    "title": "FLAIR: A Metric for Liquidity Provider Competitiveness in Automated Market Makers",
+    "url": "https://uniswap.org/flair.pdf",
+    "borrowed_mechanism": "Separate competitiveness from adverse-selection loss instead of treating one fee level as good for both."
+  },
+  {
+    "id": "mm-amm-2024",
+    "category": "amm_defi",
+    "title": "AMMs and Market Makers: DeFi and TradFi Through the Lens of Market Microstructure",
+    "url": "https://moallemi.com/ciamac/papers/mm-amm-2024.pdf",
+    "borrowed_mechanism": "Translate market-making controls into AMM fee rules instead of reasoning only from AMM canon."
+  },
+  {
+    "id": "avellaneda-stoikov-2008",
+    "category": "microstructure",
+    "title": "High-frequency trading in a limit order book",
+    "url": "https://www.researchgate.net/profile/Marco_Avellaneda2/publication/24086205_High_Frequency_Trading_in_a_Limit_Order_Book/links/00b7d52f61226a9cf0000000/High-Frequency-Trading-in-a-Limit-Order-Book.pdf",
+    "borrowed_mechanism": "Quote asymmetry should respond to adverse-selection risk and inventory state rather than broad symmetric spread moves."
+  },
+  {
+    "id": "directional-bets-market-making",
+    "category": "microstructure",
+    "title": "High-frequency market-making with inventory constraints and directional bets",
+    "url": "https://arxiv.org/abs/1206.4810",
+    "borrowed_mechanism": "Use non-symmetric quoting when directional evidence is strong, but keep a bounded risk budget."
+  },
+  {
+    "id": "flow-toxicity-vpin",
+    "category": "microstructure",
+    "title": "Flow Toxicity and Liquidity in a High Frequency World",
+    "url": "https://fliphtml5.com/htwg/tcvc/Flow_Toxicity_and_Liquidity_in_a_High_Frequency_World/",
+    "borrowed_mechanism": "Track toxicity from order-flow imbalance persistence and use it to throttle liquidity provision before losses widen."
+  },
+  {
+    "id": "algorithmic-pricing-liquidity",
+    "category": "microstructure",
+    "title": "Algorithmic Pricing and Liquidity in Securities Markets",
+    "url": "https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID4236377_code5235387.pdf?abstractid=4105954&mirid=1",
+    "borrowed_mechanism": "Pricing rules can become too coordinated or too inert; explicit control on adaptation matters for competitiveness."
+  },
+  {
+    "id": "rfc2698",
+    "category": "control_queueing",
+    "title": "RFC 2698: A Two Rate Three Color Marker",
+    "url": "https://www.rfc-editor.org/info/rfc2698",
+    "borrowed_mechanism": "Use bounded token-bucket style rate control to meter scarce rebate budget instead of leaving discounts continuously available."
+  },
+  {
+    "id": "switched-control-dwell-time",
+    "category": "control_queueing",
+    "title": "Switched Optimal Control and Dwell Time Constraints: A Preliminary Study",
+    "url": "https://arxiv.org/abs/2011.02351",
+    "borrowed_mechanism": "Impose dwell-time constraints on switching so competitive and protective modes do not chatter."
+  },
+  {
+    "id": "sac-moe-hybrid-control",
+    "category": "control_queueing",
+    "title": "SAC-MoE: Reinforcement Learning with Mixture-of-Experts for Control of Hybrid Dynamical Systems with Uncertainty",
+    "url": "https://arxiv.org/abs/2511.12361",
+    "borrowed_mechanism": "Use an interpretable router over simple experts when latent modes switch and one monolithic controller saturates."
+  }
+]

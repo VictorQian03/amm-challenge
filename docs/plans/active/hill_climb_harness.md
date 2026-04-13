@@ -55,10 +55,10 @@ Canonical retained runs:
 - at most one active research lane under `artifacts/hill_climb/<run_id>/`
 - at most one current smoke sanity lane under `artifacts/hill_climb_smoke/<run_id>/`
 
-As of the latest artifact hygiene cleanup, the sole retained hill-climb lane is
-`artifacts/hill_climb/apr11-screen480-0948/`.
-Because the current checkout has protected-surface drift relative to that run's recorded
-fingerprint, treat it as read-only history and start a fresh `run_id` before resuming mutation.
+As of the current retained lane, the active hill-climb run is
+`artifacts/hill_climb/apr12-screen480-1130/`.
+Older lane `artifacts/hill_climb/apr11-screen480-0948/` is read-only history because the
+protected-surface fingerprint changed; do not resume mutation there on this checkout.
 
 The active research artifact layout is `artifacts/hill_climb/<run_id>/`.
 

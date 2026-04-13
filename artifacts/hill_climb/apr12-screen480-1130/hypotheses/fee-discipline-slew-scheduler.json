@@ -1,0 +1,48 @@
+{
+  "actual_failure_mode": "over_spiky_fee_surface",
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-12T18:36:30+00:00",
+  "eval_ids": [
+    "prescreen_0008"
+  ],
+  "expected_effect": "Reduce unnecessary fee-jump overshoot while preserving burst defense and improving low-volatility competitiveness.",
+  "expected_failure_mode": "tail_protection_loss",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.128,
+    "low_decile_mean_edge": 355.0
+  },
+  "hypothesis_id": "fee-discipline-slew-scheduler",
+  "mutation_family": "fee-motion-discipline",
+  "nearest_prior_failures": [
+    "apr11-w05-pulse-streak",
+    "apr11-w06-asymmetric-surface"
+  ],
+  "nearest_prior_successes": [
+    "h002-continuation-only-replay"
+  ],
+  "novelty_coordinates": {
+    "classification": "synthesis",
+    "differs_from": "pulse-streak, shock-spike, and flat asymmetric surface rewrites",
+    "external_idea": "asymmetric_slew_rate_control",
+    "intent": "fee_discipline"
+  },
+  "parent_hypothesis_id": null,
+  "rationale": "Keep the current state signals but enforce asymmetric fee-discipline on the desired quote path: rapid upward moves for protection, slower downward relaxation, and tighter calm-regime release caps so fee motion stays controlled without flattening the surface.",
+  "research_refs": [
+    "artifacts/research/amm_branch_portfolio_apr12-screen480-1130/memo.md",
+    "docs/plans/active/apr12-screen480-1130.md",
+    "https://arxiv.org/abs/2011.02351",
+    "https://arxiv.org/abs/2508.08152",
+    "https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID4236377_code5235387.pdf?abstractid=4105954&mirid=1"
+  ],
+  "seed_eval_id": "screen_0001",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "low_volatility_mean_edge": 456.0,
+    "max_fee_jump": 0.052,
+    "mean_edge": 480.0
+  },
+  "title": "Asymmetric fee slew scheduler",
+  "updated_at": "2026-04-12T19:16:23+00:00"
+}
