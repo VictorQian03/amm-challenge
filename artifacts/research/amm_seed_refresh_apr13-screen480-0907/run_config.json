@@ -1,0 +1,13 @@
+{
+  "run_id": "apr13-screen480-0907",
+  "topic": "amm_seed_refresh_apr13-screen480-0907",
+  "question": "Generate a fresh hill-climb hypothesis batch from current bottlenecks and previously unread external sources.",
+  "constraints": {
+    "active_strategy_path": "contracts/src/Strategy.sol",
+    "target_stage": "screen",
+    "breakout_threshold": 480.0,
+    "baseline_mean_edge": 473.61639344802524
+  },
+  "source_policy": "Prefer previously unread papers/docs/code plus common-sense nonlinear transforms.",
+  "created_at": "2026-04-13T09:07:14-07:00"
+}

@@ -1,0 +1,40 @@
+{
+  "actual_failure_mode": "over_spiky_fee_surface",
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-13T16:12:15+00:00",
+  "eval_ids": [
+    "prescreen_0008"
+  ],
+  "expected_effect": "Recover topology separation without the weak-slice collapse from the first structural pivot.",
+  "expected_failure_mode": "tail_protection_loss",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.128,
+    "max_fee_jump": 0.06
+  },
+  "hypothesis_id": "structural-pivot-defensive-router-v2",
+  "mutation_family": "defensive_router_pivot",
+  "nearest_prior_failures": [],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "external_idea": "defensive_router",
+    "intent": "structural_pivot"
+  },
+  "parent_hypothesis_id": null,
+  "rationale": "Retry the two-mode controller with a defensive default, firmer protective floor, and slower release so the cheap mode cannot dominate the whole surface.",
+  "research_refs": [
+    "artifacts/research/amm_seed_refresh_apr13-screen480-0907/memo.md",
+    "docs/plans/active/apr13-screen480-0907.md",
+    "https://arxiv.org/abs/2303.00208",
+    "https://github.com/MeteoraAg/damm-v2"
+  ],
+  "seed_eval_id": "screen_0001",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "low_retail_mean_edge": 405.0,
+    "mean_edge": 478.0
+  },
+  "title": "Defensive router with bounded cheap mode",
+  "updated_at": "2026-04-13T16:47:26+00:00"
+}

@@ -1,6 +1,6 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-13T15:51:03+00:00",
+  "generated_at": "2026-04-13T16:52:03+00:00",
   "hill_climb_runs": [
     {
       "active_stage": "screen",
@@ -63,7 +63,7 @@
         ]
       },
       "notes": [
-        "superseded by retained lane apr12-screen480-1130",
+        "superseded by retained lane apr13-screen480-0907",
         "pending (screen incumbent 473.616393 is below target 480.000000)"
       ],
       "portfolio_gaps": [
@@ -348,6 +348,7 @@
         ]
       },
       "notes": [
+        "superseded by retained lane apr13-screen480-0907",
         "pending (screen incumbent 473.616393 is below target 480.000000)",
         "next hypothesis structural-pivot-two-mode-controller: Pause and re-check read surfaces before any wider structural retry: prescreen_0009 cut time-weighted fees to about 16.6 bps but failed with mean_edge 286.876, arb_loss_to_retail_gain 0.488874, low_retail_mean_edge 255.060, and max_fee_jump 0.008691."
       ],
@@ -368,6 +369,297 @@
         "https://www.rfc-editor.org/info/rfc2698"
       ],
       "run_id": "apr12-screen480-1130",
+      "status": "historical"
+    },
+    {
+      "active_stage": "screen",
+      "best_eval_ids": {
+        "screen": "screen_0001"
+      },
+      "best_mean_edges": {
+        "screen": 473.61639344802524
+      },
+      "created_at": "2026-04-13T16:08:16+00:00",
+      "failure_clusters": {
+        "arb_leak_regression": 2,
+        "over_spiky_fee_surface": 8,
+        "tail_protection_loss": 2
+      },
+      "frontier_bank": {
+        "best_anti_arb": {
+          "eval_id": "screen_0004",
+          "failure_tags": [
+            "over_spiky_fee_surface"
+          ],
+          "hypothesis_id": "local-refine-concave-relief",
+          "label": "local-refine-concave-v2",
+          "mean_edge": 472.88762199923895,
+          "profile": {
+            "arb_edge": -60.699880430633364,
+            "arb_loss_to_retail_gain": 0.11375806246251235,
+            "high_decile_mean_edge": 622.5224626039399,
+            "low_decile_mean_edge": 361.00112827699894,
+            "low_retail_mean_edge": 404.747174132234,
+            "low_volatility_mean_edge": 450.50662804147646,
+            "max_fee_jump": 0.05603296159492085,
+            "mean_edge": 472.88762199923895,
+            "median_decile_mean_edge": 445.5500721702685,
+            "retail_edge": 533.5875024298722,
+            "time_weighted_ask_fee": 0.004906863368725802,
+            "time_weighted_bid_fee": 0.004879940216272394
+          },
+          "stage": "screen",
+          "status": "discard"
+        },
+        "best_fee_discipline": {
+          "eval_id": "screen_0004",
+          "failure_tags": [
+            "over_spiky_fee_surface"
+          ],
+          "hypothesis_id": "local-refine-concave-relief",
+          "label": "local-refine-concave-v2",
+          "mean_edge": 472.88762199923895,
+          "profile": {
+            "arb_edge": -60.699880430633364,
+            "arb_loss_to_retail_gain": 0.11375806246251235,
+            "high_decile_mean_edge": 622.5224626039399,
+            "low_decile_mean_edge": 361.00112827699894,
+            "low_retail_mean_edge": 404.747174132234,
+            "low_volatility_mean_edge": 450.50662804147646,
+            "max_fee_jump": 0.05603296159492085,
+            "mean_edge": 472.88762199923895,
+            "median_decile_mean_edge": 445.5500721702685,
+            "retail_edge": 533.5875024298722,
+            "time_weighted_ask_fee": 0.004906863368725802,
+            "time_weighted_bid_fee": 0.004879940216272394
+          },
+          "stage": "screen",
+          "status": "discard"
+        },
+        "best_low_retail": {
+          "eval_id": "screen_0003",
+          "failure_tags": [
+            "over_spiky_fee_surface"
+          ],
+          "hypothesis_id": "local-refine-concave-relief",
+          "label": "local-refine-concave-v1",
+          "mean_edge": 474.1812347836257,
+          "profile": {
+            "arb_edge": -63.896512977820436,
+            "arb_loss_to_retail_gain": 0.11874959193842859,
+            "high_decile_mean_edge": 623.6881004295832,
+            "low_decile_mean_edge": 362.7065531018269,
+            "low_retail_mean_edge": 405.97075560436514,
+            "low_volatility_mean_edge": 451.5791437072269,
+            "max_fee_jump": 0.05665222944571535,
+            "mean_edge": 474.1812347836257,
+            "median_decile_mean_edge": 447.0160579304185,
+            "retail_edge": 538.0777477614462,
+            "time_weighted_ask_fee": 0.004523032428813361,
+            "time_weighted_bid_fee": 0.004503017759525279
+          },
+          "stage": "screen",
+          "status": "discard"
+        },
+        "best_low_volatility": {
+          "eval_id": "screen_0001",
+          "failure_tags": [
+            "over_spiky_fee_surface"
+          ],
+          "hypothesis_id": null,
+          "label": "baseline-latent-toxic-v1",
+          "mean_edge": 473.61639344802524,
+          "profile": {
+            "arb_edge": -66.77135092827479,
+            "arb_loss_to_retail_gain": 0.12356192682596893,
+            "high_decile_mean_edge": 622.0080798306832,
+            "low_decile_mean_edge": 361.497702023848,
+            "low_retail_mean_edge": 405.47245008814957,
+            "low_volatility_mean_edge": 451.7047749173429,
+            "max_fee_jump": 0.05697810742895679,
+            "mean_edge": 473.61639344802524,
+            "median_decile_mean_edge": 446.61686784788895,
+            "retail_edge": 540.3877443763,
+            "time_weighted_ask_fee": 0.004259354004241511,
+            "time_weighted_bid_fee": 0.00423782106588683
+          },
+          "stage": "screen",
+          "status": "seed"
+        },
+        "best_raw": [
+          {
+            "eval_id": "screen_0005",
+            "failure_tags": [
+              "over_spiky_fee_surface"
+            ],
+            "hypothesis_id": "local-refine-concave-relief",
+            "label": "local-refine-concave-v3",
+            "mean_edge": 474.1819843759517,
+            "profile": {
+              "arb_edge": -63.89630940872193,
+              "arb_loss_to_retail_gain": 0.11874909310928598,
+              "high_decile_mean_edge": 623.6866939307503,
+              "low_decile_mean_edge": 362.706161405521,
+              "low_retail_mean_edge": 405.97016409281326,
+              "low_volatility_mean_edge": 451.57869463069534,
+              "max_fee_jump": 0.05665222443644734,
+              "mean_edge": 474.1819843759517,
+              "median_decile_mean_edge": 447.0160579304185,
+              "retail_edge": 538.0782937846735,
+              "time_weighted_ask_fee": 0.004523012751911923,
+              "time_weighted_bid_fee": 0.004502988892426978
+            },
+            "stage": "screen",
+            "status": "discard"
+          },
+          {
+            "eval_id": "screen_0003",
+            "failure_tags": [
+              "over_spiky_fee_surface"
+            ],
+            "hypothesis_id": "local-refine-concave-relief",
+            "label": "local-refine-concave-v1",
+            "mean_edge": 474.1812347836257,
+            "profile": {
+              "arb_edge": -63.896512977820436,
+              "arb_loss_to_retail_gain": 0.11874959193842859,
+              "high_decile_mean_edge": 623.6881004295832,
+              "low_decile_mean_edge": 362.7065531018269,
+              "low_retail_mean_edge": 405.97075560436514,
+              "low_volatility_mean_edge": 451.5791437072269,
+              "max_fee_jump": 0.05665222944571535,
+              "mean_edge": 474.1812347836257,
+              "median_decile_mean_edge": 447.0160579304185,
+              "retail_edge": 538.0777477614462,
+              "time_weighted_ask_fee": 0.004523032428813361,
+              "time_weighted_bid_fee": 0.004503017759525279
+            },
+            "stage": "screen",
+            "status": "discard"
+          },
+          {
+            "eval_id": "screen_0001",
+            "failure_tags": [
+              "over_spiky_fee_surface"
+            ],
+            "hypothesis_id": null,
+            "label": "baseline-latent-toxic-v1",
+            "mean_edge": 473.61639344802524,
+            "profile": {
+              "arb_edge": -66.77135092827479,
+              "arb_loss_to_retail_gain": 0.12356192682596893,
+              "high_decile_mean_edge": 622.0080798306832,
+              "low_decile_mean_edge": 361.497702023848,
+              "low_retail_mean_edge": 405.47245008814957,
+              "low_volatility_mean_edge": 451.7047749173429,
+              "max_fee_jump": 0.05697810742895679,
+              "mean_edge": 473.61639344802524,
+              "median_decile_mean_edge": 446.61686784788895,
+              "retail_edge": 540.3877443763,
+              "time_weighted_ask_fee": 0.004259354004241511,
+              "time_weighted_bid_fee": 0.00423782106588683
+            },
+            "stage": "screen",
+            "status": "seed"
+          },
+          {
+            "eval_id": "screen_0004",
+            "failure_tags": [
+              "over_spiky_fee_surface"
+            ],
+            "hypothesis_id": "local-refine-concave-relief",
+            "label": "local-refine-concave-v2",
+            "mean_edge": 472.88762199923895,
+            "profile": {
+              "arb_edge": -60.699880430633364,
+              "arb_loss_to_retail_gain": 0.11375806246251235,
+              "high_decile_mean_edge": 622.5224626039399,
+              "low_decile_mean_edge": 361.00112827699894,
+              "low_retail_mean_edge": 404.747174132234,
+              "low_volatility_mean_edge": 450.50662804147646,
+              "max_fee_jump": 0.05603296159492085,
+              "mean_edge": 472.88762199923895,
+              "median_decile_mean_edge": 445.5500721702685,
+              "retail_edge": 533.5875024298722,
+              "time_weighted_ask_fee": 0.004906863368725802,
+              "time_weighted_bid_fee": 0.004879940216272394
+            },
+            "stage": "screen",
+            "status": "discard"
+          },
+          {
+            "eval_id": "screen_0006",
+            "failure_tags": [
+              "arb_leak_regression",
+              "over_spiky_fee_surface",
+              "tail_protection_loss"
+            ],
+            "hypothesis_id": "anti-arb-side-markout-memory",
+            "label": "anti-arb-markout-v1",
+            "mean_edge": 406.9051086119006,
+            "profile": {
+              "arb_edge": -139.74677196484922,
+              "arb_loss_to_retail_gain": 0.2556412534745295,
+              "high_decile_mean_edge": 620.2931073137488,
+              "low_decile_mean_edge": 213.53482106574324,
+              "low_retail_mean_edge": 353.30372662904193,
+              "low_volatility_mean_edge": 405.2619704861985,
+              "max_fee_jump": 0.04236750680700041,
+              "mean_edge": 406.9051086119006,
+              "median_decile_mean_edge": 399.64250445966405,
+              "retail_edge": 546.6518805767502,
+              "time_weighted_ask_fee": 0.0034271275758921004,
+              "time_weighted_bid_fee": 0.0034830367700442112
+            },
+            "stage": "screen",
+            "status": "discard"
+          }
+        ],
+        "incumbents": [
+          {
+            "eval_id": "screen_0001",
+            "failure_tags": [
+              "over_spiky_fee_surface"
+            ],
+            "hypothesis_id": null,
+            "label": "baseline-latent-toxic-v1",
+            "mean_edge": 473.61639344802524,
+            "profile": {
+              "arb_edge": -66.77135092827479,
+              "arb_loss_to_retail_gain": 0.12356192682596893,
+              "high_decile_mean_edge": 622.0080798306832,
+              "low_decile_mean_edge": 361.497702023848,
+              "low_retail_mean_edge": 405.47245008814957,
+              "low_volatility_mean_edge": 451.7047749173429,
+              "max_fee_jump": 0.05697810742895679,
+              "mean_edge": 473.61639344802524,
+              "median_decile_mean_edge": 446.61686784788895,
+              "retail_edge": 540.3877443763,
+              "time_weighted_ask_fee": 0.004259354004241511,
+              "time_weighted_bid_fee": 0.00423782106588683
+            },
+            "stage": "screen",
+            "status": "seed"
+          }
+        ]
+      },
+      "notes": [
+        "pending (screen incumbent 473.616393 is below target 480.000000)"
+      ],
+      "portfolio_gaps": [
+        "anti_arb",
+        "weak_slice",
+        "fee_discipline",
+        "structural_pivot"
+      ],
+      "research_artifact_paths": [
+        "artifacts/research/amm_seed_refresh_apr13-screen480-0907",
+        "artifacts/research/amm_seed_refresh_apr13-screen480-0907/memo.md",
+        "docs/plans/active/apr13-screen480-0907.md",
+        "https://arxiv.org/abs/2303.00208",
+        "https://github.com/MeteoraAg/damm-v2"
+      ],
+      "run_id": "apr13-screen480-0907",
       "status": "active"
     }
   ]

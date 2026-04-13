@@ -1,0 +1,36 @@
+{
+  "planned": [
+    {
+      "id": "fee-discipline-vol-accumulator-floor",
+      "stage": "screen",
+      "priority": 1,
+      "status": "invalidated",
+      "eval_id": "screen_0002"
+    },
+    {
+      "id": "local-refine-concave-relief",
+      "stage": "screen",
+      "priority": 2,
+      "status": "active",
+      "eval_id": "screen_0003"
+    },
+    {
+      "id": "anti-arb-side-markout-memory",
+      "stage": "prescreen",
+      "priority": 3,
+      "status": "planned"
+    },
+    {
+      "id": "weak-slice-exp-decay-envelope",
+      "stage": "screen",
+      "priority": 4,
+      "status": "planned"
+    },
+    {
+      "id": "structural-pivot-defensive-router-v2",
+      "stage": "prescreen",
+      "priority": 5,
+      "status": "planned"
+    }
+  ]
+}

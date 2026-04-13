@@ -1,0 +1,40 @@
+{
+  "actual_failure_mode": "over_spiky_fee_surface",
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-13T16:12:15+00:00",
+  "eval_ids": [
+    "screen_0003",
+    "screen_0004",
+    "screen_0005"
+  ],
+  "expected_effect": "Reduce broad cheap quoting while preserving selective calm competitiveness.",
+  "expected_failure_mode": "weak_slice_improvement_without_overall_gain",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.124,
+    "max_fee_jump": 0.056
+  },
+  "hypothesis_id": "local-refine-concave-relief",
+  "mutation_family": "nonlinear-local-refine",
+  "nearest_prior_failures": [],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "local_refinement",
+    "external_idea": "convex_risk_concave_relief",
+    "intent": "local_refine"
+  },
+  "parent_hypothesis_id": null,
+  "rationale": "Keep the incumbent signal stack but use convex protection only above real risk thresholds and concave capped calm relief.",
+  "research_refs": [
+    "artifacts/research/amm_seed_refresh_apr13-screen480-0907/memo.md",
+    "docs/plans/active/apr13-screen480-0907.md"
+  ],
+  "seed_eval_id": "screen_0001",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "low_retail_mean_edge": 407.0,
+    "mean_edge": 478.0
+  },
+  "title": "Concave relief, thresholded protection",
+  "updated_at": "2026-04-13T16:25:52+00:00"
+}

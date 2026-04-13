@@ -1,0 +1,36 @@
+{
+  "actual_failure_mode": "arb_leak_regression",
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "created_at": "2026-04-13T16:12:33+00:00",
+  "eval_ids": [
+    "screen_0002"
+  ],
+  "expected_effect": "Lower fee-surface spikiness while preserving or improving mean_edge and calm-slice floors.",
+  "expected_failure_mode": "tail_protection_loss",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.124,
+    "low_decile_mean_edge": 361.0
+  },
+  "hypothesis_id": "fee-discipline-vol-accumulator-floor",
+  "mutation_family": "fee-motion-discipline",
+  "nearest_prior_failures": [],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "external_idea": "volatility_accumulator_floor",
+    "intent": "fee_discipline"
+  },
+  "parent_hypothesis_id": null,
+  "rationale": "Use a filtered volatility accumulator plus exponentially decaying protective floor to smooth fee motion without flattening protection.",
+  "research_refs": [],
+  "seed_eval_id": "screen_0001",
+  "status": "invalidated",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "low_retail_mean_edge": 406.0,
+    "max_fee_jump": 0.052,
+    "mean_edge": 480.0
+  },
+  "title": "Filtered volatility accumulator floor",
+  "updated_at": "2026-04-13T16:15:50+00:00"
+}

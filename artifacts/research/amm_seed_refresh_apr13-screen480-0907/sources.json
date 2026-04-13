@@ -1,0 +1,57 @@
+[
+  {
+    "id": "structural-model-amm-2023",
+    "title": "A Structural Model of Automated Market Making",
+    "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4591447",
+    "credibility": "high",
+    "status": "new",
+    "notes": [
+      "Argues fixed fees are inefficient.",
+      "Characterizes an optimal volatility-sensitive fee schedule."
+    ]
+  },
+  {
+    "id": "myersonian-amm-2023",
+    "title": "A Myersonian Framework for Optimal Liquidity Provision in Automated Market Makers",
+    "url": "https://arxiv.org/abs/2303.00208",
+    "credibility": "high",
+    "status": "new",
+    "notes": [
+      "Interprets the jump in the demand curve as a bid-ask spread.",
+      "Separates adverse-selection and monopoly-pricing components of spread."
+    ]
+  },
+  {
+    "id": "meteora-fee-time-scheduler",
+    "title": "What's Fee Time Scheduler? - Meteora Documentation",
+    "url": "https://meteora.mintlify.app/anti-sniper-suite/fee-time-scheduler/what-is-fee-time-scheduler",
+    "credibility": "medium",
+    "status": "new",
+    "notes": [
+      "Uses linear or exponential fee decay.",
+      "Provides a concrete pattern for releasing elevated fees gradually instead of abruptly."
+    ]
+  },
+  {
+    "id": "meteora-damm-v2-code",
+    "title": "Meteora DAMM v2",
+    "url": "https://github.com/MeteoraAg/damm-v2",
+    "credibility": "medium",
+    "status": "new",
+    "notes": [
+      "Documents support for both fee schedulers and volatility-based dynamic fees.",
+      "Useful as production-oriented evidence that these two control levers can coexist."
+    ]
+  },
+  {
+    "id": "common-sense-nonlinearities",
+    "title": "Common-sense statistical transforms",
+    "url": "local://common-sense-nonlinearities",
+    "credibility": "internal",
+    "status": "new",
+    "notes": [
+      "Use convex risk transforms above threshold and concave relief transforms below threshold.",
+      "Aim to reduce broad cheap quoting while preserving selective competitiveness."
+    ]
+  }
+]

@@ -26,6 +26,12 @@
 - `artifacts/research/amm_branch_portfolio_apr12-screen480-1130/`: branch portfolio memo and source log for the five-hypothesis batch that seeded the current retained lane
 - `artifacts/hill_climb/apr11-screen480-0948/` remains read-only history and should not be resumed for mutation on this checkout
 
+## 2026-04-13
+
+- `artifacts/hill_climb/apr13-screen480-0907/`: current retained `screen` lane on the same protected-surface fingerprint; baseline `473.616393`, breakout gate still pending at `480.0`, `screen_0005` is the best raw survivor, and the seeded five-branch batch closed with no queued next hypothesis
+- `artifacts/research/amm_seed_refresh_apr13-screen480-0907/`: fresh-run research memo, new-source log, and hypothesis tracker for the current retained lane
+- `artifacts/hill_climb/apr12-screen480-1130/` is now read-only history for planning and should not be resumed for mutation on this checkout
+
 Per-run contract:
 
 - keep only `run.json`, `state.json`, `results.jsonl`, `results.tsv`, `history.jsonl`, `hypotheses/`, `incumbents/`, and `snapshots/`
