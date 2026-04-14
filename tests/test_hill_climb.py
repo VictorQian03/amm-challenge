@@ -216,6 +216,22 @@ def _build_test_harness(
     )
 
 
+def _structural_hypothesis_kwargs(**overrides: Any) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "batch_id": "batch-001",
+        "primary_layer_changed": "risk_budget",
+        "layer_held_fixed": "quote_map",
+        "hidden_coupling_removed": "Risk widening and cheap-mode release share one trigger.",
+        "why_not_coefficient_retune": "The branch changes the control split rather than rescaling the incumbent overlay stack.",
+        "expected_win_condition": "Improve screen mean_edge without broad calm-flow repricing.",
+        "expected_failure_signature": "Arb leakage improves little while fees still widen too abruptly.",
+        "quote_topology": "split-budget",
+        "is_topology_branch": False,
+    }
+    payload.update(overrides)
+    return payload
+
+
 def test_hill_climb_stages_keep_competition_length_steps():
     cfg = build_stage_config()
     assert cfg.n_steps == 10000
@@ -431,6 +447,7 @@ def test_evaluate_records_lineage_metadata_and_updates_history_and_hypothesis_re
         mutation_family="timing-overlay",
         status="queued",
         research_refs=["docs/plans/active/apr01-screen420-2134.md"],
+        **_structural_hypothesis_kwargs(),
     )
 
     source_path.write_text("// candidate mutated")
@@ -1011,6 +1028,7 @@ def test_set_state_updates_loop_metadata_and_status_reports_guidance(
         expected_effect="Improve screen mean_edge without broad carry drag",
         mutation_family="timing-overlay",
         status="queued",
+        **_structural_hypothesis_kwargs(),
     )
 
     set_args = argparse.Namespace(
@@ -1083,6 +1101,11 @@ def test_set_hypothesis_supports_structured_experiment_fields(tmp_path):
         synthesis_eligible=False,
         nearest_prior_failures=["timing-overlay"],
         nearest_prior_successes=["screen-seed"],
+        **_structural_hypothesis_kwargs(
+            primary_layer_changed="risk_budget",
+            layer_held_fixed="opportunity_budget",
+            quote_topology="hazard-gated-release",
+        ),
     )
 
     assert payload["target_metrics"] == {"arb_edge": -20.0}
@@ -1092,6 +1115,27 @@ def test_set_hypothesis_supports_structured_experiment_fields(tmp_path):
     assert payload["synthesis_eligible"] is False
     assert payload["nearest_prior_failures"] == ["timing-overlay"]
     assert payload["nearest_prior_successes"] == ["screen-seed"]
+    assert payload["primary_layer_changed"] == "risk_budget"
+    assert payload["quote_topology"] == "hazard-gated-release"
+
+
+def test_set_hypothesis_requires_structural_contract_for_new_hypotheses(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+    harness = _build_test_harness(tmp_path)
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    with pytest.raises(
+        HillClimbHarnessError, match="New hypotheses require batch_id"
+    ):
+        harness.upsert_hypothesis(
+            run_id="mar26",
+            hypothesis_id="missing-structure",
+            title="Missing structure",
+            rationale="Exercise new contract enforcement",
+            expected_effect="None",
+            mutation_family="validation",
+        )
 
 
 def test_set_hypothesis_rejects_unknown_failure_mode_and_nonserializable_novelty(
@@ -1111,6 +1155,7 @@ def test_set_hypothesis_rejects_unknown_failure_mode_and_nonserializable_novelty
             expected_effect="None",
             mutation_family="validation",
             expected_failure_mode="made_up_mode",
+            **_structural_hypothesis_kwargs(),
         )
 
     with pytest.raises(HillClimbHarnessError, match="JSON-serializable object"):
@@ -1122,6 +1167,7 @@ def test_set_hypothesis_rejects_unknown_failure_mode_and_nonserializable_novelty
             expected_effect="None",
             mutation_family="validation",
             novelty_coordinates={"bad": {1, 2, 3}},
+            **_structural_hypothesis_kwargs(),
         )
 
 
@@ -1140,6 +1186,7 @@ def test_set_hypothesis_rejects_unknown_metric_keys(tmp_path):
             expected_effect="None",
             mutation_family="validation",
             target_metrics={"made_up_metric": 1.0},
+            **_structural_hypothesis_kwargs(),
         )
 
 
@@ -1164,6 +1211,7 @@ def test_set_hypothesis_command_parses_structured_experiment_fields(
         expected_effect="Keep the command path covered",
         mutation_family="cli-test",
         status="queued",
+        batch_id="batch-001",
         parent_hypothesis_id=None,
         seed_eval_id=None,
         research_refs=["docs/plans/active/apr01-screen420-2134.md"],
@@ -1175,6 +1223,14 @@ def test_set_hypothesis_command_parses_structured_experiment_fields(
         synthesis_eligible=False,
         nearest_prior_failures=["timing-overlay"],
         nearest_prior_successes=["screen-seed"],
+        primary_layer_changed="state",
+        layer_held_fixed="quote_map",
+        hidden_coupling_removed="Anchor estimation and cheap release share the same trigger.",
+        why_not_coefficient_retune="The branch changes the gating contract instead of shrinking overlays.",
+        expected_win_condition="Improve calm quoting only when anchor confidence recovers.",
+        expected_failure_signature="Cheap mode turns on too early and recreates arb leakage.",
+        quote_topology="anchor-gated-router",
+        is_topology_branch=True,
     )
 
     assert hill_climb_set_hypothesis_command(args) == 0
@@ -1185,6 +1241,8 @@ def test_set_hypothesis_command_parses_structured_experiment_fields(
     assert payload["hard_guardrails"] == {"max_fee_jump": 0.005}
     assert payload["novelty_coordinates"] == {"intent": "parser"}
     assert payload["synthesis_eligible"] is False
+    assert payload["batch_id"] == "batch-001"
+    assert payload["is_topology_branch"] is True
 
 
 def test_successful_eval_does_not_overwrite_actual_failure_mode(tmp_path):
@@ -1206,6 +1264,7 @@ def test_successful_eval_does_not_overwrite_actual_failure_mode(tmp_path):
         expected_effect="Keep taxonomy stable",
         mutation_family="validation",
         actual_failure_mode="arb_leak_regression",
+        **_structural_hypothesis_kwargs(),
     )
 
     source_path.write_text("// improved")
@@ -1281,6 +1340,7 @@ def test_hill_climb_history_and_lookup_commands_surface_agent_facing_read_models
         mutation_family="timing-overlay",
         status="queued",
         research_refs=["docs/plans/active/apr01-screen420-2134.md"],
+        **_structural_hypothesis_kwargs(),
     )
     monkeypatch.setattr(
         "amm_competition.hill_climb.harness.ProtectedSurfaceChecker.discover",
@@ -1344,8 +1404,11 @@ def test_hill_climb_history_and_lookup_commands_surface_agent_facing_read_models
     assert hill_climb_show_hypothesis_command(show_hypothesis_args) == 0
     show_hypothesis_output = capsys.readouterr().out
     assert "Hypothesis: timing-overlay" in show_hypothesis_output
+    assert "Batch: batch-001" in show_hypothesis_output
     assert "Seed Eval: screen_0002" in show_hypothesis_output
     assert "Eval IDs: screen_0002" in show_hypothesis_output
+    assert "Primary Layer Changed: risk_budget" in show_hypothesis_output
+    assert "Quote Topology: split-budget" in show_hypothesis_output
 
     summarize_args = argparse.Namespace(
         run_id="mar26",
@@ -1355,6 +1418,11 @@ def test_hill_climb_history_and_lookup_commands_surface_agent_facing_read_models
     summarize_output = capsys.readouterr().out
     assert "Incumbent Chain:" in summarize_output
     assert "screen_0002 screen keep 6.000000" in summarize_output
+    assert (
+        "Decomposition Gaps: state, risk_budget, opportunity_budget, quote_map"
+        in summarize_output
+    )
+    assert "Batch Diversity: 0 primary layers, topology branch missing" in summarize_output
 
 
 def test_analyze_run_and_compare_profiles_commands_surface_frontier_and_profile_deltas(
@@ -1386,6 +1454,8 @@ def test_analyze_run_and_compare_profiles_commands_surface_frontier_and_profile_
     )
     assert hill_climb_analyze_run_command(analyze_args) == 0
     analyze_output = capsys.readouterr().out
+    assert "Decomposition Gaps: state, risk_budget, opportunity_budget, quote_map" in analyze_output
+    assert "Batch Diversity: 0 primary layers, topology branch missing" in analyze_output
     assert "Best Raw Frontier:" in analyze_output
     assert "screen_0002 screen 6.000000" in analyze_output
     assert (
@@ -1465,7 +1535,283 @@ def test_analyze_run_command_json_surfaces_planning_payload(
         "fee_discipline",
         "structural_pivot",
     ]
+    assert payload["decomposition_gaps"] == [
+        "state",
+        "risk_budget",
+        "opportunity_budget",
+        "quote_map",
+    ]
+    assert payload["batch_diversity"]["distinct_primary_layer_count"] == 0
+    assert payload["batch_diversity"]["has_topology_branch"] is False
     assert payload["recommended_next_batch"][0]["intent"] == "local_refine"
+
+
+def test_analyze_run_treats_three_layer_open_batch_as_contract_complete(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// baseline")
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[_make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0])],
+    )
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="state-branch",
+        title="State branch",
+        rationale="Split anchor estimation from release timing.",
+        expected_effect="Improve calm repricing without broad fee cuts.",
+        mutation_family="state-branch",
+        status="queued",
+        **_structural_hypothesis_kwargs(
+            primary_layer_changed="state",
+            layer_held_fixed="quote_map",
+            quote_topology="anchor-gated",
+            is_topology_branch=False,
+        ),
+    )
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="risk-branch",
+        title="Risk branch",
+        rationale="Separate shared spread from one-sided protection.",
+        expected_effect="Reduce hidden cheap-mode coupling in dangerous states.",
+        mutation_family="risk-branch",
+        status="queued",
+        **_structural_hypothesis_kwargs(
+            primary_layer_changed="risk_budget",
+            layer_held_fixed="state",
+            quote_topology="hazard-split",
+            is_topology_branch=False,
+        ),
+    )
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="quote-map-branch",
+        title="Quote map branch",
+        rationale="Change quote assembly without retuning the incumbent spine.",
+        expected_effect="Test a true topology pivot with bounded competitive spend.",
+        mutation_family="quote-map-branch",
+        status="queued",
+        **_structural_hypothesis_kwargs(
+            primary_layer_changed="quote_map",
+            layer_held_fixed="risk_budget",
+            quote_topology="router-pivot",
+            is_topology_branch=True,
+        ),
+    )
+
+    payload = harness.analyze_run(run_id="mar26")
+    assert payload["decomposition_gaps"] == ["opportunity_budget"]
+    assert payload["batch_diversity"]["distinct_primary_layer_count"] == 3
+    assert payload["batch_diversity"]["has_topology_branch"] is True
+    assert payload["structural_recommendations"] == [
+        {
+            "kind": "batch_contract",
+            "covered": True,
+            "reason": "Open hypotheses satisfy the minimum layer and topology diversity contract.",
+        }
+    ]
+
+
+def test_analyze_run_scopes_diversity_to_latest_batch(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// baseline")
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[_make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0])],
+    )
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="older-state",
+        title="Older state",
+        rationale="Older batch state branch.",
+        expected_effect="Legacy open branch.",
+        mutation_family="older",
+        status="queued",
+        **_structural_hypothesis_kwargs(
+            batch_id="batch-001",
+            primary_layer_changed="state",
+            layer_held_fixed="quote_map",
+            quote_topology="older-anchor",
+            is_topology_branch=False,
+        ),
+    )
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="older-risk",
+        title="Older risk",
+        rationale="Older batch risk branch.",
+        expected_effect="Legacy open branch.",
+        mutation_family="older",
+        status="queued",
+        **_structural_hypothesis_kwargs(
+            batch_id="batch-001",
+            primary_layer_changed="risk_budget",
+            layer_held_fixed="state",
+            quote_topology="older-hazard",
+            is_topology_branch=False,
+        ),
+    )
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="older-quote",
+        title="Older quote map",
+        rationale="Older batch topology branch.",
+        expected_effect="Legacy open branch.",
+        mutation_family="older",
+        status="queued",
+        **_structural_hypothesis_kwargs(
+            batch_id="batch-001",
+            primary_layer_changed="quote_map",
+            layer_held_fixed="risk_budget",
+            quote_topology="older-router",
+            is_topology_branch=True,
+        ),
+    )
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="latest-risk",
+        title="Latest risk",
+        rationale="Newest batch is intentionally narrow.",
+        expected_effect="Surface decomposition-gap enforcement.",
+        mutation_family="latest",
+        status="queued",
+        **_structural_hypothesis_kwargs(
+            batch_id="batch-002",
+            primary_layer_changed="risk_budget",
+            layer_held_fixed="quote_map",
+            quote_topology="latest-hazard",
+            is_topology_branch=False,
+        ),
+    )
+
+    payload = harness.analyze_run(run_id="mar26")
+    assert payload["batch_diversity"]["batch_id"] == "batch-002"
+    assert payload["batch_diversity"]["selection_mode"] == "explicit_batch_id"
+    assert payload["batch_diversity"]["open_hypothesis_ids"] == ["latest-risk"]
+    assert payload["decomposition_gaps"] == ["state", "opportunity_budget", "quote_map"]
+    assert payload["batch_diversity"]["distinct_primary_layer_count"] == 1
+    assert payload["batch_diversity"]["has_topology_branch"] is False
+    assert payload["structural_recommendations"] == [
+        {
+            "kind": "decomposition_gap",
+            "covered": False,
+            "reason": (
+                "Open batch does not yet cover three distinct decomposition targets; "
+                "next additions should include: state, opportunity_budget, quote_map."
+            ),
+        },
+        {
+            "kind": "topology_branch",
+            "covered": False,
+            "reason": (
+                "Reserve at least one branch that changes how the quote is assembled, "
+                "not just how incumbent terms are tuned."
+            ),
+        },
+    ]
+
+
+def test_analyze_run_keeps_same_spine_failure_signal_beyond_last_five_results(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[10.0, 10.0, 10.0, 10.0]),
+            _make_match_result(mean_edges=[4.0, 4.0, 4.0, 4.0]),
+            _make_match_result(mean_edges=[4.1, 4.1, 4.1, 4.1]),
+            _make_match_result(mean_edges=[4.2, 4.2, 4.2, 4.2]),
+            _make_match_result(mean_edges=[4.3, 4.3, 4.3, 4.3]),
+            _make_match_result(mean_edges=[4.4, 4.4, 4.4, 4.4]),
+            _make_match_result(mean_edges=[4.5, 4.5, 4.5, 4.5]),
+            _make_match_result(mean_edges=[4.6, 4.6, 4.6, 4.6]),
+        ],
+    )
+    source_path.write_text("// baseline")
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    failure_specs = [
+        ("same-spine-a", _structural_hypothesis_kwargs(batch_id="batch-001")),
+        ("same-spine-b", _structural_hypothesis_kwargs(batch_id="batch-001")),
+        (
+            "other-1",
+            _structural_hypothesis_kwargs(
+                batch_id="batch-001",
+                primary_layer_changed="state",
+                layer_held_fixed="quote_map",
+                quote_topology="anchor-1",
+            ),
+        ),
+        (
+            "other-2",
+            _structural_hypothesis_kwargs(
+                batch_id="batch-001",
+                primary_layer_changed="state",
+                layer_held_fixed="quote_map",
+                quote_topology="anchor-2",
+            ),
+        ),
+        (
+            "other-3",
+            _structural_hypothesis_kwargs(
+                batch_id="batch-001",
+                primary_layer_changed="quote_map",
+                layer_held_fixed="risk_budget",
+                quote_topology="router-1",
+            ),
+        ),
+        (
+            "other-4",
+            _structural_hypothesis_kwargs(
+                batch_id="batch-001",
+                primary_layer_changed="quote_map",
+                layer_held_fixed="risk_budget",
+                quote_topology="router-2",
+            ),
+        ),
+        (
+            "other-5",
+            _structural_hypothesis_kwargs(
+                batch_id="batch-001",
+                primary_layer_changed="opportunity_budget",
+                layer_held_fixed="state",
+                quote_topology="release-1",
+            ),
+        ),
+    ]
+    for index, (hypothesis_id, kwargs) in enumerate(failure_specs, start=1):
+        harness.upsert_hypothesis(
+            run_id="mar26",
+            hypothesis_id=hypothesis_id,
+            title=f"Hypothesis {index}",
+            rationale="Create failure history.",
+            expected_effect="None",
+            mutation_family="failure-history",
+            status="queued",
+            **kwargs,
+        )
+        source_path.write_text(f"// variant {index}")
+        harness.evaluate(
+            run_id="mar26",
+            stage="screen",
+            source_path=source_path,
+            hypothesis_id=hypothesis_id,
+        )
+
+    payload = harness.analyze_run(run_id="mar26")
+    assert payload["batch_diversity"]["force_layer_pivot"] is True
+    assert payload["batch_diversity"]["same_spine_failure_groups"] == {
+        "risk_budget->quote_map:split-budget": ["same-spine-a", "same-spine-b"]
+    }
+    assert payload["structural_recommendations"][0] == {
+        "kind": "layer_pivot",
+        "covered": False,
+        "reason": (
+            "Recent survivors or failures show same-spine replay pressure; "
+            "switch primary layer before another coefficient retune."
+        ),
+    }
 
 
 def test_compare_profiles_command_rejects_mixed_inputs_and_stage_mismatch(

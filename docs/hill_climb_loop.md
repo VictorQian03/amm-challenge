@@ -102,10 +102,19 @@ Agent-facing contract:
 - Keep `set-hypothesis` current for active branches; `intent_coverage`, `portfolio_gaps`, and `recommended_next_batch` are derived from the hypothesis registry, not only from raw eval history.
 - Use `--read-only` on `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, and `compare-profiles` when protected-surface drift should block mutation but not historical analysis.
 - `compare-profiles` is fail-fast: each slot must provide exactly one of `--*-eval-id` or `--*-source`, and stored evals must match the requested `--stage`.
+- When a new batch is being seeded, generate ideas at the decomposition level first:
+  `state estimation`, `risk budget`, `opportunity budget`, and `quote map`.
+- Treat branch labels alone as insufficient evidence of diversity. A batch should cover at
+  least three distinct decomposition targets, and at least one branch should be a topology
+  change rather than a same-spine retune.
+- Use `docs/reference_strategy_debrief.md` for the architectural benchmark and
+  `docs/codex_idea_generation_prompt.md` for the batch-seeding prompt contract.
 
 ## Stop Policy
 
 - After 3 non-improving iterations on the current line, refine the same idea with a narrower change.
 - After 5 non-improving iterations, pivot to a meaningfully different hypothesis.
+- If two survivors are near-replays or a full batch stays inside the same quote topology,
+  force the next batch to change decomposition layer before spending more local refinements.
 - After 2 failed pivots, pause and re-check the evaluator evidence before widening the search further.
 - Stop when the current stage is exhausted, the next hypothesis is unclear, or the retained artifacts fail validation.

@@ -18,7 +18,12 @@ This repo now uses a single-file hill-climbing loop for strategy research.
 
 - `contracts/src/Strategy.sol`
 
-Keep this file reviewable. Prefer small, explicit mutations over broad rewrites unless the current design is exhausted. Treat `contracts/src/candidates/` as the library of starter and archived variants, not the live run path.
+Keep this file reviewable. Prefer the smallest change that tests a distinct architectural
+thesis, not merely the smallest coefficient change. Treat `contracts/src/candidates/` as
+the library of starter and archived variants, not the live run path. After near-replay
+survivors or same-spine failures, pivot decomposition layer or quote topology instead of
+doing another coefficient retune. Use `docs/reference_strategy_debrief.md` and
+`docs/codex_idea_generation_prompt.md` when seeding a new batch.
 
 ## Research Loop
 
@@ -30,6 +35,8 @@ Keep this file reviewable. Prefer small, explicit mutations over broad rewrites 
    - inspect the retained run in machine-readable form:
      - `uv run amm-match hill-climb analyze-run --run-id mar26 --json`
      - `uv run amm-match hill-climb status --run-id mar26 --stage screen --json`
+   - if seeding a fresh batch or escaping a local optimum, use
+     `docs/codex_idea_generation_prompt.md` against the retained run evidence before coding
    - register or update the branch with `set-hypothesis` so intent coverage, portfolio gaps, and recommended-next-batch planning stay meaningful:
      - `uv run amm-match hill-climb set-hypothesis --run-id mar26 --hypothesis-id anti-arb-01 --title "Anti-arb branch" --rationale "Reduce toxic-flow leakage without blowing out calm-flow fees" --expected-effect "Improve arb discipline while preserving screen mean_edge" --mutation-family anti-arb --target-metrics arb_loss_to_retail_gain=-0.03 --hard-guardrails max_fee_jump=0.005 --expected-failure-mode arb_leak_regression`
 5. For each new idea:
@@ -71,8 +78,8 @@ Strictly higher `mean_edge` is not enough on noisy stages.
 ## Agent Read Surface
 
 - Prefer `--json` for agent automation on `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, `compare-profiles`, and `pull-best`.
-- Keep hypothesis records current with `set-hypothesis`; otherwise `intent_coverage`, `portfolio_gaps`, and `recommended_next_batch` are incomplete planning signals.
-- Use `analyze-run` to inspect failure clusters, intent coverage, portfolio gaps, and the recommended next-batch scaffold before proposing workers.
+- Keep hypothesis records current with `set-hypothesis`; otherwise decomposition coverage, batch-diversity checks, structural recommendations, `intent_coverage`, `portfolio_gaps`, and `recommended_next_batch` are incomplete planning signals.
+- Use `analyze-run` to inspect failure clusters, layer/topology diversity, intent coverage, portfolio gaps, and the recommended next-batch scaffold before proposing workers.
 - Use `--read-only` on analysis commands when protected-surface drift blocks normal mutation flows but historical reasoning is still needed.
 
 If a retained run fails continuity or append-only validation, do not repair the ledgers by hand. Quarantine that run and start a fresh `run_id`.

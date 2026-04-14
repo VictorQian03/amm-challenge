@@ -236,8 +236,8 @@ Agent-facing read surfaces:
 
 - `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, `compare-profiles`, and `pull-best` all support `--json`.
 - `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, and `compare-profiles` support `--read-only` so old runs remain inspectable after protected-surface drift.
-- `analyze-run` planning outputs depend on maintained hypothesis records; update branches with `set-hypothesis` if you want `intent_coverage`, `portfolio_gaps`, and `recommended_next_batch` to reflect the real search portfolio.
-- `analyze-run` now exposes failure clusters, phenotype intent coverage, portfolio gaps, and a recommended next-batch scaffold instead of only raw frontier ids.
+- `analyze-run` planning outputs depend on maintained hypothesis records; update branches with `set-hypothesis` if you want decomposition coverage, batch-diversity checks, structural recommendations, `intent_coverage`, `portfolio_gaps`, and `recommended_next_batch` to reflect the real search portfolio.
+- `analyze-run` now exposes failure clusters, layer/topology diversity checks, phenotype intent coverage, portfolio gaps, and a recommended next-batch scaffold instead of only raw frontier ids.
 
 See `docs/hill_climb_loop.md` for the canonical artifact schema, progression policy, and stop rules.
 

@@ -603,6 +603,7 @@ def hill_climb_set_hypothesis_command(args: argparse.Namespace) -> int:
             expected_effect=args.expected_effect,
             mutation_family=args.mutation_family,
             status=args.status,
+            batch_id=getattr(args, "batch_id", None),
             parent_hypothesis_id=args.parent_hypothesis_id,
             seed_eval_id=args.seed_eval_id,
             research_refs=list(args.research_refs or []),
@@ -627,6 +628,18 @@ def hill_climb_set_hypothesis_command(args: argparse.Namespace) -> int:
             nearest_prior_successes=list(
                 getattr(args, "nearest_prior_successes", []) or []
             ),
+            primary_layer_changed=getattr(args, "primary_layer_changed", None),
+            layer_held_fixed=getattr(args, "layer_held_fixed", None),
+            hidden_coupling_removed=getattr(args, "hidden_coupling_removed", None),
+            why_not_coefficient_retune=getattr(
+                args, "why_not_coefficient_retune", None
+            ),
+            expected_win_condition=getattr(args, "expected_win_condition", None),
+            expected_failure_signature=getattr(
+                args, "expected_failure_signature", None
+            ),
+            quote_topology=getattr(args, "quote_topology", None),
+            is_topology_branch=getattr(args, "is_topology_branch", None),
         )
     except (HillClimbHarnessError, RuntimeError, ValueError) as exc:
         print(f"Hill-climb hypothesis update failed: {exc}")
@@ -762,6 +775,7 @@ def hill_climb_show_hypothesis_command(args: argparse.Namespace) -> int:
     print(f"Title: {payload['title']}")
     print(f"Status: {payload['status']}")
     print(f"Mutation Family: {payload['mutation_family']}")
+    print(f"Batch: {payload.get('batch_id') or 'none'}")
     print(f"Expected Effect: {payload['expected_effect']}")
     print(f"Rationale: {payload['rationale']}")
     print(f"Parent Hypothesis: {payload.get('parent_hypothesis_id') or 'none'}")
@@ -782,6 +796,38 @@ def hill_climb_show_hypothesis_command(args: argparse.Namespace) -> int:
     )
     print(
         f"Synthesis Eligible: {'yes' if payload.get('synthesis_eligible', True) else 'no'}"
+    )
+    print(
+        f"Primary Layer Changed: {payload.get('primary_layer_changed') or 'none'}"
+    )
+    print(f"Layer Held Fixed: {payload.get('layer_held_fixed') or 'none'}")
+    print(
+        "Hidden Coupling Removed: "
+        + (payload.get("hidden_coupling_removed") or "none")
+    )
+    print(
+        "Why Not Coefficient Retune: "
+        + (payload.get("why_not_coefficient_retune") or "none")
+    )
+    print(
+        "Expected Win Condition: "
+        + (payload.get("expected_win_condition") or "none")
+    )
+    print(
+        "Expected Failure Signature: "
+        + (payload.get("expected_failure_signature") or "none")
+    )
+    print(f"Quote Topology: {payload.get('quote_topology') or 'none'}")
+    topology_branch = payload.get("is_topology_branch")
+    print(
+        "Topology Branch: "
+        + (
+            "yes"
+            if topology_branch is True
+            else "no"
+            if topology_branch is False
+            else "unknown"
+        )
     )
     print(f"Expected Failure Mode: {payload.get('expected_failure_mode') or 'none'}")
     print(f"Actual Failure Mode: {payload.get('actual_failure_mode') or 'none'}")
@@ -826,7 +872,25 @@ def hill_climb_summarize_run_command(args: argparse.Namespace) -> int:
         "Frontier Bank: "
         + ", ".join(entry["eval_id"] for entry in summary["frontier_bank"]["best_raw"])
     )
+    print(
+        "Decomposition Gaps: "
+        + (", ".join(summary["decomposition_gaps"]) or "none")
+    )
+    batch_diversity = summary["batch_diversity"]
+    print(
+        "Batch Diversity: "
+        f"{batch_diversity['distinct_primary_layer_count']} primary layers, "
+        + (
+            "topology branch present"
+            if batch_diversity["has_topology_branch"]
+            else "topology branch missing"
+        )
+    )
     print("Portfolio Gaps: " + (", ".join(summary["portfolio_gaps"]) or "none"))
+    print("Structural Recommendations:")
+    for entry in summary["structural_recommendations"]:
+        covered = "covered" if entry["covered"] else "missing"
+        print(f"  {entry['kind']} [{covered}] {entry['reason']}")
     print("Unresolved Hypotheses:")
     for payload in summary["unresolved_hypotheses"]:
         print(
@@ -867,11 +931,35 @@ def hill_climb_analyze_run_command(args: argparse.Namespace) -> int:
     print("Failure Clusters:")
     for tag, count in sorted(payload["failure_clusters"].items()):
         print(f"  {tag}: {count}")
+    print(
+        "Decomposition Gaps: "
+        + (", ".join(payload["decomposition_gaps"]) or "none")
+    )
+    print("Decomposition Coverage:")
+    for layer, coverage in payload["decomposition_coverage"].items():
+        open_ids = coverage["open_hypothesis_ids"]
+        print(f"  {layer}: " + (", ".join(open_ids) or "none"))
+    batch_diversity = payload["batch_diversity"]
+    print(
+        "Batch Diversity: "
+        f"{batch_diversity['distinct_primary_layer_count']} primary layers, "
+        + (
+            "topology branch present"
+            if batch_diversity["has_topology_branch"]
+            else "topology branch missing"
+        )
+    )
+    for issue in batch_diversity["issues"]:
+        print(f"  Issue: {issue}")
     print("Portfolio Gaps: " + (", ".join(payload["portfolio_gaps"]) or "none"))
     print("Intent Coverage:")
     for intent, coverage in payload["intent_coverage"].items():
         open_ids = coverage["open_hypothesis_ids"]
         print(f"  {intent}: " + (", ".join(open_ids) or "none"))
+    print("Structural Recommendations:")
+    for entry in payload["structural_recommendations"]:
+        covered = "covered" if entry["covered"] else "missing"
+        print(f"  {entry['kind']} [{covered}] {entry['reason']}")
     print("Best Raw Frontier:")
     for entry in payload["frontier_bank"]["best_raw"]:
         print(f"  {entry['eval_id']} {entry['stage']} {entry['mean_edge']:.6f}")
@@ -1308,6 +1396,11 @@ Examples:
         help="Design family or mutation bucket for clustering history",
     )
     hill_climb_set_hypothesis_parser.add_argument(
+        "--batch-id",
+        default=None,
+        help="Explicit batch identifier used for batch-scoped diversity checks",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
         "--status",
         choices=[
             "planned",
@@ -1380,6 +1473,50 @@ Examples:
         action="append",
         default=[],
         help="Repeatable nearest prior success hypothesis id",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--primary-layer-changed",
+        choices=["state", "risk_budget", "opportunity_budget", "quote_map"],
+        default=None,
+        help="Primary decomposition layer changed by this hypothesis",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--layer-held-fixed",
+        choices=["state", "risk_budget", "opportunity_budget", "quote_map"],
+        default=None,
+        help="Layer intentionally held fixed while testing this branch",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--hidden-coupling-removed",
+        default=None,
+        help="Single hidden coupling this hypothesis is trying to break",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--why-not-coefficient-retune",
+        default=None,
+        help="Why this branch is structurally different from a coefficient retune",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--expected-win-condition",
+        default=None,
+        help="Expected user-visible or score-visible win condition",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--expected-failure-signature",
+        default=None,
+        help="Expected textual failure signature for this branch",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--quote-topology",
+        default=None,
+        help="Short label for the quote-assembly topology this branch belongs to",
+    )
+    hill_climb_set_hypothesis_parser.add_argument(
+        "--topology-branch",
+        dest="is_topology_branch",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Whether this branch changes how the quote is assembled",
     )
     _add_json_argument(hill_climb_set_hypothesis_parser)
     hill_climb_set_hypothesis_parser.set_defaults(

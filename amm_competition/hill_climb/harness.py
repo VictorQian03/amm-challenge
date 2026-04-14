@@ -39,6 +39,15 @@ ANALYSIS_VERSION = "hill_climb.analysis.v1"
 INCUMBENT_EPSILON = 1e-9
 NEXT_EVAL_INDEX_FILENAME = ".next_eval_index"
 LEGACY_NEXT_EVAL_ID_FILENAME = ".next_eval_id"
+LEGACY_BATCH_KEY = "__legacy__"
+SAME_SPINE_FAILURE_LOOKBACK = 12
+DECOMPOSITION_LAYERS = (
+    "state",
+    "risk_budget",
+    "opportunity_budget",
+    "quote_map",
+)
+OPEN_HYPOTHESIS_STATUSES = {"planned", "queued", "active"}
 DEFAULT_ACTIVE_STRATEGY_PATH = Path("contracts/src/Strategy.sol")
 DEFAULT_STOP_RULES = {
     "refine_after_non_improving_iterations": 3,
@@ -581,6 +590,7 @@ class HillClimbHarness:
         expected_effect: str | None = None,
         mutation_family: str | None = None,
         status: str | None = None,
+        batch_id: str | None = None,
         parent_hypothesis_id: str | None = None,
         seed_eval_id: str | None = None,
         research_refs: list[str] | None = None,
@@ -592,6 +602,14 @@ class HillClimbHarness:
         synthesis_eligible: bool | None = None,
         nearest_prior_failures: list[str] | None = None,
         nearest_prior_successes: list[str] | None = None,
+        primary_layer_changed: str | None = None,
+        layer_held_fixed: str | None = None,
+        hidden_coupling_removed: str | None = None,
+        why_not_coefficient_retune: str | None = None,
+        expected_win_condition: str | None = None,
+        expected_failure_signature: str | None = None,
+        quote_topology: str | None = None,
+        is_topology_branch: bool | None = None,
     ) -> dict[str, Any]:
         """Create or update a hypothesis record for a run."""
         normalized_run_id = _slug(run_id, fallback="run")
@@ -612,6 +630,15 @@ class HillClimbHarness:
                         ("rationale", rationale),
                         ("expected_effect", expected_effect),
                         ("mutation_family", mutation_family),
+                        ("batch_id", batch_id),
+                        ("primary_layer_changed", primary_layer_changed),
+                        ("layer_held_fixed", layer_held_fixed),
+                        ("hidden_coupling_removed", hidden_coupling_removed),
+                        ("why_not_coefficient_retune", why_not_coefficient_retune),
+                        ("expected_win_condition", expected_win_condition),
+                        ("expected_failure_signature", expected_failure_signature),
+                        ("quote_topology", quote_topology),
+                        ("is_topology_branch", is_topology_branch),
                     )
                     if value is None
                 ]
@@ -627,6 +654,10 @@ class HillClimbHarness:
                     "expected_effect": expected_effect,
                     "mutation_family": mutation_family,
                     "status": status or "queued",
+                    "batch_id": self._normalize_optional_text(
+                        batch_id,
+                        field_name="batch_id",
+                    ),
                     "created_at": created_at,
                     "updated_at": created_at,
                     "parent_hypothesis_id": parent_hypothesis_id,
@@ -655,6 +686,35 @@ class HillClimbHarness:
                     "nearest_prior_successes": self._normalize_string_list(
                         nearest_prior_successes
                     ),
+                    "primary_layer_changed": self._normalize_decomposition_layer(
+                        primary_layer_changed,
+                        field_name="primary_layer_changed",
+                    ),
+                    "layer_held_fixed": self._normalize_decomposition_layer(
+                        layer_held_fixed,
+                        field_name="layer_held_fixed",
+                    ),
+                    "hidden_coupling_removed": self._normalize_optional_text(
+                        hidden_coupling_removed,
+                        field_name="hidden_coupling_removed",
+                    ),
+                    "why_not_coefficient_retune": self._normalize_optional_text(
+                        why_not_coefficient_retune,
+                        field_name="why_not_coefficient_retune",
+                    ),
+                    "expected_win_condition": self._normalize_optional_text(
+                        expected_win_condition,
+                        field_name="expected_win_condition",
+                    ),
+                    "expected_failure_signature": self._normalize_optional_text(
+                        expected_failure_signature,
+                        field_name="expected_failure_signature",
+                    ),
+                    "quote_topology": self._normalize_optional_text(
+                        quote_topology,
+                        field_name="quote_topology",
+                    ),
+                    "is_topology_branch": is_topology_branch,
                 }
             else:
                 payload = dict(payload)
@@ -668,6 +728,11 @@ class HillClimbHarness:
                     payload["mutation_family"] = mutation_family
                 if status is not None:
                     payload["status"] = status
+                if batch_id is not None:
+                    payload["batch_id"] = self._normalize_optional_text(
+                        batch_id,
+                        field_name="batch_id",
+                    )
                 if parent_hypothesis_id is not None:
                     payload["parent_hypothesis_id"] = parent_hypothesis_id
                 if seed_eval_id is not None:
@@ -704,6 +769,49 @@ class HillClimbHarness:
                     payload["nearest_prior_successes"] = self._normalize_string_list(
                         nearest_prior_successes
                     )
+                if primary_layer_changed is not None:
+                    payload["primary_layer_changed"] = (
+                        self._normalize_decomposition_layer(
+                            primary_layer_changed,
+                            field_name="primary_layer_changed",
+                        )
+                    )
+                if layer_held_fixed is not None:
+                    payload["layer_held_fixed"] = self._normalize_decomposition_layer(
+                        layer_held_fixed,
+                        field_name="layer_held_fixed",
+                    )
+                if hidden_coupling_removed is not None:
+                    payload["hidden_coupling_removed"] = self._normalize_optional_text(
+                        hidden_coupling_removed,
+                        field_name="hidden_coupling_removed",
+                    )
+                if why_not_coefficient_retune is not None:
+                    payload["why_not_coefficient_retune"] = (
+                        self._normalize_optional_text(
+                            why_not_coefficient_retune,
+                            field_name="why_not_coefficient_retune",
+                        )
+                    )
+                if expected_win_condition is not None:
+                    payload["expected_win_condition"] = self._normalize_optional_text(
+                        expected_win_condition,
+                        field_name="expected_win_condition",
+                    )
+                if expected_failure_signature is not None:
+                    payload["expected_failure_signature"] = (
+                        self._normalize_optional_text(
+                            expected_failure_signature,
+                            field_name="expected_failure_signature",
+                        )
+                    )
+                if quote_topology is not None:
+                    payload["quote_topology"] = self._normalize_optional_text(
+                        quote_topology,
+                        field_name="quote_topology",
+                    )
+                if is_topology_branch is not None:
+                    payload["is_topology_branch"] = is_topology_branch
                 payload["updated_at"] = created_at
             if (
                 payload.get("parent_hypothesis_id") is not None
@@ -826,6 +934,10 @@ class HillClimbHarness:
             "frontier_bank": analysis["frontier_bank"],
             "failure_clusters": analysis["failure_clusters"],
             "intent_coverage": analysis["intent_coverage"],
+            "decomposition_coverage": analysis["decomposition_coverage"],
+            "decomposition_gaps": analysis["decomposition_gaps"],
+            "batch_diversity": analysis["batch_diversity"],
+            "structural_recommendations": analysis["structural_recommendations"],
             "portfolio_gaps": analysis["portfolio_gaps"],
             "recommended_next_batch": analysis["recommended_next_batch"],
             "abandoned_families": sorted(
@@ -916,13 +1028,44 @@ class HillClimbHarness:
     ) -> dict[str, Any]:
         frontier_bank = self._build_frontier_bank(results)
         failure_clusters = self._build_failure_clusters(results)
+        active_batch_id, selection_mode, active_open_payloads = (
+            self._select_active_open_batch(hypotheses)
+        )
+        active_open_ids = {
+            payload["hypothesis_id"] for payload in active_open_payloads
+        }
+        if selection_mode == "legacy_open_pool" and len(active_open_payloads) >= 2:
+            warnings = [
+                *warnings,
+                (
+                    "Batch diversity is using a legacy open-hypothesis pool because the "
+                    "active hypotheses do not declare batch_id. Add batch_id when seeding "
+                    "new hypotheses for precise batch-scoped coverage."
+                ),
+            ]
         phenotype_coverage = {
             payload["hypothesis_id"]: self._hypothesis_analysis_entry(payload)
             for payload in sorted(
                 hypotheses.values(), key=lambda payload: payload["hypothesis_id"]
             )
         }
-        intent_coverage = self._build_intent_coverage(hypotheses)
+        intent_coverage = self._build_intent_coverage(
+            hypotheses,
+            active_open_ids=active_open_ids,
+        )
+        decomposition_coverage = self._build_decomposition_coverage(
+            hypotheses,
+            active_open_ids=active_open_ids,
+        )
+        decomposition_gaps = self._decomposition_gaps(decomposition_coverage)
+        batch_diversity = self._build_batch_diversity(
+            batch_id=active_batch_id,
+            selection_mode=selection_mode,
+            open_payloads=active_open_payloads,
+            results=results,
+            hypotheses=hypotheses,
+            decomposition_coverage=decomposition_coverage,
+        )
         return {
             "artifact_version": ANALYSIS_VERSION,
             "run_id": run_dir.name,
@@ -936,6 +1079,13 @@ class HillClimbHarness:
             ][-5:],
             "phenotype_coverage": phenotype_coverage,
             "intent_coverage": intent_coverage,
+            "decomposition_coverage": decomposition_coverage,
+            "decomposition_gaps": decomposition_gaps,
+            "batch_diversity": batch_diversity,
+            "structural_recommendations": self._structural_recommendations(
+                decomposition_gaps=decomposition_gaps,
+                batch_diversity=batch_diversity,
+            ),
             "portfolio_gaps": self._portfolio_gaps(intent_coverage),
             "recommended_next_batch": self._recommended_next_batch(
                 frontier_bank=frontier_bank,
@@ -956,6 +1106,7 @@ class HillClimbHarness:
     def _hypothesis_analysis_entry(self, payload: dict[str, Any]) -> dict[str, Any]:
         return {
             "mutation_family": payload["mutation_family"],
+            "batch_id": payload.get("batch_id"),
             "novelty_coordinates": payload.get("novelty_coordinates", {}),
             "target_metrics": payload.get("target_metrics", {}),
             "hard_guardrails": payload.get("hard_guardrails", {}),
@@ -963,6 +1114,14 @@ class HillClimbHarness:
             "actual_failure_mode": payload.get("actual_failure_mode"),
             "synthesis_eligible": payload.get("synthesis_eligible", True),
             "intents": self._infer_hypothesis_intents(payload),
+            "primary_layer_changed": payload.get("primary_layer_changed"),
+            "layer_held_fixed": payload.get("layer_held_fixed"),
+            "hidden_coupling_removed": payload.get("hidden_coupling_removed"),
+            "why_not_coefficient_retune": payload.get("why_not_coefficient_retune"),
+            "expected_win_condition": payload.get("expected_win_condition"),
+            "expected_failure_signature": payload.get("expected_failure_signature"),
+            "quote_topology": payload.get("quote_topology"),
+            "is_topology_branch": payload.get("is_topology_branch"),
         }
 
     def _infer_hypothesis_intents(self, payload: dict[str, Any]) -> list[str]:
@@ -1016,10 +1175,323 @@ class HillClimbHarness:
             intents.append("structural_pivot")
         return _sorted_unique(intents)
 
-    def _build_intent_coverage(
+    def _hypothesis_time_marker(self, payload: dict[str, Any]) -> str:
+        for field in ("updated_at", "created_at"):
+            value = payload.get(field)
+            if isinstance(value, str):
+                return value
+        return ""
+
+    def _select_active_open_batch(
         self, hypotheses: dict[str, dict[str, Any]]
+    ) -> tuple[str | None, str, list[dict[str, Any]]]:
+        open_payloads = [
+            payload
+            for payload in hypotheses.values()
+            if payload.get("status") in OPEN_HYPOTHESIS_STATUSES
+        ]
+        if not open_payloads:
+            return None, "none", []
+        grouped: dict[str, list[dict[str, Any]]] = {}
+        for payload in open_payloads:
+            batch_id = payload.get("batch_id")
+            group_key = (
+                batch_id
+                if isinstance(batch_id, str) and batch_id.strip()
+                else LEGACY_BATCH_KEY
+            )
+            grouped.setdefault(group_key, []).append(payload)
+        active_group_key, active_payloads = max(
+            grouped.items(),
+            key=lambda item: (
+                max(self._hypothesis_time_marker(payload) for payload in item[1]),
+                item[0],
+            ),
+        )
+        selection_mode = (
+            "explicit_batch_id"
+            if active_group_key != LEGACY_BATCH_KEY
+            else "legacy_open_pool"
+        )
+        active_batch_id = (
+            active_group_key if active_group_key != LEGACY_BATCH_KEY else None
+        )
+        return active_batch_id, selection_mode, active_payloads
+
+    def _build_decomposition_coverage(
+        self,
+        hypotheses: dict[str, dict[str, Any]],
+        *,
+        active_open_ids: set[str],
     ) -> dict[str, dict[str, Any]]:
-        open_statuses = {"planned", "queued", "active"}
+        coverage: dict[str, dict[str, Any]] = {
+            layer: {"all_hypothesis_ids": [], "open_hypothesis_ids": []}
+            for layer in DECOMPOSITION_LAYERS
+        }
+        coverage["unclassified"] = {"all_hypothesis_ids": [], "open_hypothesis_ids": []}
+        for payload in hypotheses.values():
+            layer = payload.get("primary_layer_changed")
+            bucket_name = (
+                layer
+                if isinstance(layer, str) and layer in DECOMPOSITION_LAYERS
+                else "unclassified"
+            )
+            bucket = coverage[bucket_name]
+            bucket["all_hypothesis_ids"].append(payload["hypothesis_id"])
+            if payload["hypothesis_id"] in active_open_ids:
+                bucket["open_hypothesis_ids"].append(payload["hypothesis_id"])
+        for bucket in coverage.values():
+            bucket["all_hypothesis_ids"] = _sorted_unique(bucket["all_hypothesis_ids"])
+            bucket["open_hypothesis_ids"] = _sorted_unique(
+                bucket["open_hypothesis_ids"]
+            )
+        return coverage
+
+    def _decomposition_gaps(
+        self, decomposition_coverage: dict[str, dict[str, Any]]
+    ) -> list[str]:
+        return [
+            layer
+            for layer in DECOMPOSITION_LAYERS
+            if not decomposition_coverage.get(layer, {}).get("open_hypothesis_ids")
+        ]
+
+    def _recent_unique_hypothesis_ids(
+        self,
+        results: list[dict[str, Any]],
+        *,
+        statuses: set[str],
+        limit: int,
+    ) -> list[str]:
+        hypothesis_ids: list[str] = []
+        seen: set[str] = set()
+        for summary in reversed(results):
+            if summary.get("status") not in statuses:
+                continue
+            hypothesis_id = summary.get("hypothesis_id")
+            if not isinstance(hypothesis_id, str) or hypothesis_id in seen:
+                continue
+            hypothesis_ids.append(hypothesis_id)
+            seen.add(hypothesis_id)
+            if len(hypothesis_ids) >= limit:
+                break
+        return list(reversed(hypothesis_ids))
+
+    def _near_replay_survivor_ids(
+        self,
+        results: list[dict[str, Any]],
+        hypotheses: dict[str, dict[str, Any]],
+    ) -> list[str]:
+        survivor_ids = self._recent_unique_hypothesis_ids(
+            results,
+            statuses={"seed", "keep"},
+            limit=2,
+        )
+        if len(survivor_ids) < 2:
+            return []
+        left = hypotheses.get(survivor_ids[0])
+        right = hypotheses.get(survivor_ids[1])
+        if left is None or right is None:
+            return []
+        left_key = self._same_spine_key(left)
+        right_key = self._same_spine_key(right)
+        if left_key is not None and left_key == right_key:
+            return survivor_ids
+        return []
+
+    def _same_spine_key(self, payload: dict[str, Any]) -> tuple[str, str, str] | None:
+        if payload.get("is_topology_branch") is True:
+            return None
+        primary_layer = payload.get("primary_layer_changed")
+        held_layer = payload.get("layer_held_fixed")
+        quote_topology = payload.get("quote_topology")
+        if not isinstance(primary_layer, str):
+            return None
+        if not isinstance(held_layer, str):
+            return None
+        if not isinstance(quote_topology, str):
+            return None
+        return primary_layer, held_layer, quote_topology
+
+    def _same_spine_group_label(self, spine_key: tuple[str, str, str]) -> str:
+        primary_layer, held_layer, quote_topology = spine_key
+        return f"{primary_layer}->{held_layer}:{quote_topology}"
+
+    def _same_spine_failure_groups(
+        self,
+        results: list[dict[str, Any]],
+        hypotheses: dict[str, dict[str, Any]],
+    ) -> dict[str, list[str]]:
+        grouped: dict[str, list[str]] = {}
+        seen: set[str] = set()
+        for summary in reversed(results):
+            if summary.get("status") not in {"discard", "invalid"}:
+                continue
+            hypothesis_id = summary.get("hypothesis_id")
+            if not isinstance(hypothesis_id, str) or hypothesis_id in seen:
+                continue
+            seen.add(hypothesis_id)
+            payload = hypotheses.get(hypothesis_id)
+            if payload is None:
+                continue
+            spine_key = self._same_spine_key(payload)
+            if spine_key is None:
+                continue
+            grouped.setdefault(self._same_spine_group_label(spine_key), []).append(
+                hypothesis_id
+            )
+            if len(seen) >= SAME_SPINE_FAILURE_LOOKBACK:
+                break
+        return {
+            group_label: _sorted_unique(hypothesis_ids)
+            for group_label, hypothesis_ids in sorted(grouped.items())
+            if len(_sorted_unique(hypothesis_ids)) >= 2
+        }
+
+    def _build_batch_diversity(
+        self,
+        *,
+        batch_id: str | None,
+        selection_mode: str,
+        open_payloads: list[dict[str, Any]],
+        results: list[dict[str, Any]],
+        hypotheses: dict[str, dict[str, Any]],
+        decomposition_coverage: dict[str, dict[str, Any]],
+    ) -> dict[str, Any]:
+        open_primary_layers = sorted(
+            {
+                payload.get("primary_layer_changed")
+                for payload in open_payloads
+                if payload.get("primary_layer_changed") in DECOMPOSITION_LAYERS
+            }
+        )
+        topology_branch_ids = _sorted_unique(
+            [
+                payload["hypothesis_id"]
+                for payload in open_payloads
+                if payload.get("is_topology_branch") is True
+            ]
+        )
+        quote_topology_groups: dict[str, list[str]] = {}
+        for payload in open_payloads:
+            quote_topology = payload.get("quote_topology")
+            if not isinstance(quote_topology, str):
+                continue
+            quote_topology_groups.setdefault(quote_topology, []).append(
+                payload["hypothesis_id"]
+            )
+        quote_topology_groups = {
+            quote_topology: _sorted_unique(hypothesis_ids)
+            for quote_topology, hypothesis_ids in sorted(quote_topology_groups.items())
+        }
+        repeated_quote_topology_groups = {
+            quote_topology: hypothesis_ids
+            for quote_topology, hypothesis_ids in quote_topology_groups.items()
+            if len(hypothesis_ids) >= 2
+        }
+        near_replay_survivor_ids = self._near_replay_survivor_ids(results, hypotheses)
+        same_spine_failure_groups = self._same_spine_failure_groups(results, hypotheses)
+        issues: list[str] = []
+        if open_payloads and len(open_primary_layers) < 3:
+            missing_layers = ", ".join(self._decomposition_gaps(decomposition_coverage))
+            issues.append(
+                "Open batch covers fewer than three primary layers"
+                + (f"; missing: {missing_layers}" if missing_layers else "")
+            )
+        if open_payloads and not topology_branch_ids:
+            issues.append("Open batch has no true topology branch")
+        if len(open_payloads) >= 2 and len(quote_topology_groups) == 1:
+            issues.append("Open batch stays inside a single quote topology")
+        if near_replay_survivor_ids:
+            issues.append(
+                "Recent surviving branches are near-replays; pivot layers before another retune"
+            )
+        if same_spine_failure_groups:
+            issues.append(
+                "Recent failures cluster inside the same spine; pivot layers instead of replaying the spine"
+            )
+        return {
+            "batch_id": batch_id,
+            "selection_mode": selection_mode,
+            "open_hypothesis_ids": _sorted_unique(
+                [payload["hypothesis_id"] for payload in open_payloads]
+            ),
+            "open_primary_layers": open_primary_layers,
+            "distinct_primary_layer_count": len(open_primary_layers),
+            "has_topology_branch": bool(topology_branch_ids),
+            "topology_branch_hypothesis_ids": topology_branch_ids,
+            "quote_topology_groups": quote_topology_groups,
+            "repeated_quote_topology_groups": repeated_quote_topology_groups,
+            "near_replay_survivor_ids": near_replay_survivor_ids,
+            "same_spine_failure_groups": same_spine_failure_groups,
+            "force_layer_pivot": bool(
+                near_replay_survivor_ids or same_spine_failure_groups
+            ),
+            "issues": issues,
+        }
+
+    def _structural_recommendations(
+        self,
+        *,
+        decomposition_gaps: list[str],
+        batch_diversity: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        recommendations: list[dict[str, Any]] = []
+        if batch_diversity.get("force_layer_pivot"):
+            recommendations.append(
+                {
+                    "kind": "layer_pivot",
+                    "covered": False,
+                    "reason": (
+                        "Recent survivors or failures show same-spine replay pressure; "
+                        "switch primary layer before another coefficient retune."
+                    ),
+                }
+            )
+        if (
+            batch_diversity.get("open_hypothesis_ids")
+            and batch_diversity.get("distinct_primary_layer_count", 0) < 3
+            and decomposition_gaps
+        ):
+            recommendations.append(
+                {
+                    "kind": "decomposition_gap",
+                    "covered": False,
+                    "reason": (
+                        "Open batch does not yet cover three distinct decomposition targets; "
+                        f"next additions should include: {', '.join(decomposition_gaps)}."
+                    ),
+                }
+            )
+        if batch_diversity.get("open_hypothesis_ids") and not batch_diversity.get(
+            "has_topology_branch"
+        ):
+            recommendations.append(
+                {
+                    "kind": "topology_branch",
+                    "covered": False,
+                    "reason": (
+                        "Reserve at least one branch that changes how the quote is assembled, "
+                        "not just how incumbent terms are tuned."
+                    ),
+                }
+            )
+        if not recommendations:
+            recommendations.append(
+                {
+                    "kind": "batch_contract",
+                    "covered": True,
+                    "reason": "Open hypotheses satisfy the minimum layer and topology diversity contract.",
+                }
+            )
+        return recommendations
+
+    def _build_intent_coverage(
+        self,
+        hypotheses: dict[str, dict[str, Any]],
+        *,
+        active_open_ids: set[str],
+    ) -> dict[str, dict[str, Any]]:
         coverage: dict[str, dict[str, Any]] = {
             intent: {"all_hypothesis_ids": [], "open_hypothesis_ids": []}
             for intent in PLANNING_INTENTS
@@ -1030,7 +1502,7 @@ class HillClimbHarness:
                     intent, {"all_hypothesis_ids": [], "open_hypothesis_ids": []}
                 )
                 bucket["all_hypothesis_ids"].append(payload["hypothesis_id"])
-                if payload.get("status") in open_statuses:
+                if payload["hypothesis_id"] in active_open_ids:
                     bucket["open_hypothesis_ids"].append(payload["hypothesis_id"])
         for bucket in coverage.values():
             bucket["all_hypothesis_ids"] = _sorted_unique(bucket["all_hypothesis_ids"])
@@ -1291,6 +1763,37 @@ class HillClimbHarness:
                     f"Expected finite numeric value for {field_name} metric {key!r}"
                 )
             normalized[key] = converted
+        return normalized
+
+    def _normalize_optional_text(
+        self,
+        value: str | None,
+        *,
+        field_name: str,
+    ) -> str | None:
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            raise HillClimbHarnessError(f"Expected {field_name} to be a string")
+        normalized = value.strip()
+        if not normalized:
+            raise HillClimbHarnessError(f"Expected non-empty text for {field_name}")
+        return normalized
+
+    def _normalize_decomposition_layer(
+        self,
+        value: str | None,
+        *,
+        field_name: str,
+    ) -> str | None:
+        normalized = self._normalize_optional_text(value, field_name=field_name)
+        if normalized is None:
+            return None
+        if normalized not in DECOMPOSITION_LAYERS:
+            allowed = ", ".join(DECOMPOSITION_LAYERS)
+            raise HillClimbHarnessError(
+                f"Unknown {field_name} {normalized!r}; expected one of: {allowed}"
+            )
         return normalized
 
     def _normalize_json_object(self, payload: dict[str, Any] | None) -> dict[str, Any]:
@@ -2589,6 +3092,15 @@ class HillClimbHarness:
         payload.setdefault("synthesis_eligible", True)
         payload.setdefault("nearest_prior_failures", [])
         payload.setdefault("nearest_prior_successes", [])
+        payload.setdefault("batch_id", None)
+        payload.setdefault("primary_layer_changed", None)
+        payload.setdefault("layer_held_fixed", None)
+        payload.setdefault("hidden_coupling_removed", None)
+        payload.setdefault("why_not_coefficient_retune", None)
+        payload.setdefault("expected_win_condition", None)
+        payload.setdefault("expected_failure_signature", None)
+        payload.setdefault("quote_topology", None)
+        payload.setdefault("is_topology_branch", None)
         required_fields = {
             "artifact_version",
             "hypothesis_id",
@@ -2597,6 +3109,7 @@ class HillClimbHarness:
             "expected_effect",
             "mutation_family",
             "status",
+            "batch_id",
             "created_at",
             "updated_at",
             "parent_hypothesis_id",
@@ -2611,6 +3124,14 @@ class HillClimbHarness:
             "synthesis_eligible",
             "nearest_prior_failures",
             "nearest_prior_successes",
+            "primary_layer_changed",
+            "layer_held_fixed",
+            "hidden_coupling_removed",
+            "why_not_coefficient_retune",
+            "expected_win_condition",
+            "expected_failure_signature",
+            "quote_topology",
+            "is_topology_branch",
         }
         missing = sorted(required_fields - set(payload))
         if missing:
@@ -2635,9 +3156,49 @@ class HillClimbHarness:
                 raise HillClimbHarnessError(
                     f"Run '{run_dir.name}' hypothesis field {field!r} must be a string"
                 )
+        for field in (
+            "hidden_coupling_removed",
+            "why_not_coefficient_retune",
+            "expected_win_condition",
+            "expected_failure_signature",
+            "quote_topology",
+        ):
+            value = payload[field]
+            if value is not None and (not isinstance(value, str) or not value.strip()):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has invalid {field}"
+                )
+        for field in ("primary_layer_changed", "layer_held_fixed"):
+            value = payload[field]
+            if value is not None and value not in DECOMPOSITION_LAYERS:
+                allowed = ", ".join(DECOMPOSITION_LAYERS)
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has unknown {field} {value!r}; "
+                    f"expected one of: {allowed}"
+                )
+        if (
+            payload["primary_layer_changed"] is not None
+            and payload["layer_held_fixed"] is not None
+            and payload["primary_layer_changed"] == payload["layer_held_fixed"]
+        ):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} cannot change and hold fixed the same layer"
+            )
+        if payload["is_topology_branch"] is not None and not isinstance(
+            payload["is_topology_branch"], bool
+        ):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has invalid is_topology_branch"
+            )
         if payload["status"] not in HYPOTHESIS_STATUSES:
             raise HillClimbHarnessError(
                 f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has unsupported status {payload['status']!r}"
+            )
+        if payload["batch_id"] is not None and (
+            not isinstance(payload["batch_id"], str) or not payload["batch_id"].strip()
+        ):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has invalid batch_id"
             )
         if payload["parent_hypothesis_id"] is not None and not isinstance(
             payload["parent_hypothesis_id"], str
