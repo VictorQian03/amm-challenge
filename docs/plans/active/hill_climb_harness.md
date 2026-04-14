@@ -30,7 +30,9 @@ These define the competition mechanics and must remain stable during research:
 
 - `contracts/src/Strategy.sol`
 
-`contracts/src/candidates/` is the library of starter and archived variants. The live run path is `contracts/src/Strategy.sol`.
+`contracts/src/StarterStrategy.sol` is the starter template. `contracts/src/Reference.sol`
+and `contracts/src/VanillaStrategy.sol` are read-only fixtures. The live run path is
+`contracts/src/Strategy.sol`.
 
 ### Harness Components
 
@@ -55,10 +57,10 @@ Canonical retained runs:
 - at most one active research lane under `artifacts/hill_climb/<run_id>/`
 - at most one current smoke sanity lane under `artifacts/hill_climb_smoke/<run_id>/`
 
-As of the current retained lane, the active hill-climb run is
-`artifacts/hill_climb/apr12-screen480-1130/`.
-Older lane `artifacts/hill_climb/apr11-screen480-0948/` is read-only history because the
-protected-surface fingerprint changed; do not resume mutation there on this checkout.
+Resolve the current retained lane through `artifacts/index.json` or `artifacts/INDEX.md`
+instead of hard-coding a run id into this reference. Historical lanes may become read-only
+when the protected-surface fingerprint changes; inspect them with `--read-only` instead of
+resuming mutation.
 
 The active research artifact layout is `artifacts/hill_climb/<run_id>/`.
 

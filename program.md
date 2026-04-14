@@ -19,11 +19,13 @@ This repo now uses a single-file hill-climbing loop for strategy research.
 - `contracts/src/Strategy.sol`
 
 Keep this file reviewable. Prefer the smallest change that tests a distinct architectural
-thesis, not merely the smallest coefficient change. Treat `contracts/src/candidates/` as
-the library of starter and archived variants, not the live run path. After near-replay
-survivors or same-spine failures, pivot decomposition layer or quote topology instead of
-doing another coefficient retune. Use `docs/reference_strategy_debrief.md` and
-`docs/codex_idea_generation_prompt.md` when seeding a new batch.
+thesis, not merely the smallest coefficient change. `contracts/src/StarterStrategy.sol`
+is the starter template, while `contracts/src/Reference.sol` and
+`contracts/src/VanillaStrategy.sol` are read-only fixtures. After near-replay survivors or
+same-spine failures, pivot decomposition layer or quote topology instead of doing another
+coefficient retune. Use `docs/reference_strategy_debrief.md`,
+`docs/codex_idea_generation_prompt.md`, and `docs/agent_harness_guide.md` when seeding a
+new batch or reasoning from retained artifacts.
 
 ## Research Loop
 
@@ -58,6 +60,7 @@ doing another coefficient retune. Use `docs/reference_strategy_debrief.md` and
    - `screen` -> `climb` -> `confirm` -> `final`
 
 See `docs/hill_climb_loop.md` for the canonical artifact schema, stage progression policy, and stop rules.
+See `docs/agent_harness_guide.md` for the fastest read order across CLI, retained lanes, historical evals, and research memos.
 
 ## Stage Contract
 

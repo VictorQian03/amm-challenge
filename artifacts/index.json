@@ -1,6 +1,6 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-13T16:52:03+00:00",
+  "generated_at": "2026-04-14T22:51:47+00:00",
   "hill_climb_runs": [
     {
       "active_stage": "screen",
@@ -655,9 +655,7 @@
       "research_artifact_paths": [
         "artifacts/research/amm_seed_refresh_apr13-screen480-0907",
         "artifacts/research/amm_seed_refresh_apr13-screen480-0907/memo.md",
-        "docs/plans/active/apr13-screen480-0907.md",
-        "https://arxiv.org/abs/2303.00208",
-        "https://github.com/MeteoraAg/damm-v2"
+        "docs/plans/active/apr13-screen480-0907.md"
       ],
       "run_id": "apr13-screen480-0907",
       "status": "active"

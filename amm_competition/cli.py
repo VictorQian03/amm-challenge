@@ -1117,10 +1117,10 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  amm-match run contracts/src/Strategy.sol
-  amm-match run contracts/src/Strategy.sol --simulations 100
-  amm-match validate contracts/src/Strategy.sol
-  amm-match hill-climb eval contracts/src/Strategy.sol --run-id mar26 --stage screen
+  uv run amm-match run contracts/src/Strategy.sol
+  uv run amm-match run contracts/src/Strategy.sol --simulations 100
+  uv run amm-match validate contracts/src/Strategy.sol
+  uv run amm-match hill-climb eval contracts/src/Strategy.sol --run-id mar26 --stage screen
         """,
     )
 

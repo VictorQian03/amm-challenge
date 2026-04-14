@@ -90,7 +90,7 @@ The normalizer also means there's no "free lunch"—you can't beat 30 bps just b
 
 ## Writing a Strategy
 
-**Start with `contracts/src/candidates/StarterCandidate.sol`** and copy it into `contracts/src/Strategy.sol`. The hill-climb harness treats `contracts/src/Strategy.sol` as the active edit path for a run, while `contracts/src/candidates/` is the library of starter and archived variants.
+**Start with `contracts/src/StarterStrategy.sol`** and copy it into `contracts/src/Strategy.sol`. The hill-climb harness treats `contracts/src/Strategy.sol` as the only active edit path for a run. `contracts/src/StarterStrategy.sol`, `contracts/src/Reference.sol`, and `contracts/src/VanillaStrategy.sol` are read-only support fixtures.
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -172,32 +172,34 @@ contract Strategy is AMMStrategyBase {
 # One-shot local setup
 ./scripts/setup_local.sh
 
+# Repo-local commands should use uv so agents do not depend on shell activation.
+
 # Run a candidate directly
-amm-match run contracts/src/Strategy.sol
+uv run amm-match run contracts/src/Strategy.sol
 
 # Quick direct test
-amm-match run contracts/src/Strategy.sol --simulations 10
+uv run amm-match run contracts/src/Strategy.sol --simulations 10
 
 # Validate without running
-amm-match validate contracts/src/Strategy.sol
+uv run amm-match validate contracts/src/Strategy.sol
 
 # Record a hill-climb eval
-amm-match hill-climb eval contracts/src/Strategy.sol --run-id mar26 --stage screen --label baseline
+uv run amm-match hill-climb eval contracts/src/Strategy.sol --run-id mar26 --stage screen --label baseline
 
 # Register a branch hypothesis so planning surfaces stay meaningful
-amm-match hill-climb set-hypothesis --run-id mar26 --hypothesis-id anti-arb-01 --title "Anti-arb branch" --rationale "Reduce toxic-flow leakage without fee spikes" --expected-effect "Improve arb discipline while preserving screen mean_edge" --mutation-family anti-arb --target-metrics arb_loss_to_retail_gain=-0.03 --hard-guardrails max_fee_jump=0.005 --expected-failure-mode arb_leak_regression
+uv run amm-match hill-climb set-hypothesis --run-id mar26 --hypothesis-id anti-arb-01 --title "Anti-arb branch" --rationale "Reduce toxic-flow leakage without fee spikes" --expected-effect "Improve arb discipline while preserving screen mean_edge" --mutation-family anti-arb --target-metrics arb_loss_to_retail_gain=-0.03 --hard-guardrails max_fee_jump=0.005 --expected-failure-mode arb_leak_regression
 
 # Inspect the current stage incumbent
-amm-match hill-climb status --run-id mar26 --stage screen --json
+uv run amm-match hill-climb status --run-id mar26 --stage screen --json
 
 # Inspect the run with machine-readable output
-amm-match hill-climb analyze-run --run-id mar26 --json
+uv run amm-match hill-climb analyze-run --run-id mar26 --json
 
 # Compare two stored evals on the same stage
-amm-match hill-climb compare-profiles --run-id mar26 --stage screen --baseline-eval-id screen_0001 --candidate-eval-id screen_0002
+uv run amm-match hill-climb compare-profiles --run-id mar26 --stage screen --baseline-eval-id screen_0001 --candidate-eval-id screen_0002
 
 # Restore the current stage incumbent into the active file
-amm-match hill-climb pull-best --run-id mar26 --stage screen --destination contracts/src/Strategy.sol
+uv run amm-match hill-climb pull-best --run-id mar26 --stage screen --destination contracts/src/Strategy.sol
 
 ```
 
@@ -238,6 +240,7 @@ Agent-facing read surfaces:
 - `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, and `compare-profiles` support `--read-only` so old runs remain inspectable after protected-surface drift.
 - `analyze-run` planning outputs depend on maintained hypothesis records; update branches with `set-hypothesis` if you want decomposition coverage, batch-diversity checks, structural recommendations, `intent_coverage`, `portfolio_gaps`, and `recommended_next_batch` to reflect the real search portfolio.
 - `analyze-run` now exposes failure clusters, layer/topology diversity checks, phenotype intent coverage, portfolio gaps, and a recommended next-batch scaffold instead of only raw frontier ids.
+- `docs/agent_harness_guide.md` is the canonical map for active-run CLI usage, historical retained-lane analysis, and research / idea-generation artifact read order.
 
 See `docs/hill_climb_loop.md` for the canonical artifact schema, progression policy, and stop rules.
 
@@ -247,5 +250,5 @@ This repo ships with versioned git hooks under `.githooks/` and a protected-path
 
 - `./scripts/setup_local.sh` installs the local environment and sets `core.hooksPath=.githooks`
 - `pre-commit` and `pre-push` block protected mechanics edits whether they are staged or still dirty in the working tree
-- `amm-match hill-climb eval` also refuses to run against a dirty protected surface, and retained runs pin a protected-surface fingerprint in `run.json`
+- `uv run amm-match hill-climb eval` also refuses to run against a dirty protected surface, and retained runs pin a protected-surface fingerprint in `run.json`
 - intentional edits can still be made by setting `ALLOW_COMPETITION_MECHANICS_EDIT=1`

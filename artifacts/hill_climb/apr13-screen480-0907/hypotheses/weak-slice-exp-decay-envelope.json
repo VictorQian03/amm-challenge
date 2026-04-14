@@ -1,17 +1,23 @@
 {
   "actual_failure_mode": "over_spiky_fee_surface",
   "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": null,
   "created_at": "2026-04-13T16:12:15+00:00",
   "eval_ids": [
     "prescreen_0007"
   ],
   "expected_effect": "Lift calm weak slices without continuous cheap quoting.",
   "expected_failure_mode": "arb_leak_regression",
+  "expected_failure_signature": "The envelope behaves like a broad cheap-mode overlay and arb leakage spikes.",
+  "expected_win_condition": "Lift low-retail and low-decile slices via short-lived calm-only release.",
   "hard_guardrails": {
     "arb_loss_to_retail_gain": 0.124,
     "mean_edge": 473.0
   },
+  "hidden_coupling_removed": "Calm relief persistence and opportunity spend were tied together as a broad bucket or toggle.",
   "hypothesis_id": "weak-slice-exp-decay-envelope",
+  "is_topology_branch": false,
+  "layer_held_fixed": "risk_budget",
   "mutation_family": "weak_slice_decay_envelope",
   "nearest_prior_failures": [],
   "nearest_prior_successes": [],
@@ -21,11 +27,10 @@
     "intent": "weak_slice"
   },
   "parent_hypothesis_id": null,
+  "primary_layer_changed": "opportunity_budget",
+  "quote_topology": "additive-incumbent-spine",
   "rationale": "Trigger bounded calm relief only after repeated benign confirmations, then decay it exponentially rather than leaving a bucket or broad rebate active.",
-  "research_refs": [
-    "artifacts/research/amm_seed_refresh_apr13-screen480-0907/memo.md",
-    "docs/plans/active/apr13-screen480-0907.md"
-  ],
+  "research_refs": [],
   "seed_eval_id": "screen_0005",
   "status": "discard",
   "synthesis_eligible": true,
@@ -34,5 +39,6 @@
     "low_retail_mean_edge": 408.0
   },
   "title": "Exponential calm-relief envelope",
-  "updated_at": "2026-04-13T16:39:41+00:00"
+  "updated_at": "2026-04-14T22:49:25+00:00",
+  "why_not_coefficient_retune": "This replaces the bucket-style release path with a bounded confirmation-gated decay envelope."
 }

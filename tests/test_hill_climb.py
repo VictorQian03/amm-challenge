@@ -652,7 +652,7 @@ def test_evaluate_rejects_alternate_source_path_for_existing_run(tmp_path):
 
 def test_hill_climb_eval_command_rejects_nondefault_active_path(capsys):
     args = argparse.Namespace(
-        strategy="contracts/src/candidates/StarterCandidate.sol",
+        strategy="contracts/src/StarterStrategy.sol",
         run_id="mar26",
         stage="screen",
         artifact_root="artifacts/hill_climb",

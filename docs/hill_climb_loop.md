@@ -5,8 +5,8 @@ This is the canonical repo-local reference for the hill-climb loop. Keep `README
 ## Active Edit Path
 
 - The active strategy file is `contracts/src/Strategy.sol`.
-- `contracts/src/candidates/` is a library of starter and archived variants. Copy one into `contracts/src/Strategy.sol` before evaluating it.
-- `amm-match hill-climb eval` only accepts `contracts/src/Strategy.sol` for normal runs.
+- `contracts/src/StarterStrategy.sol` is the starter template; `contracts/src/Reference.sol` and `contracts/src/VanillaStrategy.sol` are read-only reference fixtures.
+- `uv run amm-match hill-climb eval` only accepts `contracts/src/Strategy.sol` for normal runs.
 - A run is pinned to one active strategy path in `run.json`. Normal eval flows fail fast if the run is resumed through a different source path.
 
 ## Decision Rule
@@ -82,19 +82,20 @@ Promotion policy:
 
 - Move a candidate from `screen -> climb -> confirm -> final` only after it survives the current stage as `seed` or `keep`.
 - A stage failure or margin miss is a local branch failure, not a reason to overwrite the incumbent.
-- If the operator is chasing a specific breakout threshold, record it with `amm-match hill-climb set-state --breakout-stage <stage> --breakout-threshold <mean_edge>` and treat `keep` as local progress, not completion, until the recorded outcome gate passes.
+- If the operator is chasing a specific breakout threshold, record it with `uv run amm-match hill-climb set-state --breakout-stage <stage> --breakout-threshold <mean_edge>` and treat `keep` as local progress, not completion, until the recorded outcome gate passes.
+- Use `artifacts/index.json` for machine-readable cross-run discovery, `artifacts/INDEX.md` for the human narrative, and `docs/agent_harness_guide.md` for the agent-facing read order across retained lanes and research artifacts.
 - Same-stage re-evals of the same `source_sha256` fail by default. Use `--replay-reason` only for intentional replays.
 
 ## Read Surfaces
 
-- `amm-match hill-climb status`: quick incumbent/latest plus loop guidance.
-- `amm-match hill-climb history --run-id <id>`: compact per-eval timeline.
-- `amm-match hill-climb show-eval --run-id <id> --eval-id <id>`: one eval with lineage metadata.
-- `amm-match hill-climb set-hypothesis --run-id <id> --hypothesis-id <id> ...`: create or update the first-class hypothesis registry.
-- `amm-match hill-climb show-hypothesis --run-id <id> --hypothesis-id <id>`: one hypothesis with linked evals.
-- `amm-match hill-climb summarize-run --run-id <id>`: incumbent chain, unresolved ideas, abandoned families, and notable failures.
-- `amm-match hill-climb analyze-run --run-id <id>`: structured frontier bank, failure clusters, intent coverage, portfolio gaps, and recommended next-batch coverage.
-- `amm-match hill-climb compare-profiles --stage <stage> ...`: stage-aligned phenotype deltas for baseline, candidate, and optional anchor inputs.
+- `uv run amm-match hill-climb status`: quick incumbent/latest plus loop guidance.
+- `uv run amm-match hill-climb history --run-id <id>`: compact per-eval timeline.
+- `uv run amm-match hill-climb show-eval --run-id <id> --eval-id <id>`: one eval with lineage metadata.
+- `uv run amm-match hill-climb set-hypothesis --run-id <id> --hypothesis-id <id> ...`: create or update the first-class hypothesis registry.
+- `uv run amm-match hill-climb show-hypothesis --run-id <id> --hypothesis-id <id>`: one hypothesis with linked evals.
+- `uv run amm-match hill-climb summarize-run --run-id <id>`: incumbent chain, unresolved ideas, abandoned families, and notable failures.
+- `uv run amm-match hill-climb analyze-run --run-id <id>`: structured frontier bank, failure clusters, intent coverage, portfolio gaps, and recommended next-batch coverage.
+- `uv run amm-match hill-climb compare-profiles --stage <stage> ...`: stage-aligned phenotype deltas for baseline, candidate, and optional anchor inputs.
 
 Agent-facing contract:
 

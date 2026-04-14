@@ -1,5 +1,57 @@
 {
   "artifact_version": "hill_climb.analysis.v1",
+  "batch_diversity": {
+    "batch_id": null,
+    "distinct_primary_layer_count": 0,
+    "force_layer_pivot": false,
+    "has_topology_branch": false,
+    "issues": [],
+    "near_replay_survivor_ids": [],
+    "open_hypothesis_ids": [],
+    "open_primary_layers": [],
+    "quote_topology_groups": {},
+    "repeated_quote_topology_groups": {},
+    "same_spine_failure_groups": {},
+    "selection_mode": "none",
+    "topology_branch_hypothesis_ids": []
+  },
+  "decomposition_coverage": {
+    "opportunity_budget": {
+      "all_hypothesis_ids": [
+        "weak-slice-exp-decay-envelope"
+      ],
+      "open_hypothesis_ids": []
+    },
+    "quote_map": {
+      "all_hypothesis_ids": [
+        "local-refine-concave-relief",
+        "structural-pivot-defensive-router-v2"
+      ],
+      "open_hypothesis_ids": []
+    },
+    "risk_budget": {
+      "all_hypothesis_ids": [
+        "anti-arb-side-markout-memory"
+      ],
+      "open_hypothesis_ids": []
+    },
+    "state": {
+      "all_hypothesis_ids": [
+        "fee-discipline-vol-accumulator-floor"
+      ],
+      "open_hypothesis_ids": []
+    },
+    "unclassified": {
+      "all_hypothesis_ids": [],
+      "open_hypothesis_ids": []
+    }
+  },
+  "decomposition_gaps": [
+    "state",
+    "risk_budget",
+    "opportunity_budget",
+    "quote_map"
+  ],
   "failure_clusters": {
     "arb_leak_regression": 2,
     "over_spiky_fee_surface": 8,
@@ -263,7 +315,7 @@
       }
     ]
   },
-  "generated_at": "2026-04-13T16:52:03+00:00",
+  "generated_at": "2026-04-14T22:51:47+00:00",
   "intent_coverage": {
     "anti_arb": {
       "all_hypothesis_ids": [
@@ -319,11 +371,15 @@
   "phenotype_coverage": {
     "anti-arb-side-markout-memory": {
       "actual_failure_mode": "arb_leak_regression",
+      "batch_id": null,
       "expected_failure_mode": "overpriced_calm_flow",
+      "expected_failure_signature": "The asymmetric overlay still cheapens both sides enough to leak arb and tail protection.",
+      "expected_win_condition": "Charge only the toxic side while keeping the baseline spread intact.",
       "hard_guardrails": {
         "low_retail_mean_edge": 405.0,
         "max_fee_jump": 0.056
       },
+      "hidden_coupling_removed": "Symmetric baseline spread and toxic-side protection were sharing one additive surface.",
       "intents": [
         "anti_arb",
         "fee_discipline",
@@ -331,25 +387,34 @@
         "structural_pivot",
         "weak_slice"
       ],
+      "is_topology_branch": false,
+      "layer_held_fixed": "opportunity_budget",
       "mutation_family": "side_markout_budget",
       "novelty_coordinates": {
         "classification": "novel",
         "external_idea": "markout_memory",
         "intent": "anti_arb"
       },
+      "primary_layer_changed": "risk_budget",
+      "quote_topology": "additive-incumbent-spine",
       "synthesis_eligible": true,
       "target_metrics": {
         "arb_loss_to_retail_gain": 0.118,
         "mean_edge": 478.0
-      }
+      },
+      "why_not_coefficient_retune": "This adds side-specific markout memory and one-sided blockers instead of retuning symmetric carry terms."
     },
     "fee-discipline-vol-accumulator-floor": {
       "actual_failure_mode": "arb_leak_regression",
+      "batch_id": null,
       "expected_failure_mode": "tail_protection_loss",
+      "expected_failure_signature": "Average fees fall too far and arb or weak-slice protection collapses.",
+      "expected_win_condition": "Lower max_fee_jump while defending incumbent arb and weak-slice floors.",
       "hard_guardrails": {
         "arb_loss_to_retail_gain": 0.124,
         "low_decile_mean_edge": 361.0
       },
+      "hidden_coupling_removed": "Instantaneous event spikes were driving both volatility estimation and fee release timing.",
       "intents": [
         "anti_arb",
         "fee_discipline",
@@ -357,26 +422,35 @@
         "structural_pivot",
         "weak_slice"
       ],
+      "is_topology_branch": false,
+      "layer_held_fixed": "quote_map",
       "mutation_family": "fee-motion-discipline",
       "novelty_coordinates": {
         "classification": "novel",
         "external_idea": "volatility_accumulator_floor",
         "intent": "fee_discipline"
       },
+      "primary_layer_changed": "state",
+      "quote_topology": "additive-incumbent-spine",
       "synthesis_eligible": true,
       "target_metrics": {
         "low_retail_mean_edge": 406.0,
         "max_fee_jump": 0.052,
         "mean_edge": 480.0
-      }
+      },
+      "why_not_coefficient_retune": "This swaps in a filtered volatility accumulator plus decaying floor control instead of retuning the incumbent event-spike coefficients."
     },
     "local-refine-concave-relief": {
       "actual_failure_mode": "over_spiky_fee_surface",
+      "batch_id": null,
       "expected_failure_mode": "weak_slice_improvement_without_overall_gain",
+      "expected_failure_signature": "The branch becomes a near-replay or raises average fees without enough mean_edge gain.",
+      "expected_win_condition": "Improve calm slices and arb discipline while keeping an incumbent-like pricing floor.",
       "hard_guardrails": {
         "arb_loss_to_retail_gain": 0.124,
         "max_fee_jump": 0.056
       },
+      "hidden_coupling_removed": "The same linear map was cheapening calm flow and widening protection without a gated nonlinear split.",
       "intents": [
         "anti_arb",
         "fee_discipline",
@@ -384,25 +458,34 @@
         "structural_pivot",
         "weak_slice"
       ],
+      "is_topology_branch": false,
+      "layer_held_fixed": "state",
       "mutation_family": "nonlinear-local-refine",
       "novelty_coordinates": {
         "classification": "local_refinement",
         "external_idea": "convex_risk_concave_relief",
         "intent": "local_refine"
       },
+      "primary_layer_changed": "quote_map",
+      "quote_topology": "additive-incumbent-spine",
       "synthesis_eligible": true,
       "target_metrics": {
         "low_retail_mean_edge": 407.0,
         "mean_edge": 478.0
-      }
+      },
+      "why_not_coefficient_retune": "This changes the nonlinear quote map and confirmation-gated spend path rather than nudging incumbent coefficients."
     },
     "structural-pivot-defensive-router-v2": {
       "actual_failure_mode": "over_spiky_fee_surface",
+      "batch_id": null,
       "expected_failure_mode": "tail_protection_loss",
+      "expected_failure_signature": "The router cuts average fees into a hidden cheap mode and leaks arb or tail protection.",
+      "expected_win_condition": "Keep the defensive floor while a bounded competitive branch recovers weak slices.",
       "hard_guardrails": {
         "arb_loss_to_retail_gain": 0.128,
         "max_fee_jump": 0.06
       },
+      "hidden_coupling_removed": "One additive surface was simultaneously deciding the defensive floor and the competitive mode.",
       "intents": [
         "anti_arb",
         "fee_discipline",
@@ -410,25 +493,34 @@
         "structural_pivot",
         "weak_slice"
       ],
+      "is_topology_branch": true,
+      "layer_held_fixed": "state",
       "mutation_family": "defensive_router_pivot",
       "novelty_coordinates": {
         "classification": "novel",
         "external_idea": "defensive_router",
         "intent": "structural_pivot"
       },
+      "primary_layer_changed": "quote_map",
+      "quote_topology": "defensive-router",
       "synthesis_eligible": true,
       "target_metrics": {
         "low_retail_mean_edge": 405.0,
         "mean_edge": 478.0
-      }
+      },
+      "why_not_coefficient_retune": "This changes quote assembly into a defensive default plus bounded competitive router rather than retuning one surface."
     },
     "weak-slice-exp-decay-envelope": {
       "actual_failure_mode": "over_spiky_fee_surface",
+      "batch_id": null,
       "expected_failure_mode": "arb_leak_regression",
+      "expected_failure_signature": "The envelope behaves like a broad cheap-mode overlay and arb leakage spikes.",
+      "expected_win_condition": "Lift low-retail and low-decile slices via short-lived calm-only release.",
       "hard_guardrails": {
         "arb_loss_to_retail_gain": 0.124,
         "mean_edge": 473.0
       },
+      "hidden_coupling_removed": "Calm relief persistence and opportunity spend were tied together as a broad bucket or toggle.",
       "intents": [
         "anti_arb",
         "fee_discipline",
@@ -436,17 +528,22 @@
         "structural_pivot",
         "weak_slice"
       ],
+      "is_topology_branch": false,
+      "layer_held_fixed": "risk_budget",
       "mutation_family": "weak_slice_decay_envelope",
       "novelty_coordinates": {
         "classification": "novel",
         "external_idea": "exp_decay_relief",
         "intent": "weak_slice"
       },
+      "primary_layer_changed": "opportunity_budget",
+      "quote_topology": "additive-incumbent-spine",
       "synthesis_eligible": true,
       "target_metrics": {
         "low_decile_mean_edge": 363.0,
         "low_retail_mean_edge": 408.0
-      }
+      },
+      "why_not_coefficient_retune": "This replaces the bucket-style release path with a bounded confirmation-gated decay envelope."
     }
   },
   "portfolio_gaps": [
@@ -9882,5 +9979,12 @@
     }
   ],
   "run_id": "apr13-screen480-0907",
+  "structural_recommendations": [
+    {
+      "covered": true,
+      "kind": "batch_contract",
+      "reason": "Open hypotheses satisfy the minimum layer and topology diversity contract."
+    }
+  ],
   "warnings": []
 }

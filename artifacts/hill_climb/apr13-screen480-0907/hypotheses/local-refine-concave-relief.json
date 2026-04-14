@@ -1,6 +1,7 @@
 {
   "actual_failure_mode": "over_spiky_fee_surface",
   "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": null,
   "created_at": "2026-04-13T16:12:15+00:00",
   "eval_ids": [
     "screen_0003",
@@ -9,11 +10,16 @@
   ],
   "expected_effect": "Reduce broad cheap quoting while preserving selective calm competitiveness.",
   "expected_failure_mode": "weak_slice_improvement_without_overall_gain",
+  "expected_failure_signature": "The branch becomes a near-replay or raises average fees without enough mean_edge gain.",
+  "expected_win_condition": "Improve calm slices and arb discipline while keeping an incumbent-like pricing floor.",
   "hard_guardrails": {
     "arb_loss_to_retail_gain": 0.124,
     "max_fee_jump": 0.056
   },
+  "hidden_coupling_removed": "The same linear map was cheapening calm flow and widening protection without a gated nonlinear split.",
   "hypothesis_id": "local-refine-concave-relief",
+  "is_topology_branch": false,
+  "layer_held_fixed": "state",
   "mutation_family": "nonlinear-local-refine",
   "nearest_prior_failures": [],
   "nearest_prior_successes": [],
@@ -23,11 +29,10 @@
     "intent": "local_refine"
   },
   "parent_hypothesis_id": null,
+  "primary_layer_changed": "quote_map",
+  "quote_topology": "additive-incumbent-spine",
   "rationale": "Keep the incumbent signal stack but use convex protection only above real risk thresholds and concave capped calm relief.",
-  "research_refs": [
-    "artifacts/research/amm_seed_refresh_apr13-screen480-0907/memo.md",
-    "docs/plans/active/apr13-screen480-0907.md"
-  ],
+  "research_refs": [],
   "seed_eval_id": "screen_0001",
   "status": "discard",
   "synthesis_eligible": true,
@@ -36,5 +41,6 @@
     "mean_edge": 478.0
   },
   "title": "Concave relief, thresholded protection",
-  "updated_at": "2026-04-13T16:25:52+00:00"
+  "updated_at": "2026-04-14T22:49:25+00:00",
+  "why_not_coefficient_retune": "This changes the nonlinear quote map and confirmation-gated spend path rather than nudging incumbent coefficients."
 }

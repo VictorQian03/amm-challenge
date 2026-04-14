@@ -1,5 +1,11 @@
 # Artifacts Index
 
+Start here:
+
+- `artifacts/index.json`: machine-readable cross-run catalog for agents
+- `docs/agent_harness_guide.md`: canonical read order for retained runs, historical evals, research memos, and idea-generation inputs
+- this file: human narrative for what changed across dates
+
 ## 2026-03-27
 
 - `artifacts/code-simplifier/`: targeted hill-climb harness/test cleanup run
@@ -8,7 +14,7 @@
 ## 2026-04-01
 
 - `artifacts/hill_climb_smoke/apr01-audit-smoke/`: retained smoke-harness lane under the current protected-surface fingerprint
-- `artifacts/research/amm_dynamic_fee_apr01-screen420-2134/`: external AMM dynamic-fee evidence memo and hypothesis ranking
+- `docs/plans/completed/apr01-screen420-2134.md`: retained narrative for the pruned `apr01` research round after the separate research directory was folded back into plan history
 
 ## 2026-04-10
 
