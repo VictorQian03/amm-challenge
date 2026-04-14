@@ -1317,6 +1317,46 @@ def test_set_state_rejects_partial_breakout_goal_configuration(
     )
 
 
+def test_get_run_state_rejects_missing_outcome_gate_field(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(tmp_path)
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    state_path = tmp_path / "artifacts" / "mar26" / "state.json"
+    state = _load_json(state_path)
+    del state["outcome_gate"]
+    state_path.write_text(json.dumps(state))
+
+    with pytest.raises(
+        HillClimbHarnessError, match="state is missing required fields: outcome_gate"
+    ):
+        harness.get_run_state(run_id="mar26")
+
+
+def test_get_run_state_rejects_out_of_order_stop_rules(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(tmp_path)
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    state_path = tmp_path / "artifacts" / "mar26" / "state.json"
+    state = _load_json(state_path)
+    state["stop_rules"] = {
+        "refine_after_non_improving_iterations": 6,
+        "pivot_after_non_improving_iterations": 5,
+        "stop_after_non_improving_iterations": 8,
+    }
+    state_path.write_text(json.dumps(state))
+
+    with pytest.raises(
+        HillClimbHarnessError, match="stop_rules must satisfy refine <= pivot <= stop"
+    ):
+        harness.get_run_state(run_id="mar26")
+
+
 def test_hill_climb_history_and_lookup_commands_surface_agent_facing_read_models(
     tmp_path, capsys, monkeypatch
 ):

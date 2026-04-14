@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
@@ -256,6 +257,11 @@ def _tsv_field(value: str | None) -> str:
     return value.replace("\t", " ").replace("\n", " ").strip()
 
 
+def _ensure_text_file(path: Path, contents: str) -> None:
+    if not path.exists():
+        path.write_text(contents)
+
+
 class _RunLock:
     """Portable directory-based lock for per-run artifact coordination."""
 
@@ -351,6 +357,20 @@ class HillClimbHarness:
                 )
             raise
         normalized_research_refs = self._normalize_string_list(research_refs)
+        summary_base = self._evaluation_summary_base(
+            run_id=normalized_run_id,
+            eval_id=eval_id,
+            stage_config=stage_config,
+            source_path=source_path,
+            source_sha256=source_sha256,
+            snapshot_path=snapshot_path,
+            label=label,
+            description=description,
+            lineage=lineage,
+            change_summary=change_summary,
+            research_refs=normalized_research_refs,
+            replay_reason=replay_reason,
+        )
 
         try:
             strategy = self._strategy_loader(source_text)
@@ -379,24 +399,7 @@ class HillClimbHarness:
                 gate_passed=bool(scorecard["gate"]["passed"]),
             )
             summary = {
-                "artifact_version": ARTIFACT_VERSION,
-                "run_id": normalized_run_id,
-                "eval_id": eval_id,
-                "created_at": _utc_now(),
-                "stage": stage_config.name,
-                "stage_description": stage_config.description,
-                "source_path": str(source_path.resolve()),
-                "source_sha256": source_sha256,
-                "snapshot_path": str(snapshot_path),
-                "snapshot_relpath": str(snapshot_path.relative_to(run_dir)),
-                "label": label,
-                "description": description,
-                "hypothesis_id": lineage["hypothesis_id"],
-                "parent_eval_id": lineage["parent_eval_id"],
-                "parent_source_sha256": lineage["parent_source_sha256"],
-                "change_summary": change_summary,
-                "research_refs": normalized_research_refs,
-                "replay_reason": replay_reason,
+                **summary_base,
                 "strategy_name": strategy_name,
                 "status": selection.status,
                 "mean_edge": mean_edge,
@@ -414,24 +417,7 @@ class HillClimbHarness:
             }
         except Exception as exc:
             summary = {
-                "artifact_version": ARTIFACT_VERSION,
-                "run_id": normalized_run_id,
-                "eval_id": eval_id,
-                "created_at": _utc_now(),
-                "stage": stage_config.name,
-                "stage_description": stage_config.description,
-                "source_path": str(source_path.resolve()),
-                "source_sha256": source_sha256,
-                "snapshot_path": str(snapshot_path),
-                "snapshot_relpath": str(snapshot_path.relative_to(run_dir)),
-                "label": label,
-                "description": description,
-                "hypothesis_id": lineage["hypothesis_id"],
-                "parent_eval_id": lineage["parent_eval_id"],
-                "parent_source_sha256": lineage["parent_source_sha256"],
-                "change_summary": change_summary,
-                "research_refs": normalized_research_refs,
-                "replay_reason": replay_reason,
+                **summary_base,
                 "strategy_name": None,
                 "status": "invalid",
                 "mean_edge": None,
@@ -1670,13 +1656,9 @@ class HillClimbHarness:
         return snapshot_path
 
     def _ensure_read_surfaces(self, run_dir: Path) -> None:
-        history_path = self._history_path(run_dir)
-        if not history_path.exists():
-            history_path.write_text("")
+        _ensure_text_file(self._history_path(run_dir), "")
         self._hypotheses_dir(run_dir).mkdir(parents=True, exist_ok=True)
-        analysis_path = self._analysis_path(run_dir)
-        if not analysis_path.exists():
-            analysis_path.write_text("")
+        _ensure_text_file(self._analysis_path(run_dir), _json_dump({}))
 
     def _read_results(self, run_dir: Path) -> list[dict[str, Any]]:
         return self._read_jsonl_records(run_dir / "results.jsonl")
@@ -2709,6 +2691,43 @@ class HillClimbHarness:
     def _write_manifest(self, run_dir: Path, manifest: dict[str, Any]) -> None:
         (run_dir / "run.json").write_text(_json_dump(manifest))
 
+    def _evaluation_summary_base(
+        self,
+        *,
+        run_id: str,
+        eval_id: str,
+        stage_config: Any,
+        source_path: Path,
+        source_sha256: str,
+        snapshot_path: Path,
+        label: str | None,
+        description: str | None,
+        lineage: dict[str, Any],
+        change_summary: str | None,
+        research_refs: list[str],
+        replay_reason: str | None,
+    ) -> dict[str, Any]:
+        return {
+            "artifact_version": ARTIFACT_VERSION,
+            "run_id": run_id,
+            "eval_id": eval_id,
+            "created_at": _utc_now(),
+            "stage": stage_config.name,
+            "stage_description": stage_config.description,
+            "source_path": str(source_path.resolve()),
+            "source_sha256": source_sha256,
+            "snapshot_path": str(snapshot_path),
+            "snapshot_relpath": str(snapshot_path.relative_to(self.artifact_root / run_id)),
+            "label": label,
+            "description": description,
+            "hypothesis_id": lineage["hypothesis_id"],
+            "parent_eval_id": lineage["parent_eval_id"],
+            "parent_source_sha256": lineage["parent_source_sha256"],
+            "change_summary": change_summary,
+            "research_refs": research_refs,
+            "replay_reason": replay_reason,
+        }
+
     def _default_state_payload(
         self, *, run_id: str, target_stage: str
     ) -> dict[str, Any]:
@@ -2787,16 +2806,8 @@ class HillClimbHarness:
         return state
 
     def _ensure_results_ledgers(self, run_dir: Path) -> None:
-        results_jsonl = run_dir / "results.jsonl"
-        if not results_jsonl.exists():
-            results_jsonl.write_text("")
-        results_tsv = run_dir / "results.tsv"
-        if not results_tsv.exists():
-            results_tsv.write_text(RESULTS_HEADER)
-        history_path = self._history_path(run_dir)
-        if not history_path.exists():
-            history_path.write_text("")
-        self._hypotheses_dir(run_dir).mkdir(parents=True, exist_ok=True)
+        _ensure_text_file(run_dir / "results.jsonl", "")
+        _ensure_text_file(run_dir / "results.tsv", RESULTS_HEADER)
 
     def _validate_results_ledgers(self, run_dir: Path) -> None:
         results_jsonl = run_dir / "results.jsonl"
@@ -3347,6 +3358,7 @@ class HillClimbHarness:
             "last_completed_iteration",
             "next_hypothesis_id",
             "next_hypothesis_note",
+            "outcome_gate",
             "run_id",
             "run_mode",
             "stop_rules",
@@ -3369,32 +3381,8 @@ class HillClimbHarness:
             raise HillClimbHarnessError(
                 f"Run '{run_dir.name}' state field incumbent_eval_ids must be an object"
             )
-        if not isinstance(state["stop_rules"], dict):
-            raise HillClimbHarnessError(
-                f"Run '{run_dir.name}' state field stop_rules must be an object"
-            )
-        outcome_gate = state.get("outcome_gate")
-        if outcome_gate is not None:
-            if not isinstance(outcome_gate, dict):
-                raise HillClimbHarnessError(
-                    f"Run '{run_dir.name}' state field outcome_gate must be null or an object"
-                )
-            stage = outcome_gate.get("stage")
-            if stage not in HILL_CLIMB_STAGES:
-                raise HillClimbHarnessError(
-                    f"Run '{run_dir.name}' outcome_gate has unknown stage {stage!r}"
-                )
-            minimum_mean_edge = outcome_gate.get("minimum_mean_edge")
-            if isinstance(minimum_mean_edge, bool) or not isinstance(
-                minimum_mean_edge, (int, float)
-            ):
-                raise HillClimbHarnessError(
-                    f"Run '{run_dir.name}' outcome_gate.minimum_mean_edge must be a finite number"
-                )
-            if not math.isfinite(float(minimum_mean_edge)):
-                raise HillClimbHarnessError(
-                    f"Run '{run_dir.name}' outcome_gate.minimum_mean_edge must be a finite number"
-                )
+        self._validate_stop_rules(run_dir, state["stop_rules"])
+        self._validate_outcome_gate(run_dir, state["outcome_gate"])
         if state["run_mode"] not in {"foreground", "background"}:
             raise HillClimbHarnessError(
                 f"Run '{run_dir.name}' has unsupported run_mode {state['run_mode']!r}"
@@ -3423,12 +3411,6 @@ class HillClimbHarness:
             if state["next_hypothesis_id"] not in hypotheses:
                 raise HillClimbHarnessError(
                     f"Run '{run_dir.name}' references missing next_hypothesis_id {state['next_hypothesis_id']!r}"
-                )
-        for key, minimum in DEFAULT_STOP_RULES.items():
-            raw_value = state["stop_rules"].get(key)
-            if not isinstance(raw_value, int) or raw_value < minimum:
-                raise HillClimbHarnessError(
-                    f"Run '{run_dir.name}' stop_rules[{key!r}] must be an integer >= {minimum}"
                 )
         baseline_summary = next(
             (summary for summary in results if summary.get("status") != "invalid"),
@@ -3463,6 +3445,72 @@ class HillClimbHarness:
                     run_dir,
                     f"Run '{run_dir.name}' has stale incumbent_eval_ids in state.json",
                 )
+            )
+
+    def _validate_outcome_gate(
+        self, run_dir: Path, outcome_gate: object
+    ) -> None:
+        if outcome_gate is None:
+            return
+        if not isinstance(outcome_gate, Mapping):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' state field outcome_gate must be null or an object"
+            )
+        outcome_gate_payload = dict(outcome_gate)
+        stage = outcome_gate_payload.get("stage")
+        if stage not in HILL_CLIMB_STAGES:
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' outcome_gate has unknown stage {stage!r}"
+            )
+        minimum_mean_edge = outcome_gate_payload.get("minimum_mean_edge")
+        if isinstance(minimum_mean_edge, bool) or not isinstance(
+            minimum_mean_edge, (int, float)
+        ):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' outcome_gate.minimum_mean_edge must be a finite number"
+            )
+        if not math.isfinite(float(minimum_mean_edge)):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' outcome_gate.minimum_mean_edge must be a finite number"
+            )
+
+    def _validate_stop_rules(self, run_dir: Path, stop_rules: object) -> None:
+        if not isinstance(stop_rules, Mapping):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' state field stop_rules must be an object"
+            )
+        stop_rule_payload = dict(stop_rules)
+        expected_keys = set(DEFAULT_STOP_RULES)
+        actual_keys = set(stop_rule_payload)
+        missing = sorted(expected_keys - actual_keys)
+        extra = sorted(actual_keys - expected_keys)
+        if missing or extra:
+            details: list[str] = []
+            if missing:
+                details.append(f"missing: {', '.join(missing)}")
+            if extra:
+                details.append(f"unknown: {', '.join(extra)}")
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' stop_rules must match the current contract ({'; '.join(details)})"
+            )
+        validated_values: dict[str, int] = {}
+        for key, minimum in DEFAULT_STOP_RULES.items():
+            raw_value = stop_rule_payload[key]
+            if isinstance(raw_value, bool) or not isinstance(raw_value, int):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' stop_rules[{key!r}] must be an integer >= {minimum}"
+                )
+            if raw_value < minimum:
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' stop_rules[{key!r}] must be an integer >= {minimum}"
+                )
+            validated_values[key] = raw_value
+        refine_after = validated_values["refine_after_non_improving_iterations"]
+        pivot_after = validated_values["pivot_after_non_improving_iterations"]
+        stop_after = validated_values["stop_after_non_improving_iterations"]
+        if not (refine_after <= pivot_after <= stop_after):
+            raise HillClimbHarnessError(
+                f"Run '{run_dir.name}' stop_rules must satisfy refine <= pivot <= stop"
             )
 
     def _run_state_status_from_payload(
