@@ -238,8 +238,9 @@ Agent-facing read surfaces:
 
 - `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, `compare-profiles`, and `pull-best` all support `--json`.
 - `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, and `compare-profiles` support `--read-only` so old runs remain inspectable after protected-surface drift.
-- `analyze-run` planning outputs depend on maintained hypothesis records; update branches with `set-hypothesis` if you want decomposition coverage, batch-diversity checks, structural recommendations, `intent_coverage`, `portfolio_gaps`, and `recommended_next_batch` to reflect the real search portfolio.
-- `analyze-run` now exposes failure clusters, layer/topology diversity checks, phenotype intent coverage, portfolio gaps, and a recommended next-batch scaffold instead of only raw frontier ids.
+- `analyze-run` planning outputs depend on maintained hypothesis records; update branches with `set-hypothesis` if you want decomposition coverage, batch-diversity checks, structural recommendations, `intent_coverage`, `portfolio_gaps`, `family_scoreboard`, `layer_scoreboard`, and `recommended_next_batch` to reflect the real search portfolio.
+- `analyze-run` now exposes failure clusters, layer/topology diversity checks, phenotype intent coverage, mutation-family and primary-layer risk scoreboards, notebook-style findings/dead ends, and a recommended next-batch scaffold instead of only raw frontier ids.
+- each retained lane also renders a derived notebook under `artifacts/hill_climb/<run_id>/notebook/` with `findings.md`, `dead_ends.md`, and `search_risk.md`; these are convenience outputs rebuilt from canonical ledgers, not authoritative state.
 - `docs/agent_harness_guide.md` is the canonical map for active-run CLI usage, historical retained-lane analysis, and research / idea-generation artifact read order.
 
 See `docs/hill_climb_loop.md` for the canonical artifact schema, progression policy, and stop rules.

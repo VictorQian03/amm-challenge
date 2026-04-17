@@ -1,7 +1,171 @@
 {
   "artifact_version": "hill_climb.analysis.v1",
+  "batch_diversity": {
+    "batch_id": null,
+    "distinct_primary_layer_count": 0,
+    "force_layer_pivot": false,
+    "has_topology_branch": false,
+    "issues": [],
+    "near_replay_survivor_ids": [],
+    "open_hypothesis_ids": [],
+    "open_primary_layers": [],
+    "quote_topology_groups": {},
+    "repeated_quote_topology_groups": {},
+    "same_spine_failure_groups": {},
+    "selection_mode": "none",
+    "topology_branch_hypothesis_ids": []
+  },
+  "decomposition_coverage": {
+    "opportunity_budget": {
+      "all_hypothesis_ids": [],
+      "open_hypothesis_ids": []
+    },
+    "quote_map": {
+      "all_hypothesis_ids": [],
+      "open_hypothesis_ids": []
+    },
+    "risk_budget": {
+      "all_hypothesis_ids": [],
+      "open_hypothesis_ids": []
+    },
+    "state": {
+      "all_hypothesis_ids": [],
+      "open_hypothesis_ids": []
+    },
+    "unclassified": {
+      "all_hypothesis_ids": [
+        "anti-arb-toxicity-budget",
+        "fee-discipline-slew-scheduler",
+        "local-refine-hysteretic-release",
+        "structural-pivot-two-mode-controller",
+        "weak-slice-rebate-bucket"
+      ],
+      "open_hypothesis_ids": []
+    }
+  },
+  "decomposition_gaps": [
+    "state",
+    "risk_budget",
+    "opportunity_budget",
+    "quote_map"
+  ],
   "failure_clusters": {
     "over_spiky_fee_surface": 8
+  },
+  "family_scoreboard": {
+    "fee-motion-discipline": {
+      "attempt_count": 1,
+      "best_eval_id": "prescreen_0008",
+      "best_mean_edge": 372.6272758295454,
+      "dead_end": false,
+      "discard_count": 1,
+      "failure_modes": [
+        "over_spiky_fee_surface"
+      ],
+      "fragility": 1.0,
+      "hypothesis_ids": [
+        "fee-discipline-slew-scheduler"
+      ],
+      "invalid_count": 0,
+      "keep_count": 0,
+      "last_eval_id": "prescreen_0008",
+      "last_status": "discard",
+      "mutation_family": "fee-motion-discipline",
+      "open_hypothesis_ids": [],
+      "risk_label": "high",
+      "seed_count": 0,
+      "survivor_count": 0
+    },
+    "passive-recapture-hysteresis": {
+      "attempt_count": 3,
+      "best_eval_id": "prescreen_0002",
+      "best_mean_edge": 477.3337207830145,
+      "dead_end": true,
+      "discard_count": 3,
+      "failure_modes": [
+        "over_spiky_fee_surface"
+      ],
+      "fragility": 1.0,
+      "hypothesis_ids": [
+        "local-refine-hysteretic-release"
+      ],
+      "invalid_count": 0,
+      "keep_count": 0,
+      "last_eval_id": "screen_0004",
+      "last_status": "discard",
+      "mutation_family": "passive-recapture-hysteresis",
+      "open_hypothesis_ids": [],
+      "risk_label": "high",
+      "seed_count": 0,
+      "survivor_count": 0
+    },
+    "rebate-budget-queueing": {
+      "attempt_count": 2,
+      "best_eval_id": "screen_0007",
+      "best_mean_edge": 473.61639344802524,
+      "dead_end": true,
+      "discard_count": 2,
+      "failure_modes": [
+        "over_spiky_fee_surface"
+      ],
+      "fragility": 1.0,
+      "hypothesis_ids": [
+        "weak-slice-rebate-bucket"
+      ],
+      "invalid_count": 0,
+      "keep_count": 0,
+      "last_eval_id": "screen_0007",
+      "last_status": "discard",
+      "mutation_family": "rebate-budget-queueing",
+      "open_hypothesis_ids": [],
+      "risk_label": "high",
+      "seed_count": 0,
+      "survivor_count": 0
+    },
+    "switched-controller-pivot": {
+      "attempt_count": 1,
+      "best_eval_id": "prescreen_0009",
+      "best_mean_edge": 286.8763251508669,
+      "dead_end": false,
+      "discard_count": 1,
+      "failure_modes": [],
+      "fragility": 1.0,
+      "hypothesis_ids": [
+        "structural-pivot-two-mode-controller"
+      ],
+      "invalid_count": 0,
+      "keep_count": 0,
+      "last_eval_id": "prescreen_0009",
+      "last_status": "discard",
+      "mutation_family": "switched-controller-pivot",
+      "open_hypothesis_ids": [],
+      "risk_label": "high",
+      "seed_count": 0,
+      "survivor_count": 0
+    },
+    "toxic-flow-budget": {
+      "attempt_count": 1,
+      "best_eval_id": "prescreen_0005",
+      "best_mean_edge": 476.27982742652785,
+      "dead_end": false,
+      "discard_count": 1,
+      "failure_modes": [
+        "over_spiky_fee_surface"
+      ],
+      "fragility": 1.0,
+      "hypothesis_ids": [
+        "anti-arb-toxicity-budget"
+      ],
+      "invalid_count": 0,
+      "keep_count": 0,
+      "last_eval_id": "prescreen_0005",
+      "last_status": "discard",
+      "mutation_family": "toxic-flow-budget",
+      "open_hypothesis_ids": [],
+      "risk_label": "high",
+      "seed_count": 0,
+      "survivor_count": 0
+    }
   },
   "frontier_bank": {
     "best_anti_arb": {
@@ -259,7 +423,7 @@
       }
     ]
   },
-  "generated_at": "2026-04-13T15:51:03+00:00",
+  "generated_at": "2026-04-17T00:52:02+00:00",
   "intent_coverage": {
     "anti_arb": {
       "all_hypothesis_ids": [
@@ -312,14 +476,44 @@
       "open_hypothesis_ids": []
     }
   },
+  "layer_scoreboard": {
+    "unclassified": {
+      "attempt_count": 8,
+      "discard_count": 8,
+      "fragility": 1.0,
+      "hypothesis_ids": [
+        "anti-arb-toxicity-budget",
+        "fee-discipline-slew-scheduler",
+        "local-refine-hysteretic-release",
+        "structural-pivot-two-mode-controller",
+        "weak-slice-rebate-bucket"
+      ],
+      "invalid_count": 0,
+      "mutation_families": [
+        "fee-motion-discipline",
+        "passive-recapture-hysteresis",
+        "rebate-budget-queueing",
+        "switched-controller-pivot",
+        "toxic-flow-budget"
+      ],
+      "open_hypothesis_ids": [],
+      "primary_layer": "unclassified",
+      "risk_label": "high",
+      "survivor_count": 0
+    }
+  },
   "phenotype_coverage": {
     "anti-arb-toxicity-budget": {
       "actual_failure_mode": "over_spiky_fee_surface",
+      "batch_id": null,
       "expected_failure_mode": "overpriced_calm_flow",
+      "expected_failure_signature": null,
+      "expected_win_condition": null,
       "hard_guardrails": {
         "low_retail_mean_edge": 400.0,
         "max_fee_jump": 0.06
       },
+      "hidden_coupling_removed": null,
       "intents": [
         "anti_arb",
         "fee_discipline",
@@ -327,6 +521,8 @@
         "structural_pivot",
         "weak_slice"
       ],
+      "is_topology_branch": null,
+      "layer_held_fixed": null,
       "mutation_family": "toxic-flow-budget",
       "novelty_coordinates": {
         "classification": "novel",
@@ -334,20 +530,27 @@
         "external_idea": "flow_toxicity_budget",
         "intent": "anti_arb"
       },
+      "primary_layer_changed": null,
+      "quote_topology": null,
       "synthesis_eligible": true,
       "target_metrics": {
         "arb_edge": -62.0,
         "arb_loss_to_retail_gain": 0.118,
         "mean_edge": 480.0
-      }
+      },
+      "why_not_coefficient_retune": null
     },
     "fee-discipline-slew-scheduler": {
       "actual_failure_mode": "over_spiky_fee_surface",
+      "batch_id": null,
       "expected_failure_mode": "tail_protection_loss",
+      "expected_failure_signature": null,
+      "expected_win_condition": null,
       "hard_guardrails": {
         "arb_loss_to_retail_gain": 0.128,
         "low_decile_mean_edge": 355.0
       },
+      "hidden_coupling_removed": null,
       "intents": [
         "anti_arb",
         "fee_discipline",
@@ -355,6 +558,8 @@
         "structural_pivot",
         "weak_slice"
       ],
+      "is_topology_branch": null,
+      "layer_held_fixed": null,
       "mutation_family": "fee-motion-discipline",
       "novelty_coordinates": {
         "classification": "synthesis",
@@ -362,20 +567,27 @@
         "external_idea": "asymmetric_slew_rate_control",
         "intent": "fee_discipline"
       },
+      "primary_layer_changed": null,
+      "quote_topology": null,
       "synthesis_eligible": true,
       "target_metrics": {
         "low_volatility_mean_edge": 456.0,
         "max_fee_jump": 0.052,
         "mean_edge": 480.0
-      }
+      },
+      "why_not_coefficient_retune": null
     },
     "local-refine-hysteretic-release": {
       "actual_failure_mode": "over_spiky_fee_surface",
+      "batch_id": null,
       "expected_failure_mode": "weak_slice_improvement_without_overall_gain",
+      "expected_failure_signature": null,
+      "expected_win_condition": null,
       "hard_guardrails": {
         "arb_loss_to_retail_gain": 0.126,
         "max_fee_jump": 0.06
       },
+      "hidden_coupling_removed": null,
       "intents": [
         "anti_arb",
         "fee_discipline",
@@ -383,6 +595,8 @@
         "structural_pivot",
         "weak_slice"
       ],
+      "is_topology_branch": null,
+      "layer_held_fixed": null,
       "mutation_family": "passive-recapture-hysteresis",
       "novelty_coordinates": {
         "classification": "local_refinement",
@@ -390,20 +604,27 @@
         "external_idea": "hysteresis_dwell_time_release",
         "intent": "local_refine"
       },
+      "primary_layer_changed": null,
+      "quote_topology": null,
       "synthesis_eligible": true,
       "target_metrics": {
         "low_decile_mean_edge": 366.0,
         "low_retail_mean_edge": 408.0,
         "mean_edge": 480.0
-      }
+      },
+      "why_not_coefficient_retune": null
     },
     "structural-pivot-two-mode-controller": {
       "actual_failure_mode": null,
+      "batch_id": null,
       "expected_failure_mode": "tail_protection_loss",
+      "expected_failure_signature": null,
+      "expected_win_condition": null,
       "hard_guardrails": {
         "arb_loss_to_retail_gain": 0.128,
         "max_fee_jump": 0.06
       },
+      "hidden_coupling_removed": null,
       "intents": [
         "anti_arb",
         "fee_discipline",
@@ -411,6 +632,8 @@
         "structural_pivot",
         "weak_slice"
       ],
+      "is_topology_branch": null,
+      "layer_held_fixed": null,
       "mutation_family": "switched-controller-pivot",
       "novelty_coordinates": {
         "classification": "novel",
@@ -418,20 +641,27 @@
         "external_idea": "switched_controller_with_router",
         "intent": "structural_pivot"
       },
+      "primary_layer_changed": null,
+      "quote_topology": null,
       "synthesis_eligible": true,
       "target_metrics": {
         "low_retail_mean_edge": 410.0,
         "low_volatility_mean_edge": 456.0,
         "mean_edge": 480.0
-      }
+      },
+      "why_not_coefficient_retune": null
     },
     "weak-slice-rebate-bucket": {
       "actual_failure_mode": "over_spiky_fee_surface",
+      "batch_id": null,
       "expected_failure_mode": "arb_leak_regression",
+      "expected_failure_signature": null,
+      "expected_win_condition": null,
       "hard_guardrails": {
         "arb_loss_to_retail_gain": 0.126,
         "max_fee_jump": 0.06
       },
+      "hidden_coupling_removed": null,
       "intents": [
         "anti_arb",
         "fee_discipline",
@@ -439,6 +669,8 @@
         "structural_pivot",
         "weak_slice"
       ],
+      "is_topology_branch": null,
+      "layer_held_fixed": null,
       "mutation_family": "rebate-budget-queueing",
       "novelty_coordinates": {
         "classification": "novel",
@@ -446,12 +678,15 @@
         "external_idea": "token_bucket_rebate_budget",
         "intent": "weak_slice"
       },
+      "primary_layer_changed": null,
+      "quote_topology": null,
       "synthesis_eligible": true,
       "target_metrics": {
         "low_decile_mean_edge": 370.0,
         "low_retail_mean_edge": 412.0,
         "mean_edge": 480.0
-      }
+      },
+      "why_not_coefficient_retune": null
     }
   },
   "portfolio_gaps": [
@@ -8395,6 +8630,187 @@
       "reason": "Reserve one orthogonal pivot so the batch does not collapse into semantically different versions of the same phenotype."
     }
   ],
+  "research_notebook": {
+    "artifact_version": "hill_climb.notebook.v1",
+    "dead_ends": [
+      {
+        "kind": "mutation_family",
+        "note": "passive-recapture-hysteresis has no survivors across 3 attempts; failure modes: over_spiky_fee_surface.",
+        "subject": "passive-recapture-hysteresis"
+      },
+      {
+        "kind": "mutation_family",
+        "note": "rebate-budget-queueing has no survivors across 2 attempts; failure modes: over_spiky_fee_surface.",
+        "subject": "rebate-budget-queueing"
+      },
+      {
+        "kind": "mutation_family",
+        "note": "fee-motion-discipline has no survivors across 1 attempts; failure modes: over_spiky_fee_surface.",
+        "subject": "fee-motion-discipline"
+      },
+      {
+        "kind": "mutation_family",
+        "note": "switched-controller-pivot has no survivors across 1 attempts; latest status: discard.",
+        "subject": "switched-controller-pivot"
+      },
+      {
+        "kind": "mutation_family",
+        "note": "toxic-flow-budget has no survivors across 1 attempts; failure modes: over_spiky_fee_surface.",
+        "subject": "toxic-flow-budget"
+      }
+    ],
+    "findings": [],
+    "search_surface_risk": {
+      "mutation_families": [
+        {
+          "attempt_count": 1,
+          "best_eval_id": "prescreen_0008",
+          "best_mean_edge": 372.6272758295454,
+          "dead_end": false,
+          "discard_count": 1,
+          "failure_modes": [
+            "over_spiky_fee_surface"
+          ],
+          "fragility": 1.0,
+          "hypothesis_ids": [
+            "fee-discipline-slew-scheduler"
+          ],
+          "invalid_count": 0,
+          "keep_count": 0,
+          "last_eval_id": "prescreen_0008",
+          "last_status": "discard",
+          "mutation_family": "fee-motion-discipline",
+          "open_hypothesis_ids": [],
+          "risk_label": "high",
+          "seed_count": 0,
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 3,
+          "best_eval_id": "prescreen_0002",
+          "best_mean_edge": 477.3337207830145,
+          "dead_end": true,
+          "discard_count": 3,
+          "failure_modes": [
+            "over_spiky_fee_surface"
+          ],
+          "fragility": 1.0,
+          "hypothesis_ids": [
+            "local-refine-hysteretic-release"
+          ],
+          "invalid_count": 0,
+          "keep_count": 0,
+          "last_eval_id": "screen_0004",
+          "last_status": "discard",
+          "mutation_family": "passive-recapture-hysteresis",
+          "open_hypothesis_ids": [],
+          "risk_label": "high",
+          "seed_count": 0,
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 2,
+          "best_eval_id": "screen_0007",
+          "best_mean_edge": 473.61639344802524,
+          "dead_end": true,
+          "discard_count": 2,
+          "failure_modes": [
+            "over_spiky_fee_surface"
+          ],
+          "fragility": 1.0,
+          "hypothesis_ids": [
+            "weak-slice-rebate-bucket"
+          ],
+          "invalid_count": 0,
+          "keep_count": 0,
+          "last_eval_id": "screen_0007",
+          "last_status": "discard",
+          "mutation_family": "rebate-budget-queueing",
+          "open_hypothesis_ids": [],
+          "risk_label": "high",
+          "seed_count": 0,
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 1,
+          "best_eval_id": "prescreen_0009",
+          "best_mean_edge": 286.8763251508669,
+          "dead_end": false,
+          "discard_count": 1,
+          "failure_modes": [],
+          "fragility": 1.0,
+          "hypothesis_ids": [
+            "structural-pivot-two-mode-controller"
+          ],
+          "invalid_count": 0,
+          "keep_count": 0,
+          "last_eval_id": "prescreen_0009",
+          "last_status": "discard",
+          "mutation_family": "switched-controller-pivot",
+          "open_hypothesis_ids": [],
+          "risk_label": "high",
+          "seed_count": 0,
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 1,
+          "best_eval_id": "prescreen_0005",
+          "best_mean_edge": 476.27982742652785,
+          "dead_end": false,
+          "discard_count": 1,
+          "failure_modes": [
+            "over_spiky_fee_surface"
+          ],
+          "fragility": 1.0,
+          "hypothesis_ids": [
+            "anti-arb-toxicity-budget"
+          ],
+          "invalid_count": 0,
+          "keep_count": 0,
+          "last_eval_id": "prescreen_0005",
+          "last_status": "discard",
+          "mutation_family": "toxic-flow-budget",
+          "open_hypothesis_ids": [],
+          "risk_label": "high",
+          "seed_count": 0,
+          "survivor_count": 0
+        }
+      ],
+      "primary_layers": [
+        {
+          "attempt_count": 8,
+          "discard_count": 8,
+          "fragility": 1.0,
+          "hypothesis_ids": [
+            "anti-arb-toxicity-budget",
+            "fee-discipline-slew-scheduler",
+            "local-refine-hysteretic-release",
+            "structural-pivot-two-mode-controller",
+            "weak-slice-rebate-bucket"
+          ],
+          "invalid_count": 0,
+          "mutation_families": [
+            "fee-motion-discipline",
+            "passive-recapture-hysteresis",
+            "rebate-budget-queueing",
+            "switched-controller-pivot",
+            "toxic-flow-budget"
+          ],
+          "open_hypothesis_ids": [],
+          "primary_layer": "unclassified",
+          "risk_label": "high",
+          "survivor_count": 0
+        }
+      ]
+    }
+  },
   "run_id": "apr12-screen480-1130",
+  "structural_recommendations": [
+    {
+      "covered": true,
+      "kind": "batch_contract",
+      "reason": "Open hypotheses satisfy the minimum layer and topology diversity contract."
+    }
+  ],
   "warnings": []
 }

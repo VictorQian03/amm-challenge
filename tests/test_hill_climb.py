@@ -551,6 +551,90 @@ def test_cross_run_index_marks_only_newest_valid_lane_active(tmp_path):
     assert statuses["older"]["notes"][0] == "superseded by retained lane newer"
 
 
+def test_cross_run_index_marks_closed_latest_lane_historical(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            _make_match_result(mean_edges=[4.0, 4.0, 4.0, 4.0]),
+        ],
+    )
+
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    source_path.write_text("// closed batch")
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    index_payload = json.loads((tmp_path / "index.json").read_text())
+    run_entry = index_payload["hill_climb_runs"][0]
+
+    assert run_entry["run_id"] == "mar26"
+    assert run_entry["status"] == "historical"
+    assert run_entry["notes"] == [
+        "batch closed with no queued next hypothesis; seed a fresh run_id for the next branch"
+    ]
+
+
+def test_cross_run_index_demotes_older_active_lane_when_latest_history_is_closed(
+    tmp_path,
+):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            _make_match_result(mean_edges=[6.0, 6.0, 6.0, 6.0]),
+            _make_match_result(mean_edges=[4.0, 4.0, 4.0, 4.0]),
+        ],
+    )
+
+    harness.evaluate(run_id="older", stage="screen", source_path=source_path)
+    older_manifest_path = tmp_path / "artifacts" / "older" / "run.json"
+    older_manifest = json.loads(older_manifest_path.read_text())
+    older_manifest["created_at"] = "2026-04-11T16:52:11+00:00"
+    older_manifest_path.write_text(json.dumps(older_manifest, indent=2, sort_keys=True))
+    harness.upsert_hypothesis(
+        run_id="older",
+        hypothesis_id="next-idea",
+        title="Next idea",
+        rationale="Keep the older lane notionally active.",
+        expected_effect="None",
+        mutation_family="older-family",
+        status="queued",
+        **_structural_hypothesis_kwargs(),
+    )
+    harness.update_run_state(
+        run_id="older",
+        next_hypothesis_id="next-idea",
+        next_hypothesis_id_set=True,
+    )
+
+    source_path.write_text("// latest seed")
+    harness.evaluate(run_id="latest", stage="screen", source_path=source_path)
+    latest_manifest_path = tmp_path / "artifacts" / "latest" / "run.json"
+    latest_manifest = json.loads(latest_manifest_path.read_text())
+    latest_manifest["created_at"] = "2026-04-12T18:30:59+00:00"
+    latest_manifest_path.write_text(
+        json.dumps(latest_manifest, indent=2, sort_keys=True)
+    )
+    source_path.write_text("// latest closed")
+    harness.evaluate(run_id="latest", stage="screen", source_path=source_path)
+
+    index_payload = json.loads((tmp_path / "index.json").read_text())
+    statuses = {entry["run_id"]: entry for entry in index_payload["hill_climb_runs"]}
+
+    assert statuses["latest"]["status"] == "historical"
+    assert statuses["older"]["status"] == "historical"
+    assert statuses["older"]["notes"][0] == (
+        "superseded by latest retained history latest"
+    )
+
+
 def test_prescreen_stage_rejects_spiky_or_arb_leaky_candidates(tmp_path):
     source_path = tmp_path / "Strategy.sol"
     source_path.write_text("// candidate")
@@ -1125,9 +1209,7 @@ def test_set_hypothesis_requires_structural_contract_for_new_hypotheses(tmp_path
     harness = _build_test_harness(tmp_path)
     harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
 
-    with pytest.raises(
-        HillClimbHarnessError, match="New hypotheses require batch_id"
-    ):
+    with pytest.raises(HillClimbHarnessError, match="New hypotheses require batch_id"):
         harness.upsert_hypothesis(
             run_id="mar26",
             hypothesis_id="missing-structure",
@@ -1462,7 +1544,9 @@ def test_hill_climb_history_and_lookup_commands_surface_agent_facing_read_models
         "Decomposition Gaps: state, risk_budget, opportunity_budget, quote_map"
         in summarize_output
     )
-    assert "Batch Diversity: 0 primary layers, topology branch missing" in summarize_output
+    assert (
+        "Batch Diversity: 0 primary layers, topology branch missing" in summarize_output
+    )
 
 
 def test_analyze_run_and_compare_profiles_commands_surface_frontier_and_profile_deltas(
@@ -1494,8 +1578,13 @@ def test_analyze_run_and_compare_profiles_commands_surface_frontier_and_profile_
     )
     assert hill_climb_analyze_run_command(analyze_args) == 0
     analyze_output = capsys.readouterr().out
-    assert "Decomposition Gaps: state, risk_budget, opportunity_budget, quote_map" in analyze_output
-    assert "Batch Diversity: 0 primary layers, topology branch missing" in analyze_output
+    assert (
+        "Decomposition Gaps: state, risk_budget, opportunity_budget, quote_map"
+        in analyze_output
+    )
+    assert (
+        "Batch Diversity: 0 primary layers, topology branch missing" in analyze_output
+    )
     assert "Best Raw Frontier:" in analyze_output
     assert "screen_0002 screen 6.000000" in analyze_output
     assert (
@@ -1852,6 +1941,113 @@ def test_analyze_run_keeps_same_spine_failure_signal_beyond_last_five_results(tm
             "switch primary layer before another coefficient retune."
         ),
     }
+
+
+def test_analyze_run_builds_research_notebook_and_search_risk_files(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            _make_match_result(mean_edges=[6.0, 6.0, 6.0, 6.0]),
+            _make_match_result(mean_edges=[4.0, 4.0, 4.0, 4.0]),
+            _make_match_result(mean_edges=[4.1, 4.1, 4.1, 4.1]),
+        ],
+    )
+    source_path.write_text("// baseline")
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="winner",
+        title="Winner",
+        rationale="Prove a successful family is retained in the notebook.",
+        expected_effect="Lift screen mean_edge.",
+        mutation_family="winner-family",
+        status="queued",
+        **_structural_hypothesis_kwargs(
+            primary_layer_changed="state",
+            layer_held_fixed="quote_map",
+            quote_topology="winner-topology",
+        ),
+    )
+    source_path.write_text("// winner")
+    harness.evaluate(
+        run_id="mar26",
+        stage="screen",
+        source_path=source_path,
+        hypothesis_id="winner",
+    )
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="dead-end",
+        title="Dead end",
+        rationale="Create a family with repeated discards.",
+        expected_effect="None",
+        mutation_family="dead-family",
+        status="queued",
+        **_structural_hypothesis_kwargs(
+            primary_layer_changed="quote_map",
+            layer_held_fixed="risk_budget",
+            quote_topology="dead-topology",
+        ),
+    )
+    source_path.write_text("// dead-end a")
+    harness.evaluate(
+        run_id="mar26",
+        stage="screen",
+        source_path=source_path,
+        hypothesis_id="dead-end",
+    )
+    source_path.write_text("// dead-end b")
+    harness.evaluate(
+        run_id="mar26",
+        stage="screen",
+        source_path=source_path,
+        hypothesis_id="dead-end",
+    )
+
+    payload = harness.analyze_run(run_id="mar26")
+    winner_family = payload["family_scoreboard"]["winner-family"]
+    dead_family = payload["family_scoreboard"]["dead-family"]
+    assert winner_family["survivor_count"] == 1
+    assert winner_family["risk_label"] == "low"
+    assert dead_family["attempt_count"] == 2
+    assert dead_family["dead_end"] is True
+    assert dead_family["risk_label"] == "high"
+    assert payload["layer_scoreboard"]["state"]["survivor_count"] == 1
+    assert payload["layer_scoreboard"]["quote_map"]["attempt_count"] == 2
+    assert payload["research_notebook"]["findings"] == [
+        {
+            "kind": "mutation_family",
+            "subject": "winner-family",
+            "note": (
+                "winner-family survived 1/1 attempts; best eval "
+                "screen_0002 reached mean_edge 6.000000."
+            ),
+        }
+    ]
+    assert payload["research_notebook"]["dead_ends"] == [
+        {
+            "kind": "mutation_family",
+            "subject": "dead-family",
+            "note": (
+                "dead-family has no survivors across 2 attempts; "
+                "latest status: discard."
+            ),
+        }
+    ]
+
+    run_dir = tmp_path / "artifacts" / "mar26" / "notebook"
+    assert (
+        "winner-family survived 1/1 attempts" in (run_dir / "findings.md").read_text()
+    )
+    assert (
+        "dead-family has no survivors across 2 attempts"
+        in (run_dir / "dead_ends.md").read_text()
+    )
+    search_risk = (run_dir / "search_risk.md").read_text()
+    assert "dead-family [HIGH risk, fragility=1.00]" in search_risk
+    assert "winner-family [LOW risk, fragility=0.00]" in search_risk
 
 
 def test_compare_profiles_command_rejects_mixed_inputs_and_stage_mismatch(

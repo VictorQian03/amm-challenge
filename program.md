@@ -81,8 +81,9 @@ Strictly higher `mean_edge` is not enough on noisy stages.
 ## Agent Read Surface
 
 - Prefer `--json` for agent automation on `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, `compare-profiles`, and `pull-best`.
-- Keep hypothesis records current with `set-hypothesis`; otherwise decomposition coverage, batch-diversity checks, structural recommendations, `intent_coverage`, `portfolio_gaps`, and `recommended_next_batch` are incomplete planning signals.
-- Use `analyze-run` to inspect failure clusters, layer/topology diversity, intent coverage, portfolio gaps, and the recommended next-batch scaffold before proposing workers.
+- Keep hypothesis records current with `set-hypothesis`; otherwise decomposition coverage, batch-diversity checks, structural recommendations, `intent_coverage`, `portfolio_gaps`, family/layer risk scoreboards, and `recommended_next_batch` are incomplete planning signals.
+- Use `analyze-run` to inspect failure clusters, layer/topology diversity, intent coverage, portfolio gaps, notebook-style findings/dead ends, and the recommended next-batch scaffold before proposing workers.
+- Use `artifacts/hill_climb/<run_id>/notebook/` only as a cached convenience surface. The canonical source of truth remains `results.jsonl`, `state.json`, and `hypotheses/`.
 - Use `--read-only` on analysis commands when protected-surface drift blocks normal mutation flows but historical reasoning is still needed.
 
 If a retained run fails continuity or append-only validation, do not repair the ledgers by hand. Quarantine that run and start a fresh `run_id`.

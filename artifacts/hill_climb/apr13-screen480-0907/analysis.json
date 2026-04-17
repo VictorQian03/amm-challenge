@@ -57,6 +57,123 @@
     "over_spiky_fee_surface": 8,
     "tail_protection_loss": 2
   },
+  "family_scoreboard": {
+    "defensive_router_pivot": {
+      "attempt_count": 1,
+      "best_eval_id": "prescreen_0008",
+      "best_mean_edge": 390.85275634154556,
+      "dead_end": false,
+      "discard_count": 1,
+      "failure_modes": [
+        "over_spiky_fee_surface"
+      ],
+      "fragility": 1.0,
+      "hypothesis_ids": [
+        "structural-pivot-defensive-router-v2"
+      ],
+      "invalid_count": 0,
+      "keep_count": 0,
+      "last_eval_id": "prescreen_0008",
+      "last_status": "discard",
+      "mutation_family": "defensive_router_pivot",
+      "open_hypothesis_ids": [],
+      "risk_label": "high",
+      "seed_count": 0,
+      "survivor_count": 0
+    },
+    "fee-motion-discipline": {
+      "attempt_count": 1,
+      "best_eval_id": "screen_0002",
+      "best_mean_edge": 367.95375292100954,
+      "dead_end": false,
+      "discard_count": 1,
+      "failure_modes": [
+        "arb_leak_regression"
+      ],
+      "fragility": 1.0,
+      "hypothesis_ids": [
+        "fee-discipline-vol-accumulator-floor"
+      ],
+      "invalid_count": 0,
+      "keep_count": 0,
+      "last_eval_id": "screen_0002",
+      "last_status": "discard",
+      "mutation_family": "fee-motion-discipline",
+      "open_hypothesis_ids": [],
+      "risk_label": "high",
+      "seed_count": 0,
+      "survivor_count": 0
+    },
+    "nonlinear-local-refine": {
+      "attempt_count": 3,
+      "best_eval_id": "screen_0005",
+      "best_mean_edge": 474.1819843759517,
+      "dead_end": true,
+      "discard_count": 3,
+      "failure_modes": [
+        "over_spiky_fee_surface"
+      ],
+      "fragility": 1.0,
+      "hypothesis_ids": [
+        "local-refine-concave-relief"
+      ],
+      "invalid_count": 0,
+      "keep_count": 0,
+      "last_eval_id": "screen_0005",
+      "last_status": "discard",
+      "mutation_family": "nonlinear-local-refine",
+      "open_hypothesis_ids": [],
+      "risk_label": "high",
+      "seed_count": 0,
+      "survivor_count": 0
+    },
+    "side_markout_budget": {
+      "attempt_count": 1,
+      "best_eval_id": "screen_0006",
+      "best_mean_edge": 406.9051086119006,
+      "dead_end": false,
+      "discard_count": 1,
+      "failure_modes": [
+        "arb_leak_regression"
+      ],
+      "fragility": 1.0,
+      "hypothesis_ids": [
+        "anti-arb-side-markout-memory"
+      ],
+      "invalid_count": 0,
+      "keep_count": 0,
+      "last_eval_id": "screen_0006",
+      "last_status": "discard",
+      "mutation_family": "side_markout_budget",
+      "open_hypothesis_ids": [],
+      "risk_label": "high",
+      "seed_count": 0,
+      "survivor_count": 0
+    },
+    "weak_slice_decay_envelope": {
+      "attempt_count": 1,
+      "best_eval_id": "prescreen_0007",
+      "best_mean_edge": 382.9152708424429,
+      "dead_end": false,
+      "discard_count": 1,
+      "failure_modes": [
+        "over_spiky_fee_surface"
+      ],
+      "fragility": 1.0,
+      "hypothesis_ids": [
+        "weak-slice-exp-decay-envelope"
+      ],
+      "invalid_count": 0,
+      "keep_count": 0,
+      "last_eval_id": "prescreen_0007",
+      "last_status": "discard",
+      "mutation_family": "weak_slice_decay_envelope",
+      "open_hypothesis_ids": [],
+      "risk_label": "high",
+      "seed_count": 0,
+      "survivor_count": 0
+    }
+  },
   "frontier_bank": {
     "best_anti_arb": {
       "eval_id": "screen_0004",
@@ -315,7 +432,7 @@
       }
     ]
   },
-  "generated_at": "2026-04-14T22:51:47+00:00",
+  "generated_at": "2026-04-17T00:52:02+00:00",
   "intent_coverage": {
     "anti_arb": {
       "all_hypothesis_ids": [
@@ -366,6 +483,74 @@
         "weak-slice-exp-decay-envelope"
       ],
       "open_hypothesis_ids": []
+    }
+  },
+  "layer_scoreboard": {
+    "opportunity_budget": {
+      "attempt_count": 1,
+      "discard_count": 1,
+      "fragility": 1.0,
+      "hypothesis_ids": [
+        "weak-slice-exp-decay-envelope"
+      ],
+      "invalid_count": 0,
+      "mutation_families": [
+        "weak_slice_decay_envelope"
+      ],
+      "open_hypothesis_ids": [],
+      "primary_layer": "opportunity_budget",
+      "risk_label": "high",
+      "survivor_count": 0
+    },
+    "quote_map": {
+      "attempt_count": 4,
+      "discard_count": 4,
+      "fragility": 1.0,
+      "hypothesis_ids": [
+        "local-refine-concave-relief",
+        "structural-pivot-defensive-router-v2"
+      ],
+      "invalid_count": 0,
+      "mutation_families": [
+        "defensive_router_pivot",
+        "nonlinear-local-refine"
+      ],
+      "open_hypothesis_ids": [],
+      "primary_layer": "quote_map",
+      "risk_label": "high",
+      "survivor_count": 0
+    },
+    "risk_budget": {
+      "attempt_count": 1,
+      "discard_count": 1,
+      "fragility": 1.0,
+      "hypothesis_ids": [
+        "anti-arb-side-markout-memory"
+      ],
+      "invalid_count": 0,
+      "mutation_families": [
+        "side_markout_budget"
+      ],
+      "open_hypothesis_ids": [],
+      "primary_layer": "risk_budget",
+      "risk_label": "high",
+      "survivor_count": 0
+    },
+    "state": {
+      "attempt_count": 1,
+      "discard_count": 1,
+      "fragility": 1.0,
+      "hypothesis_ids": [
+        "fee-discipline-vol-accumulator-floor"
+      ],
+      "invalid_count": 0,
+      "mutation_families": [
+        "fee-motion-discipline"
+      ],
+      "open_hypothesis_ids": [],
+      "primary_layer": "state",
+      "risk_label": "high",
+      "survivor_count": 0
     }
   },
   "phenotype_coverage": {
@@ -9978,6 +10163,224 @@
       "reason": "Reserve one orthogonal pivot so the batch does not collapse into semantically different versions of the same phenotype."
     }
   ],
+  "research_notebook": {
+    "artifact_version": "hill_climb.notebook.v1",
+    "dead_ends": [
+      {
+        "kind": "mutation_family",
+        "note": "nonlinear-local-refine has no survivors across 3 attempts; failure modes: over_spiky_fee_surface.",
+        "subject": "nonlinear-local-refine"
+      },
+      {
+        "kind": "mutation_family",
+        "note": "defensive_router_pivot has no survivors across 1 attempts; failure modes: over_spiky_fee_surface.",
+        "subject": "defensive_router_pivot"
+      },
+      {
+        "kind": "mutation_family",
+        "note": "fee-motion-discipline has no survivors across 1 attempts; failure modes: arb_leak_regression.",
+        "subject": "fee-motion-discipline"
+      },
+      {
+        "kind": "mutation_family",
+        "note": "side_markout_budget has no survivors across 1 attempts; failure modes: arb_leak_regression.",
+        "subject": "side_markout_budget"
+      },
+      {
+        "kind": "mutation_family",
+        "note": "weak_slice_decay_envelope has no survivors across 1 attempts; failure modes: over_spiky_fee_surface.",
+        "subject": "weak_slice_decay_envelope"
+      }
+    ],
+    "findings": [],
+    "search_surface_risk": {
+      "mutation_families": [
+        {
+          "attempt_count": 1,
+          "best_eval_id": "prescreen_0008",
+          "best_mean_edge": 390.85275634154556,
+          "dead_end": false,
+          "discard_count": 1,
+          "failure_modes": [
+            "over_spiky_fee_surface"
+          ],
+          "fragility": 1.0,
+          "hypothesis_ids": [
+            "structural-pivot-defensive-router-v2"
+          ],
+          "invalid_count": 0,
+          "keep_count": 0,
+          "last_eval_id": "prescreen_0008",
+          "last_status": "discard",
+          "mutation_family": "defensive_router_pivot",
+          "open_hypothesis_ids": [],
+          "risk_label": "high",
+          "seed_count": 0,
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 1,
+          "best_eval_id": "screen_0002",
+          "best_mean_edge": 367.95375292100954,
+          "dead_end": false,
+          "discard_count": 1,
+          "failure_modes": [
+            "arb_leak_regression"
+          ],
+          "fragility": 1.0,
+          "hypothesis_ids": [
+            "fee-discipline-vol-accumulator-floor"
+          ],
+          "invalid_count": 0,
+          "keep_count": 0,
+          "last_eval_id": "screen_0002",
+          "last_status": "discard",
+          "mutation_family": "fee-motion-discipline",
+          "open_hypothesis_ids": [],
+          "risk_label": "high",
+          "seed_count": 0,
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 3,
+          "best_eval_id": "screen_0005",
+          "best_mean_edge": 474.1819843759517,
+          "dead_end": true,
+          "discard_count": 3,
+          "failure_modes": [
+            "over_spiky_fee_surface"
+          ],
+          "fragility": 1.0,
+          "hypothesis_ids": [
+            "local-refine-concave-relief"
+          ],
+          "invalid_count": 0,
+          "keep_count": 0,
+          "last_eval_id": "screen_0005",
+          "last_status": "discard",
+          "mutation_family": "nonlinear-local-refine",
+          "open_hypothesis_ids": [],
+          "risk_label": "high",
+          "seed_count": 0,
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 1,
+          "best_eval_id": "screen_0006",
+          "best_mean_edge": 406.9051086119006,
+          "dead_end": false,
+          "discard_count": 1,
+          "failure_modes": [
+            "arb_leak_regression"
+          ],
+          "fragility": 1.0,
+          "hypothesis_ids": [
+            "anti-arb-side-markout-memory"
+          ],
+          "invalid_count": 0,
+          "keep_count": 0,
+          "last_eval_id": "screen_0006",
+          "last_status": "discard",
+          "mutation_family": "side_markout_budget",
+          "open_hypothesis_ids": [],
+          "risk_label": "high",
+          "seed_count": 0,
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 1,
+          "best_eval_id": "prescreen_0007",
+          "best_mean_edge": 382.9152708424429,
+          "dead_end": false,
+          "discard_count": 1,
+          "failure_modes": [
+            "over_spiky_fee_surface"
+          ],
+          "fragility": 1.0,
+          "hypothesis_ids": [
+            "weak-slice-exp-decay-envelope"
+          ],
+          "invalid_count": 0,
+          "keep_count": 0,
+          "last_eval_id": "prescreen_0007",
+          "last_status": "discard",
+          "mutation_family": "weak_slice_decay_envelope",
+          "open_hypothesis_ids": [],
+          "risk_label": "high",
+          "seed_count": 0,
+          "survivor_count": 0
+        }
+      ],
+      "primary_layers": [
+        {
+          "attempt_count": 1,
+          "discard_count": 1,
+          "fragility": 1.0,
+          "hypothesis_ids": [
+            "weak-slice-exp-decay-envelope"
+          ],
+          "invalid_count": 0,
+          "mutation_families": [
+            "weak_slice_decay_envelope"
+          ],
+          "open_hypothesis_ids": [],
+          "primary_layer": "opportunity_budget",
+          "risk_label": "high",
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 4,
+          "discard_count": 4,
+          "fragility": 1.0,
+          "hypothesis_ids": [
+            "local-refine-concave-relief",
+            "structural-pivot-defensive-router-v2"
+          ],
+          "invalid_count": 0,
+          "mutation_families": [
+            "defensive_router_pivot",
+            "nonlinear-local-refine"
+          ],
+          "open_hypothesis_ids": [],
+          "primary_layer": "quote_map",
+          "risk_label": "high",
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 1,
+          "discard_count": 1,
+          "fragility": 1.0,
+          "hypothesis_ids": [
+            "anti-arb-side-markout-memory"
+          ],
+          "invalid_count": 0,
+          "mutation_families": [
+            "side_markout_budget"
+          ],
+          "open_hypothesis_ids": [],
+          "primary_layer": "risk_budget",
+          "risk_label": "high",
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 1,
+          "discard_count": 1,
+          "fragility": 1.0,
+          "hypothesis_ids": [
+            "fee-discipline-vol-accumulator-floor"
+          ],
+          "invalid_count": 0,
+          "mutation_families": [
+            "fee-motion-discipline"
+          ],
+          "open_hypothesis_ids": [],
+          "primary_layer": "state",
+          "risk_label": "high",
+          "survivor_count": 0
+        }
+      ]
+    }
+  },
   "run_id": "apr13-screen480-0907",
   "structural_recommendations": [
     {

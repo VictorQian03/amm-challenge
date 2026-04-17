@@ -14,12 +14,13 @@ Context:
 - Active strategy: contracts/src/Strategy.sol
 - Architectural reference only: contracts/src/Reference.sol
 - Harness references:
-  - program.md
   - docs/hill_climb_loop.md
+  - docs/agent_harness_guide.md
   - docs/reference_strategy_debrief.md
 - Current retained lane artifacts:
   - <run analysis file or analyze-run output>
-  - <current plan or hypothesis registry>
+  - <derived notebook findings/dead ends/search risk>
+  - <hypothesis registry or current plan note>
   - <one or two representative eval/profile comparisons>
 
 Task:
@@ -39,7 +40,6 @@ Hard constraints:
 - Do not suggest line-by-line ports, constants, slot layouts, or implementation details.
 - Do not propose "add one more overlay" ideas unless you can explain why the quote topology
   remains clean.
-- Do not duplicate guidance already present in the referenced docs.
 - Treat lower average fees alone as non-evidence; explain why any cheapening is narrowly
   gated and why it should not recreate a hidden cheap mode.
 - At least 3 of the 4 hypotheses must target different primary layers.
@@ -110,6 +110,10 @@ Output format:
 
 - Prefer feeding Codex `analyze-run --json`, one current incumbent profile, and one failed
   branch profile instead of a long narrative recap.
+- Include `notebook/findings.md` or `notebook/search_risk.md` when the next batch should react
+  to repeated dead ends instead of only the latest raw frontier.
+- Use the latest retained lane for evidence, but start a new `run_id` if the index says the
+  retained lane is historical or exhausted.
 - If the last batch already contained a topology pivot, ask Codex whether it falsified the
   whole topology or only one unsafe release path.
 - If the last two best survivors are near-replays, say that explicitly and require a layer

@@ -797,21 +797,17 @@ def hill_climb_show_hypothesis_command(args: argparse.Namespace) -> int:
     print(
         f"Synthesis Eligible: {'yes' if payload.get('synthesis_eligible', True) else 'no'}"
     )
-    print(
-        f"Primary Layer Changed: {payload.get('primary_layer_changed') or 'none'}"
-    )
+    print(f"Primary Layer Changed: {payload.get('primary_layer_changed') or 'none'}")
     print(f"Layer Held Fixed: {payload.get('layer_held_fixed') or 'none'}")
     print(
-        "Hidden Coupling Removed: "
-        + (payload.get("hidden_coupling_removed") or "none")
+        "Hidden Coupling Removed: " + (payload.get("hidden_coupling_removed") or "none")
     )
     print(
         "Why Not Coefficient Retune: "
         + (payload.get("why_not_coefficient_retune") or "none")
     )
     print(
-        "Expected Win Condition: "
-        + (payload.get("expected_win_condition") or "none")
+        "Expected Win Condition: " + (payload.get("expected_win_condition") or "none")
     )
     print(
         "Expected Failure Signature: "
@@ -872,10 +868,7 @@ def hill_climb_summarize_run_command(args: argparse.Namespace) -> int:
         "Frontier Bank: "
         + ", ".join(entry["eval_id"] for entry in summary["frontier_bank"]["best_raw"])
     )
-    print(
-        "Decomposition Gaps: "
-        + (", ".join(summary["decomposition_gaps"]) or "none")
-    )
+    print("Decomposition Gaps: " + (", ".join(summary["decomposition_gaps"]) or "none"))
     batch_diversity = summary["batch_diversity"]
     print(
         "Batch Diversity: "
@@ -887,6 +880,20 @@ def hill_climb_summarize_run_command(args: argparse.Namespace) -> int:
         )
     )
     print("Portfolio Gaps: " + (", ".join(summary["portfolio_gaps"]) or "none"))
+    print("Findings:")
+    findings = summary["research_notebook"]["findings"]
+    if findings:
+        for entry in findings:
+            print(f"  {entry['subject']}: {entry['note']}")
+    else:
+        print("  none")
+    print("Dead Ends:")
+    dead_ends = summary["research_notebook"]["dead_ends"]
+    if dead_ends:
+        for entry in dead_ends:
+            print(f"  {entry['subject']}: {entry['note']}")
+    else:
+        print("  none")
     print("Structural Recommendations:")
     for entry in summary["structural_recommendations"]:
         covered = "covered" if entry["covered"] else "missing"
@@ -931,10 +938,7 @@ def hill_climb_analyze_run_command(args: argparse.Namespace) -> int:
     print("Failure Clusters:")
     for tag, count in sorted(payload["failure_clusters"].items()):
         print(f"  {tag}: {count}")
-    print(
-        "Decomposition Gaps: "
-        + (", ".join(payload["decomposition_gaps"]) or "none")
-    )
+    print("Decomposition Gaps: " + (", ".join(payload["decomposition_gaps"]) or "none"))
     print("Decomposition Coverage:")
     for layer, coverage in payload["decomposition_coverage"].items():
         open_ids = coverage["open_hypothesis_ids"]
@@ -952,6 +956,30 @@ def hill_climb_analyze_run_command(args: argparse.Namespace) -> int:
     for issue in batch_diversity["issues"]:
         print(f"  Issue: {issue}")
     print("Portfolio Gaps: " + (", ".join(payload["portfolio_gaps"]) or "none"))
+    print("Mutation Family Risk:")
+    if payload["family_scoreboard"]:
+        for family in sorted(
+            payload["family_scoreboard"].values(),
+            key=lambda entry: entry["mutation_family"],
+        ):
+            print(
+                "  "
+                + (
+                    f"{family['mutation_family']} "
+                    f"[{str(family['risk_label']).upper()} risk, "
+                    f"fragility={family['fragility']:.2f}] "
+                    f"{family['survivor_count']}/{family['attempt_count']} survivors"
+                )
+            )
+    else:
+        print("  none")
+    print("Dead Ends:")
+    dead_ends = payload["research_notebook"]["dead_ends"]
+    if dead_ends:
+        for entry in dead_ends:
+            print(f"  {entry['subject']}: {entry['note']}")
+    else:
+        print("  none")
     print("Intent Coverage:")
     for intent, coverage in payload["intent_coverage"].items():
         open_ids = coverage["open_hypothesis_ids"]

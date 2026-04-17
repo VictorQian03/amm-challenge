@@ -1,6 +1,7 @@
 # Hill-Climb Loop Contract
 
-This is the canonical repo-local reference for the hill-climb loop. Keep `README.md` and `program.md` short and route schema questions here.
+This is the canonical repo-local reference for the hill-climb loop. Keep `README.md`,
+`program.md`, and agent prompts short and route schema questions here.
 
 ## Active Edit Path
 
@@ -51,6 +52,8 @@ Each run lives under `artifacts/hill_climb/<run_id>/`.
   - Append-only compact experiment ledger.
 - `history.jsonl`
   - Derived compact read model generated from `results.jsonl`.
+- `notebook/findings.md`, `notebook/dead_ends.md`, `notebook/search_risk.md`
+  - Derived search-memory read surfaces rendered from canonical results and hypotheses.
 - `hypotheses/<hypothesis_id>.json`
   - Authoritative hypothesis registry with lifecycle, lineage, and linked eval ids.
 - `incumbents/<stage>.json`
@@ -67,7 +70,7 @@ Unsupported continuity:
 - Retained runs that still carry legacy continuity files or stale manifest/state versions are unsupported; start a fresh run instead.
 - If continuity or append-only validation fails, do not hand-edit `results.jsonl`, `results.tsv`, `state.json`, or `.next_eval_index` to force a resume. Quarantine the run directory and start a fresh `run_id`.
 
-Derived fields such as `snapshot_relpath`, `incumbent_before`, `history.jsonl`, and the compact TSV row are convenience views. If they disagree with the authoritative manifest/state/results/hypothesis contract, the run should be treated as broken and replaced with a fresh run.
+Derived fields such as `snapshot_relpath`, `incumbent_before`, `history.jsonl`, the notebook markdown files, and the compact TSV row are convenience views. If they disagree with the authoritative manifest/state/results/hypothesis contract, the run should be treated as broken and replaced with a fresh run.
 
 ## Stage Progression
 
@@ -93,14 +96,15 @@ Promotion policy:
 - `uv run amm-match hill-climb show-eval --run-id <id> --eval-id <id>`: one eval with lineage metadata.
 - `uv run amm-match hill-climb set-hypothesis --run-id <id> --hypothesis-id <id> ...`: create or update the first-class hypothesis registry.
 - `uv run amm-match hill-climb show-hypothesis --run-id <id> --hypothesis-id <id>`: one hypothesis with linked evals.
-- `uv run amm-match hill-climb summarize-run --run-id <id>`: incumbent chain, unresolved ideas, abandoned families, and notable failures.
-- `uv run amm-match hill-climb analyze-run --run-id <id>`: structured frontier bank, failure clusters, intent coverage, portfolio gaps, and recommended next-batch coverage.
+- `uv run amm-match hill-climb summarize-run --run-id <id>`: incumbent chain, unresolved ideas, notebook-style findings/dead ends, abandoned families, and notable failures.
+- `uv run amm-match hill-climb analyze-run --run-id <id>`: structured frontier bank, failure clusters, intent coverage, family/layer risk scoreboards, notebook-style search memory, portfolio gaps, and recommended next-batch coverage.
 - `uv run amm-match hill-climb compare-profiles --stage <stage> ...`: stage-aligned phenotype deltas for baseline, candidate, and optional anchor inputs.
 
 Agent-facing contract:
 
 - Prefer `--json` for all read commands and `pull-best` when another agent or harness is consuming the output.
 - Keep `set-hypothesis` current for active branches; `intent_coverage`, `portfolio_gaps`, and `recommended_next_batch` are derived from the hypothesis registry, not only from raw eval history.
+- Treat `family_scoreboard`, `layer_scoreboard`, and `research_notebook` as planning aids, not replacement acceptance rules. Promotion still depends on stage gates plus the promotion margin.
 - Use `--read-only` on `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, and `compare-profiles` when protected-surface drift should block mutation but not historical analysis.
 - `compare-profiles` is fail-fast: each slot must provide exactly one of `--*-eval-id` or `--*-source`, and stored evals must match the requested `--stage`.
 - When a new batch is being seeded, generate ideas at the decomposition level first:
@@ -110,6 +114,8 @@ Agent-facing contract:
   change rather than a same-spine retune.
 - Use `docs/reference_strategy_debrief.md` for the architectural benchmark and
   `docs/codex_idea_generation_prompt.md` for the batch-seeding prompt contract.
+- If `artifacts/index.json` shows no active retained lane, use the latest historical lane
+  only as read context and start a fresh `run_id`.
 
 ## Stop Policy
 

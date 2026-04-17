@@ -9,6 +9,15 @@ This is the canonical agent-facing map for the current AMM harness.
 - `contracts/src/StarterStrategy.sol` is the starter template.
 - `contracts/src/Reference.sol` is an architectural benchmark, not a porting target.
 - `contracts/src/VanillaStrategy.sol` is the fixed-fee normalizer fixture.
+- Use `docs/reference_strategy_debrief.md` when generating new batches.
+
+## Fresh-Run State
+
+- The repo is parked on baseline `contracts/src/Strategy.sol`.
+- Treat retained lanes as read surfaces unless `artifacts/index.json` explicitly marks one
+  as active.
+- If the latest retained lane is historical, exhausted, or fingerprint-stale, start a new
+  `run_id` instead of resuming.
 
 ## Active Loop
 
@@ -54,14 +63,18 @@ For one run under `artifacts/hill_climb/<run_id>/`:
 2. `uv run amm-match hill-climb analyze-run --run-id <id> --json`
 3. `run.json`
 4. `state.json`
-5. `history.jsonl`
-6. `hypotheses/`
-7. `results.jsonl`
+5. `notebook/search_risk.md`
+6. `notebook/findings.md`
+7. `notebook/dead_ends.md`
+8. `history.jsonl`
+9. `hypotheses/`
+10. `results.jsonl`
 
 Notes:
 
 - prefer the CLI read surfaces over reading raw ledgers first
 - `analysis.json` is a cached convenience artifact, not the contract
+- `notebook/*.md` is also derived convenience output rebuilt from canonical ledgers
 - historical lanes are for planning unless the current checkout still matches their protected-surface fingerprint
 
 ## Research Artifact Read Order
@@ -98,6 +111,8 @@ When seeding a fresh batch or escaping a local optimum, gather:
 
 - `uv run amm-match hill-climb analyze-run --run-id <id> --json`
 - one incumbent profile and one failed-branch profile from `compare-profiles`
+- `artifacts/hill_climb/<run_id>/notebook/search_risk.md`
+- `artifacts/hill_climb/<run_id>/notebook/findings.md`
 - the linked research memo under `artifacts/research/<topic>/memo.md`
 - `docs/reference_strategy_debrief.md`
 - `docs/codex_idea_generation_prompt.md`

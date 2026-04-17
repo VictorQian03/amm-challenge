@@ -1,6 +1,6 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-14T22:51:47+00:00",
+  "generated_at": "2026-04-17T00:52:02+00:00",
   "hill_climb_runs": [
     {
       "active_stage": "screen",
@@ -63,8 +63,8 @@
         ]
       },
       "notes": [
-        "superseded by retained lane apr13-screen480-0907",
-        "pending (screen incumbent 473.616393 is below target 480.000000)"
+        "pending (screen incumbent 473.616393 is below target 480.000000)",
+        "batch closed with no queued next hypothesis; seed a fresh run_id for the next branch"
       ],
       "portfolio_gaps": [
         "anti_arb",
@@ -348,7 +348,7 @@
         ]
       },
       "notes": [
-        "superseded by retained lane apr13-screen480-0907",
+        "superseded by latest retained history apr13-screen480-0907",
         "pending (screen incumbent 473.616393 is below target 480.000000)",
         "next hypothesis structural-pivot-two-mode-controller: Pause and re-check read surfaces before any wider structural retry: prescreen_0009 cut time-weighted fees to about 16.6 bps but failed with mean_edge 286.876, arb_loss_to_retail_gain 0.488874, low_retail_mean_edge 255.060, and max_fee_jump 0.008691."
       ],
@@ -644,7 +644,8 @@
         ]
       },
       "notes": [
-        "pending (screen incumbent 473.616393 is below target 480.000000)"
+        "pending (screen incumbent 473.616393 is below target 480.000000)",
+        "batch closed with no queued next hypothesis; seed a fresh run_id for the next branch"
       ],
       "portfolio_gaps": [
         "anti_arb",
@@ -658,7 +659,7 @@
         "docs/plans/active/apr13-screen480-0907.md"
       ],
       "run_id": "apr13-screen480-0907",
-      "status": "active"
+      "status": "historical"
     }
   ]
 }

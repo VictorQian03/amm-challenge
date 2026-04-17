@@ -6,6 +6,12 @@ Start here:
 - `docs/agent_harness_guide.md`: canonical read order for retained runs, historical evals, research memos, and idea-generation inputs
 - this file: human narrative for what changed across dates
 
+Current state:
+
+- no retained hill-climb lane is active
+- `contracts/src/Strategy.sol` is parked on the baseline snapshot for a fresh run
+- use `apr13-screen480-0907` as the latest historical read surface, then start a new `run_id`
+
 ## 2026-03-27
 
 - `artifacts/code-simplifier/`: targeted hill-climb harness/test cleanup run
@@ -28,19 +34,19 @@ Start here:
 
 ## 2026-04-12
 
-- `artifacts/hill_climb/apr12-screen480-1130/`: current retained `screen` lane on the updated protected-surface fingerprint; baseline `473.616393`, breakout gate still pending at `480.0`, and `structural-pivot-two-mode-controller` is queued next
-- `artifacts/research/amm_branch_portfolio_apr12-screen480-1130/`: branch portfolio memo and source log for the five-hypothesis batch that seeded the current retained lane
+- `artifacts/hill_climb/apr12-screen480-1130/`: retained historical `screen` lane on the prior protected-surface fingerprint; baseline `473.616393`, breakout gate stayed pending at `480.0`, and the next structural retry was deferred
+- `artifacts/research/amm_branch_portfolio_apr12-screen480-1130/`: branch portfolio memo and source log for the five-hypothesis batch that seeded that historical lane
 - `artifacts/hill_climb/apr11-screen480-0948/` remains read-only history and should not be resumed for mutation on this checkout
 
 ## 2026-04-13
 
-- `artifacts/hill_climb/apr13-screen480-0907/`: current retained `screen` lane on the same protected-surface fingerprint; baseline `473.616393`, breakout gate still pending at `480.0`, `screen_0005` is the best raw survivor, and the seeded five-branch batch closed with no queued next hypothesis
-- `artifacts/research/amm_seed_refresh_apr13-screen480-0907/`: fresh-run research memo, new-source log, and hypothesis tracker for the current retained lane
-- `artifacts/hill_climb/apr12-screen480-1130/` is now read-only history for planning and should not be resumed for mutation on this checkout
+- `artifacts/hill_climb/apr13-screen480-0907/`: latest retained historical `screen` lane on the current protected-surface fingerprint; baseline `473.616393`, breakout gate remained pending at `480.0`, `screen_0005` is the best raw survivor, and the batch closed with no queued next hypothesis
+- `artifacts/research/amm_seed_refresh_apr13-screen480-0907/`: research memo, new-source log, and hypothesis tracker for that historical lane
+- `artifacts/hill_climb/apr12-screen480-1130/` and `artifacts/hill_climb/apr13-screen480-0907/` are read-only history for planning; the next mutation should use a fresh `run_id`
 
 Per-run contract:
 
-- keep only `run.json`, `state.json`, `results.jsonl`, `results.tsv`, `history.jsonl`, `hypotheses/`, `incumbents/`, and `snapshots/`
+- keep only `run.json`, `state.json`, `results.jsonl`, `results.tsv`, `history.jsonl`, `hypotheses/`, `incumbents/`, `snapshots/`, and derived `notebook/` surfaces
 - keep the machine-readable cross-run catalog at `artifacts/index.json`
 - do not recreate per-evaluation `evaluations/` trees
 - do not retain old probe, compare, quarantine, or superseded baseline runs once the active lane is updated

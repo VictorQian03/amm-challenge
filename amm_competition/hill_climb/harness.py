@@ -37,11 +37,13 @@ HISTORY_VERSION = "hill_climb.history.v1"
 HYPOTHESIS_VERSION = "hill_climb.hypothesis.v1"
 CROSS_RUN_INDEX_VERSION = "hill_climb.index.v1"
 ANALYSIS_VERSION = "hill_climb.analysis.v1"
+SEARCH_NOTEBOOK_VERSION = "hill_climb.notebook.v1"
 INCUMBENT_EPSILON = 1e-9
 NEXT_EVAL_INDEX_FILENAME = ".next_eval_index"
 LEGACY_NEXT_EVAL_ID_FILENAME = ".next_eval_id"
 LEGACY_BATCH_KEY = "__legacy__"
 SAME_SPINE_FAILURE_LOOKBACK = 12
+FRAGILITY_LOOKBACK = 5
 DECOMPOSITION_LAYERS = (
     "state",
     "risk_budget",
@@ -129,6 +131,16 @@ def _delta(current: float | None, baseline: float | None) -> float | None:
 
 def _sorted_unique(values: list[str]) -> list[str]:
     return sorted({value for value in values if value})
+
+
+def _risk_label(*, fragility: float, attempt_count: int) -> str:
+    if attempt_count <= 0:
+        return "unproven"
+    if fragility > 0.5:
+        return "high"
+    if fragility > 0.2:
+        return "medium"
+    return "low"
 
 
 def _json_search_blob(payload: dict[str, Any]) -> str:
@@ -922,6 +934,9 @@ class HillClimbHarness:
             "intent_coverage": analysis["intent_coverage"],
             "decomposition_coverage": analysis["decomposition_coverage"],
             "decomposition_gaps": analysis["decomposition_gaps"],
+            "family_scoreboard": analysis["family_scoreboard"],
+            "layer_scoreboard": analysis["layer_scoreboard"],
+            "research_notebook": analysis["research_notebook"],
             "batch_diversity": analysis["batch_diversity"],
             "structural_recommendations": analysis["structural_recommendations"],
             "portfolio_gaps": analysis["portfolio_gaps"],
@@ -1017,9 +1032,7 @@ class HillClimbHarness:
         active_batch_id, selection_mode, active_open_payloads = (
             self._select_active_open_batch(hypotheses)
         )
-        active_open_ids = {
-            payload["hypothesis_id"] for payload in active_open_payloads
-        }
+        active_open_ids = {payload["hypothesis_id"] for payload in active_open_payloads}
         if selection_mode == "legacy_open_pool" and len(active_open_payloads) >= 2:
             warnings = [
                 *warnings,
@@ -1044,6 +1057,14 @@ class HillClimbHarness:
             active_open_ids=active_open_ids,
         )
         decomposition_gaps = self._decomposition_gaps(decomposition_coverage)
+        family_scoreboard = self._build_family_scoreboard(
+            results=results,
+            hypotheses=hypotheses,
+        )
+        layer_scoreboard = self._build_layer_scoreboard(
+            results=results,
+            hypotheses=hypotheses,
+        )
         batch_diversity = self._build_batch_diversity(
             batch_id=active_batch_id,
             selection_mode=selection_mode,
@@ -1051,6 +1072,10 @@ class HillClimbHarness:
             results=results,
             hypotheses=hypotheses,
             decomposition_coverage=decomposition_coverage,
+        )
+        research_notebook = self._build_research_notebook(
+            family_scoreboard=family_scoreboard,
+            layer_scoreboard=layer_scoreboard,
         )
         return {
             "artifact_version": ANALYSIS_VERSION,
@@ -1067,6 +1092,9 @@ class HillClimbHarness:
             "intent_coverage": intent_coverage,
             "decomposition_coverage": decomposition_coverage,
             "decomposition_gaps": decomposition_gaps,
+            "family_scoreboard": family_scoreboard,
+            "layer_scoreboard": layer_scoreboard,
+            "research_notebook": research_notebook,
             "batch_diversity": batch_diversity,
             "structural_recommendations": self._structural_recommendations(
                 decomposition_gaps=decomposition_gaps,
@@ -1078,6 +1106,282 @@ class HillClimbHarness:
                 failure_clusters=failure_clusters,
                 intent_coverage=intent_coverage,
             ),
+        }
+
+    def _summaries_by_hypothesis(
+        self, results: list[dict[str, Any]]
+    ) -> dict[str, list[dict[str, Any]]]:
+        grouped: dict[str, list[dict[str, Any]]] = {}
+        for summary in results:
+            hypothesis_id = summary.get("hypothesis_id")
+            if isinstance(hypothesis_id, str):
+                grouped.setdefault(hypothesis_id, []).append(summary)
+        return grouped
+
+    def _family_entry(
+        self,
+        *,
+        mutation_family: str,
+        hypothesis_payloads: list[dict[str, Any]],
+        attempts: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        statuses = [
+            status
+            for summary in attempts
+            if isinstance((status := summary.get("status")), str)
+        ]
+        recent_statuses = statuses[-FRAGILITY_LOOKBACK:]
+        recent_rejections = sum(
+            1 for status in recent_statuses if status in {"discard", "invalid"}
+        )
+        fragility = recent_rejections / len(recent_statuses) if recent_statuses else 0.0
+        valid_attempts = [
+            summary
+            for summary in attempts
+            if _safe_float(summary.get("mean_edge")) is not None
+        ]
+        best_attempt = max(
+            valid_attempts,
+            key=lambda summary: float(summary["mean_edge"]),
+            default=None,
+        )
+        failure_modes = _sorted_unique(
+            [
+                str(primary_tag)
+                for summary in attempts
+                if isinstance(
+                    (
+                        primary_tag := summary.get("derived_analysis", {})
+                        .get("failure_signature", {})
+                        .get("primary_tag")
+                    ),
+                    str,
+                )
+                and primary_tag != "improving_variant"
+            ]
+        )
+        last_attempt = attempts[-1] if attempts else None
+        attempt_count = len(attempts)
+        survivor_count = sum(1 for status in statuses if status in {"seed", "keep"})
+        discard_count = statuses.count("discard")
+        invalid_count = statuses.count("invalid")
+        return {
+            "mutation_family": mutation_family,
+            "hypothesis_ids": _sorted_unique(
+                [payload["hypothesis_id"] for payload in hypothesis_payloads]
+            ),
+            "open_hypothesis_ids": _sorted_unique(
+                [
+                    payload["hypothesis_id"]
+                    for payload in hypothesis_payloads
+                    if payload.get("status") in OPEN_HYPOTHESIS_STATUSES
+                ]
+            ),
+            "attempt_count": attempt_count,
+            "survivor_count": survivor_count,
+            "seed_count": statuses.count("seed"),
+            "keep_count": statuses.count("keep"),
+            "discard_count": discard_count,
+            "invalid_count": invalid_count,
+            "best_eval_id": None if best_attempt is None else best_attempt["eval_id"],
+            "best_mean_edge": None
+            if best_attempt is None
+            else float(best_attempt["mean_edge"]),
+            "last_eval_id": None if last_attempt is None else last_attempt["eval_id"],
+            "last_status": None if last_attempt is None else last_attempt.get("status"),
+            "failure_modes": failure_modes,
+            "fragility": fragility,
+            "risk_label": _risk_label(fragility=fragility, attempt_count=attempt_count),
+            "dead_end": attempt_count >= 2 and survivor_count == 0,
+        }
+
+    def _build_family_scoreboard(
+        self,
+        *,
+        results: list[dict[str, Any]],
+        hypotheses: dict[str, dict[str, Any]],
+    ) -> dict[str, dict[str, Any]]:
+        summaries_by_hypothesis = self._summaries_by_hypothesis(results)
+        grouped_payloads: dict[str, list[dict[str, Any]]] = {}
+        grouped_attempts: dict[str, list[dict[str, Any]]] = {}
+        for payload in hypotheses.values():
+            mutation_family = str(payload.get("mutation_family") or "unclassified")
+            grouped_payloads.setdefault(mutation_family, []).append(payload)
+            grouped_attempts.setdefault(mutation_family, [])
+            grouped_attempts[mutation_family].extend(
+                summaries_by_hypothesis.get(payload["hypothesis_id"], [])
+            )
+        return {
+            mutation_family: self._family_entry(
+                mutation_family=mutation_family,
+                hypothesis_payloads=grouped_payloads[mutation_family],
+                attempts=sorted(
+                    grouped_attempts.get(mutation_family, []),
+                    key=lambda summary: str(summary.get("created_at") or ""),
+                ),
+            )
+            for mutation_family in sorted(grouped_payloads)
+        }
+
+    def _layer_entry(
+        self,
+        *,
+        layer: str,
+        hypothesis_payloads: list[dict[str, Any]],
+        attempts: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        statuses = [
+            status
+            for summary in attempts
+            if isinstance((status := summary.get("status")), str)
+        ]
+        recent_statuses = statuses[-FRAGILITY_LOOKBACK:]
+        recent_rejections = sum(
+            1 for status in recent_statuses if status in {"discard", "invalid"}
+        )
+        fragility = recent_rejections / len(recent_statuses) if recent_statuses else 0.0
+        return {
+            "primary_layer": layer,
+            "mutation_families": _sorted_unique(
+                [
+                    str(payload.get("mutation_family") or "unclassified")
+                    for payload in hypothesis_payloads
+                ]
+            ),
+            "hypothesis_ids": _sorted_unique(
+                [payload["hypothesis_id"] for payload in hypothesis_payloads]
+            ),
+            "open_hypothesis_ids": _sorted_unique(
+                [
+                    payload["hypothesis_id"]
+                    for payload in hypothesis_payloads
+                    if payload.get("status") in OPEN_HYPOTHESIS_STATUSES
+                ]
+            ),
+            "attempt_count": len(attempts),
+            "survivor_count": sum(
+                1 for status in statuses if status in {"seed", "keep"}
+            ),
+            "discard_count": statuses.count("discard"),
+            "invalid_count": statuses.count("invalid"),
+            "fragility": fragility,
+            "risk_label": _risk_label(fragility=fragility, attempt_count=len(attempts)),
+        }
+
+    def _build_layer_scoreboard(
+        self,
+        *,
+        results: list[dict[str, Any]],
+        hypotheses: dict[str, dict[str, Any]],
+    ) -> dict[str, dict[str, Any]]:
+        summaries_by_hypothesis = self._summaries_by_hypothesis(results)
+        grouped_payloads: dict[str, list[dict[str, Any]]] = {}
+        grouped_attempts: dict[str, list[dict[str, Any]]] = {}
+        for payload in hypotheses.values():
+            layer = payload.get("primary_layer_changed")
+            layer_name = (
+                str(layer)
+                if isinstance(layer, str) and layer in DECOMPOSITION_LAYERS
+                else "unclassified"
+            )
+            grouped_payloads.setdefault(layer_name, []).append(payload)
+            grouped_attempts.setdefault(layer_name, [])
+            grouped_attempts[layer_name].extend(
+                summaries_by_hypothesis.get(payload["hypothesis_id"], [])
+            )
+        return {
+            layer: self._layer_entry(
+                layer=layer,
+                hypothesis_payloads=grouped_payloads[layer],
+                attempts=sorted(
+                    grouped_attempts.get(layer, []),
+                    key=lambda summary: str(summary.get("created_at") or ""),
+                ),
+            )
+            for layer in sorted(grouped_payloads)
+        }
+
+    def _build_research_notebook(
+        self,
+        *,
+        family_scoreboard: dict[str, dict[str, Any]],
+        layer_scoreboard: dict[str, dict[str, Any]],
+    ) -> dict[str, Any]:
+        finding_entries = sorted(
+            (
+                entry
+                for entry in family_scoreboard.values()
+                if entry["survivor_count"] > 0
+            ),
+            key=lambda entry: (
+                -entry["survivor_count"],
+                -(
+                    entry["best_mean_edge"]
+                    if entry["best_mean_edge"] is not None
+                    else -math.inf
+                ),
+                entry["mutation_family"],
+            ),
+        )
+        findings = [
+            {
+                "kind": "mutation_family",
+                "subject": entry["mutation_family"],
+                "note": (
+                    f"{entry['mutation_family']} survived {entry['survivor_count']}/"
+                    f"{entry['attempt_count']} attempts; best eval "
+                    f"{entry['best_eval_id']} reached mean_edge "
+                    f"{entry['best_mean_edge']:.6f}."
+                ),
+            }
+            for entry in finding_entries[:5]
+            if entry["best_eval_id"] is not None and entry["best_mean_edge"] is not None
+        ]
+        dead_end_entries = sorted(
+            (
+                entry
+                for entry in family_scoreboard.values()
+                if entry["dead_end"]
+                or (
+                    entry["attempt_count"] > 0
+                    and entry["survivor_count"] == 0
+                    and entry["risk_label"] == "high"
+                )
+            ),
+            key=lambda entry: (
+                -entry["fragility"],
+                -entry["attempt_count"],
+                entry["mutation_family"],
+            ),
+        )
+        dead_ends = [
+            {
+                "kind": "mutation_family",
+                "subject": entry["mutation_family"],
+                "note": (
+                    f"{entry['mutation_family']} has no survivors across "
+                    f"{entry['attempt_count']} attempts; "
+                    + (
+                        f"failure modes: {', '.join(entry['failure_modes'])}."
+                        if entry["failure_modes"]
+                        else f"latest status: {entry['last_status'] or 'none'}."
+                    )
+                ),
+            }
+            for entry in dead_end_entries[:5]
+        ]
+        return {
+            "artifact_version": SEARCH_NOTEBOOK_VERSION,
+            "findings": findings,
+            "dead_ends": dead_ends,
+            "search_surface_risk": {
+                "mutation_families": [
+                    family_scoreboard[name] for name in sorted(family_scoreboard)
+                ],
+                "primary_layers": [
+                    layer_scoreboard[name] for name in sorted(layer_scoreboard)
+                ],
+            },
         }
 
     def _build_failure_clusters(self, results: list[dict[str, Any]]) -> dict[str, int]:
@@ -1659,6 +1963,10 @@ class HillClimbHarness:
         _ensure_text_file(self._history_path(run_dir), "")
         self._hypotheses_dir(run_dir).mkdir(parents=True, exist_ok=True)
         _ensure_text_file(self._analysis_path(run_dir), _json_dump({}))
+        self._notebook_dir(run_dir).mkdir(parents=True, exist_ok=True)
+        _ensure_text_file(self._findings_path(run_dir), "# Findings\n")
+        _ensure_text_file(self._dead_ends_path(run_dir), "# Dead Ends\n")
+        _ensure_text_file(self._search_risk_path(run_dir), "# Search Risk\n")
 
     def _read_results(self, run_dir: Path) -> list[dict[str, Any]]:
         return self._read_jsonl_records(run_dir / "results.jsonl")
@@ -1668,6 +1976,18 @@ class HillClimbHarness:
 
     def _analysis_path(self, run_dir: Path) -> Path:
         return run_dir / "analysis.json"
+
+    def _notebook_dir(self, run_dir: Path) -> Path:
+        return run_dir / "notebook"
+
+    def _findings_path(self, run_dir: Path) -> Path:
+        return self._notebook_dir(run_dir) / "findings.md"
+
+    def _dead_ends_path(self, run_dir: Path) -> Path:
+        return self._notebook_dir(run_dir) / "dead_ends.md"
+
+    def _search_risk_path(self, run_dir: Path) -> Path:
+        return self._notebook_dir(run_dir) / "search_risk.md"
 
     def _read_jsonl_records(self, path: Path) -> list[dict[str, Any]]:
         if not path.exists():
@@ -2321,7 +2641,72 @@ class HillClimbHarness:
         )
         analysis_payload["generated_at"] = _utc_now()
         self._analysis_path(run_dir).write_text(_json_dump(analysis_payload))
+        research_notebook = analysis_payload.get("research_notebook", {})
+        self._findings_path(run_dir).write_text(
+            self._render_notebook_section(
+                title="Findings",
+                entries=research_notebook.get("findings", []),
+            )
+        )
+        self._dead_ends_path(run_dir).write_text(
+            self._render_notebook_section(
+                title="Dead Ends",
+                entries=research_notebook.get("dead_ends", []),
+            )
+        )
+        self._search_risk_path(run_dir).write_text(
+            self._render_search_risk_markdown(
+                research_notebook.get("search_surface_risk", {})
+            )
+        )
         self._write_cross_run_index()
+
+    def _render_notebook_section(
+        self, *, title: str, entries: list[dict[str, Any]]
+    ) -> str:
+        lines = [f"# {title}", ""]
+        if not entries:
+            lines.append("- none")
+        else:
+            for entry in entries:
+                note = entry.get("note")
+                if isinstance(note, str) and note.strip():
+                    lines.append(f"- {note}")
+        return "\n".join(lines) + "\n"
+
+    def _render_search_risk_markdown(self, payload: dict[str, Any]) -> str:
+        lines = ["# Search Risk", "", "## Mutation Families", ""]
+        mutation_families = payload.get("mutation_families", [])
+        if mutation_families:
+            for entry in mutation_families:
+                lines.append(
+                    "- "
+                    + (
+                        f"{entry['mutation_family']} "
+                        f"[{str(entry['risk_label']).upper()} risk, "
+                        f"fragility={entry['fragility']:.2f}]: "
+                        f"{entry['survivor_count']}/{entry['attempt_count']} survivors; "
+                        f"last status {entry['last_status'] or 'none'}"
+                    )
+                )
+        else:
+            lines.append("- none")
+        lines.extend(["", "## Primary Layers", ""])
+        primary_layers = payload.get("primary_layers", [])
+        if primary_layers:
+            for entry in primary_layers:
+                lines.append(
+                    "- "
+                    + (
+                        f"{entry['primary_layer']} "
+                        f"[{str(entry['risk_label']).upper()} risk, "
+                        f"fragility={entry['fragility']:.2f}]: "
+                        f"{entry['survivor_count']}/{entry['attempt_count']} survivors"
+                    )
+                )
+        else:
+            lines.append("- none")
+        return "\n".join(lines) + "\n"
 
     def _collect_research_artifact_paths(self, run_dir: Path) -> list[str]:
         collected: set[str] = set()
@@ -2393,6 +2778,19 @@ class HillClimbHarness:
                             )
                         else:
                             notes.append(f"next hypothesis {next_hypothesis_id}")
+                    open_hypothesis_ids = analysis["batch_diversity"][
+                        "open_hypothesis_ids"
+                    ]
+                    if (
+                        len(history) > 1
+                        and next_hypothesis_id is None
+                        and not open_hypothesis_ids
+                        and status == "active"
+                    ):
+                        status = "historical"
+                        notes.append(
+                            "batch closed with no queued next hypothesis; seed a fresh run_id for the next branch"
+                        )
                     entries.append(
                         {
                             "run_id": manifest["run_id"],
@@ -2453,6 +2851,30 @@ class HillClimbHarness:
                     entry["notes"] = [
                         f"superseded by retained lane {current_run_id}"
                     ] + entry["notes"]
+        latest_retained_candidates = [
+            entry
+            for entry in entries
+            if entry["created_at"] is not None and entry["status"] != "invalid"
+        ]
+        if latest_retained_candidates:
+            latest_retained = max(
+                latest_retained_candidates,
+                key=lambda entry: (entry["created_at"], entry["run_id"]),
+            )
+            latest_retained_run_id = latest_retained["run_id"]
+            latest_retained_is_closed_history = latest_retained["status"] == "historical"
+            if current_run_id is None or (
+                latest_retained_is_closed_history
+                and latest_retained_run_id != current_run_id
+            ):
+                for entry in entries:
+                    if entry["run_id"] == latest_retained_run_id:
+                        continue
+                    if entry["status"] in {"active", "goal-passed"}:
+                        entry["status"] = "historical"
+                        entry["notes"] = [
+                            f"superseded by latest retained history {latest_retained_run_id}"
+                        ] + entry["notes"]
 
         payload = {
             "artifact_version": CROSS_RUN_INDEX_VERSION,
@@ -2717,7 +3139,9 @@ class HillClimbHarness:
             "source_path": str(source_path.resolve()),
             "source_sha256": source_sha256,
             "snapshot_path": str(snapshot_path),
-            "snapshot_relpath": str(snapshot_path.relative_to(self.artifact_root / run_id)),
+            "snapshot_relpath": str(
+                snapshot_path.relative_to(self.artifact_root / run_id)
+            ),
             "label": label,
             "description": description,
             "hypothesis_id": lineage["hypothesis_id"],
@@ -3447,9 +3871,7 @@ class HillClimbHarness:
                 )
             )
 
-    def _validate_outcome_gate(
-        self, run_dir: Path, outcome_gate: object
-    ) -> None:
+    def _validate_outcome_gate(self, run_dir: Path, outcome_gate: object) -> None:
         if outcome_gate is None:
             return
         if not isinstance(outcome_gate, Mapping):
