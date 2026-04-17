@@ -1,0 +1,44 @@
+{
+  "actual_failure_mode": "arb_leak_regression",
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr17-screen480-batch1",
+  "created_at": "2026-04-17T15:37:58+00:00",
+  "eval_ids": [
+    "screen_0007"
+  ],
+  "expected_effect": "Reduce quote-motion spikes while keeping tail protection more selective than a broad flattening pass.",
+  "expected_failure_mode": "quote_motion_regression",
+  "expected_failure_signature": "If jumps remain noisy or the filter over-smooths into tail_protection_loss, the new state semantics are not buying useful control.",
+  "expected_win_condition": "Smooth protective behavior without flattening the defensive floor into an arb leak.",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.124,
+    "low_decile_mean_edge": 361.0
+  },
+  "hidden_coupling_removed": "Instantaneous shocks currently drive both volatility estimation and release timing.",
+  "hypothesis_id": "filtered-cluster-state",
+  "is_topology_branch": false,
+  "layer_held_fixed": "quote_map",
+  "mutation_family": "cluster_persistence_state",
+  "nearest_prior_failures": [],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "external_idea": "volatility_cluster_persistence",
+    "intent": "fee_discipline"
+  },
+  "parent_hypothesis_id": null,
+  "primary_layer_changed": "state",
+  "quote_topology": "single-surface-additive",
+  "rationale": "Replace instantaneous event-spike interpretation with a filtered cluster-persistence state that only elevates protection after repeated aligned stress, then releases with memory.",
+  "research_refs": [],
+  "seed_eval_id": "screen_0001",
+  "status": "completed",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "max_fee_jump": 0.052,
+    "mean_edge": 480.0
+  },
+  "title": "Filtered cluster-persistence state",
+  "updated_at": "2026-04-17T16:00:58+00:00",
+  "why_not_coefficient_retune": "This changes state semantics and memory persistence while keeping quote assembly fixed."
+}

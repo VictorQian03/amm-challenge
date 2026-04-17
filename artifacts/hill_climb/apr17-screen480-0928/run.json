@@ -1,0 +1,19 @@
+{
+  "active_strategy_path": "/Users/victorqian/Desktop/opt_arena/simple_amm/contracts/src/Strategy.sol",
+  "artifact_version": "hill_climb.run.v4",
+  "continuity_counter": ".next_eval_index",
+  "created_at": "2026-04-17T16:30:30+00:00",
+  "history_path": "history.jsonl",
+  "hypotheses_dir": "hypotheses",
+  "protected_surface_fingerprint": {
+    "file_count": 14,
+    "manifest_path": ".competition-protected-paths",
+    "sha256": "f61ebc1306bdf41c2fb0c06f6e5aeaee037862d5e062446559a201a79a53d52b"
+  },
+  "results_jsonl": "results.jsonl",
+  "results_tsv": "results.tsv",
+  "run_id": "apr17-screen480-0928",
+  "snapshot_dir": "snapshots",
+  "snapshot_layout": "flat_snapshots.v1",
+  "state_path": "state.json"
+}

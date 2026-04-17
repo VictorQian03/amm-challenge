@@ -1,0 +1,48 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr17-screen480-0928-batch1",
+  "created_at": "2026-04-17T16:31:17+00:00",
+  "eval_ids": [],
+  "expected_effect": "Retain selective anti-arb protection without paying the full symmetric fee cost of the dead split-side family.",
+  "expected_failure_mode": null,
+  "expected_failure_signature": "If the shell stays engaged too long, average fee rises without enough incremental edge; if it refills too slowly, the line misses true stress.",
+  "expected_win_condition": "Improve anti-arb and weak slices while staying below the fee drag that blocked promotion in the strongest raw branch.",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.124,
+    "time_weighted_mean_fee": 0.0046
+  },
+  "hidden_coupling_removed": "Persistent protection and one-sided stress response should not spend from the same untracked risk budget.",
+  "hypothesis_id": "drawdown-budget-shell",
+  "is_topology_branch": false,
+  "layer_held_fixed": "state",
+  "mutation_family": "drawdown_budget_shell",
+  "nearest_prior_failures": [
+    "baseline-split-side-protection-v3",
+    "hazard-gated-side-regime"
+  ],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "external_idea": "loss_budget_shell",
+    "intent": "anti_arb"
+  },
+  "parent_hypothesis_id": null,
+  "primary_layer_changed": "risk_budget",
+  "quote_topology": "three-zone quote assembly",
+  "rationale": "Split risk spend into a small always-on floor, a stress shell keyed to recent arb-loss consumption, and a one-sided extension shell that refills slowly.",
+  "research_refs": [
+    "docs/plans/active/apr17-screen480-0928.md"
+  ],
+  "seed_eval_id": "screen_0001",
+  "status": "planned",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "arb_loss_to_retail_gain": 0.118,
+    "low_retail_mean_edge": 410.0,
+    "mean_edge": 480.0
+  },
+  "title": "Drawdown-budgeted risk shell",
+  "updated_at": "2026-04-17T16:31:17+00:00",
+  "why_not_coefficient_retune": "This introduces explicit budget accounting and refill semantics rather than another regime toggle or additive surcharge retune."
+}

@@ -1,0 +1,48 @@
+{
+  "actual_failure_mode": "arb_leak_regression",
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr17-screen480-batch1",
+  "created_at": "2026-04-17T15:38:07+00:00",
+  "eval_ids": [
+    "screen_0009"
+  ],
+  "expected_effect": "Lift weak calm slices without leaving the book cheap continuously.",
+  "expected_failure_mode": "arb_leak_regression",
+  "expected_failure_signature": "If calm credits refill too easily, the book drifts into the same broad cheapening and arb leakage as the weak-slice envelope line.",
+  "expected_win_condition": "Target low-retail and low-decile improvement without changing the incumbent defensive floor.",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.124,
+    "low_decile_mean_edge": 361.0
+  },
+  "hidden_coupling_removed": "Calm relief is granted by the same contemporaneous signals that decide broad protection, so spend persists longer than evidence supports.",
+  "hypothesis_id": "earned-calm-credit-ledger",
+  "is_topology_branch": false,
+  "layer_held_fixed": "risk_budget",
+  "mutation_family": "earned_release_ledger",
+  "nearest_prior_failures": [
+    "weak-slice-exp-decay-envelope"
+  ],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "external_idea": "calm_credit_ledger",
+    "intent": "weak_slice"
+  },
+  "parent_hypothesis_id": null,
+  "primary_layer_changed": "opportunity_budget",
+  "quote_topology": "single-surface-additive",
+  "rationale": "Make calm competitiveness an earned and depleting budget that accumulates only after repeated benign confirmations and can be spent only in short windows.",
+  "research_refs": [
+    "docs/plans/active/apr17-screen480-0834.md"
+  ],
+  "seed_eval_id": "screen_0001",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "low_retail_mean_edge": 407.0,
+    "mean_edge": 480.0
+  },
+  "title": "Earned calm-credit ledger",
+  "updated_at": "2026-04-17T16:19:04+00:00",
+  "why_not_coefficient_retune": "This changes how opportunity spend is accrued and exhausted instead of softening thresholds on the same overlay."
+}

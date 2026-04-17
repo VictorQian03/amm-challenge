@@ -1,0 +1,47 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr17-screen480-batch1",
+  "created_at": "2026-04-17T15:37:37+00:00",
+  "eval_ids": [
+    "screen_0002"
+  ],
+  "expected_effect": "Improve calm and low-retail competitiveness without reopening broad arb leakage.",
+  "expected_failure_mode": "arb_leak_regression",
+  "expected_failure_signature": "If calm windows cheapen both sides together or arb_loss_to_retail_gain regresses, the split still behaves like a replay.",
+  "expected_win_condition": "Recover weak calm slices while keeping one-sided toxicity protection selective and defensive by default.",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.124,
+    "time_weighted_mean_fee": 0.00435
+  },
+  "hidden_coupling_removed": "The incumbent uses one additive surface to set both the symmetric defensive floor and the toxic-side surcharge.",
+  "hypothesis_id": "baseline-split-side-protection",
+  "is_topology_branch": true,
+  "layer_held_fixed": "state",
+  "mutation_family": "two_channel_spread_split",
+  "nearest_prior_failures": [],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "external_idea": "myersonian_spread_split",
+    "intent": "structural_pivot"
+  },
+  "parent_hypothesis_id": null,
+  "primary_layer_changed": "quote_map",
+  "quote_topology": "baseline-plus-side-specific-protection",
+  "rationale": "Replace the single additive quote spine with a persistent symmetric baseline floor plus a separate side-specific protection channel so calm competitiveness no longer requires broad cheapening.",
+  "research_refs": [
+    "artifacts/research/amm_seed_refresh_apr13-screen480-0907/memo.md",
+    "docs/plans/active/apr17-screen480-0834.md"
+  ],
+  "seed_eval_id": "screen_0001",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "low_retail_mean_edge": 406.0,
+    "mean_edge": 480.0
+  },
+  "title": "Baseline split with one-sided protection",
+  "updated_at": "2026-04-17T15:46:19+00:00",
+  "why_not_coefficient_retune": "This changes quote assembly into two explicit channels instead of retuning one shared surface."
+}

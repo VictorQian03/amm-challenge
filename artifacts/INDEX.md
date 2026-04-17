@@ -8,8 +8,8 @@ Start here:
 
 Current state:
 
-- no active retained hill-climb lane is registered after the harness-architecture reset
-- use `apr13-screen480-0907` as the latest historical read surface when seeding the next fresh run
+- active retained `screen` lane: `apr17-screen480-0928`
+- latest historical read surface on the current protected-surface fingerprint: `apr17-screen480-0834`
 - stale `apr16-screen480-1758` retained-lane artifacts were pruned after the run was abandoned
 
 ## 2026-03-27
@@ -43,6 +43,13 @@ Current state:
 - `artifacts/hill_climb/apr13-screen480-0907/`: latest retained historical `screen` lane on the current protected-surface fingerprint; baseline `473.616393`, breakout gate remained pending at `480.0`, `screen_0005` is the best raw survivor, and the batch closed with no queued next hypothesis
 - `artifacts/research/amm_seed_refresh_apr13-screen480-0907/`: research memo, new-source log, and hypothesis tracker for that historical lane
 - `artifacts/hill_climb/apr12-screen480-1130/` and `artifacts/hill_climb/apr13-screen480-0907/` are read-only history for planning; the next mutation should use a fresh `run_id`
+
+## 2026-04-17
+
+- `artifacts/hill_climb/apr17-screen480-0834/`: retained historical `screen` lane on the current protected-surface fingerprint; baseline `473.616393`, strongest raw branch `screen_0004 @ 483.890738`, and the batch closed with no queued next hypothesis after the family was exhausted
+- `docs/plans/completed/apr17-screen480-0834.md`: retained narrative for the closed `apr17-screen480-0834` batch after its successor lane became active
+- `artifacts/hill_climb/apr17-screen480-0928/`: active retained `screen` lane; baseline `473.616393`, breakout gate still pending at `480.0`, and `vol-accumulator-side-tax` is the queued next hypothesis
+- `docs/plans/active/apr17-screen480-0928.md`: active planning surface for the live retained lane
 
 Per-run contract:
 

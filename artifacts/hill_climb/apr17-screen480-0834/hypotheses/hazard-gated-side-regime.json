@@ -1,0 +1,47 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr17-screen480-batch1",
+  "created_at": "2026-04-17T15:38:16+00:00",
+  "eval_ids": [
+    "screen_0008"
+  ],
+  "expected_effect": "Improve one-sided arb defense without sacrificing the incumbent calm floor.",
+  "expected_failure_mode": "over_spiky_fee_surface",
+  "expected_failure_signature": "If the regime switch flaps or both sides still move together, the branch will look like another over-spiky replay.",
+  "expected_win_condition": "Charge the toxic side more selectively while preserving the incumbent calm baseline on the non-toxic side.",
+  "hard_guardrails": {
+    "low_retail_mean_edge": 405.0,
+    "max_fee_jump": 0.056
+  },
+  "hidden_coupling_removed": "One controller currently decides both when the book should become defensive and how one-sided toxicity should be charged.",
+  "hypothesis_id": "hazard-gated-side-regime",
+  "is_topology_branch": true,
+  "layer_held_fixed": "opportunity_budget",
+  "mutation_family": "hazard_side_gate",
+  "nearest_prior_failures": [],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "external_idea": "side_hazard_gate",
+    "intent": "anti_arb"
+  },
+  "parent_hypothesis_id": null,
+  "primary_layer_changed": "risk_budget",
+  "quote_topology": "regime-switched-quote-assembly",
+  "rationale": "Keep opportunity spend fixed, but let risk budgeting switch between a defensive symmetric regime and a one-sided hazard regime only when toxicity evidence aligns with side and extension.",
+  "research_refs": [
+    "artifacts/research/amm_dynamic_fee_apr10-screen480-0931/memo.md",
+    "docs/plans/active/apr17-screen480-0834.md"
+  ],
+  "seed_eval_id": "screen_0001",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "arb_loss_to_retail_gain": 0.118,
+    "mean_edge": 480.0
+  },
+  "title": "Hazard-gated side regime",
+  "updated_at": "2026-04-17T16:09:13+00:00",
+  "why_not_coefficient_retune": "This introduces a risk-semantic regime switch rather than another additive overlay or cheap router."
+}

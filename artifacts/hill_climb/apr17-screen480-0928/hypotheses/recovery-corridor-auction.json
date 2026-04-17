@@ -1,0 +1,47 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr17-screen480-0928-batch1",
+  "created_at": "2026-04-17T16:31:28+00:00",
+  "eval_ids": [],
+  "expected_effect": "Recover weak calm slices through narrow non-toxic-side relief instead of a broad cheap mode.",
+  "expected_failure_mode": "arb_leak_regression",
+  "expected_failure_signature": "If relief appears on both sides or survives renewed stress, arb leakage and weak-slice collapse return.",
+  "expected_win_condition": "Lift low-retail and low-volatility performance while keeping low-decile support and arb-loss ratio inside baseline guardrails.",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.124,
+    "low_decile_mean_edge": 361.0
+  },
+  "hidden_coupling_removed": "Calm recovery should not be earned and spent as a broad global discount path.",
+  "hypothesis_id": "recovery-corridor-auction",
+  "is_topology_branch": false,
+  "layer_held_fixed": "risk_budget",
+  "mutation_family": "recovery_corridor_auction",
+  "nearest_prior_failures": [
+    "earned-calm-credit-ledger"
+  ],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "external_idea": "selective_recovery_corridor",
+    "intent": "weak_slice"
+  },
+  "parent_hypothesis_id": null,
+  "primary_layer_changed": "opportunity_budget",
+  "quote_topology": "non-toxic-side recovery corridor",
+  "rationale": "Replace global calm credit with a narrow corridor that can reduce only the non-toxic side after repeated calm confirmations and closes immediately on renewed stress.",
+  "research_refs": [
+    "docs/plans/active/apr17-screen480-0928.md"
+  ],
+  "seed_eval_id": "screen_0001",
+  "status": "planned",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "low_retail_mean_edge": 410.0,
+    "low_volatility_mean_edge": 456.0,
+    "mean_edge": 480.0
+  },
+  "title": "Recovery corridor on non-toxic side",
+  "updated_at": "2026-04-17T16:31:28+00:00",
+  "why_not_coefficient_retune": "This changes where recovery is allowed to appear in the quote rather than merely shrinking or growing the same rebate envelope."
+}

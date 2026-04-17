@@ -1,0 +1,49 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr17-screen480-0928-batch1",
+  "created_at": "2026-04-17T16:30:53+00:00",
+  "eval_ids": [],
+  "expected_effect": "Preserve the anti-arb gain of the strongest raw split-side branch while smoothing the protective floor and release path.",
+  "expected_failure_mode": "arb_leak_regression",
+  "expected_failure_signature": "If the slow floor lags true stress, arb leakage returns; if it stays wide too long, fee drag blocks promotion.",
+  "expected_win_condition": "Lift mean_edge above 480 without recreating the fee drag of the dead split-side family and while keeping arb_loss_to_retail_gain inside guardrail.",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.124,
+    "time_weighted_mean_fee": 0.00455
+  },
+  "hidden_coupling_removed": "Instantaneous shocks should not decide both protective-floor activation and release timing.",
+  "hypothesis_id": "vol-accumulator-side-tax",
+  "is_topology_branch": false,
+  "layer_held_fixed": "opportunity_budget",
+  "mutation_family": "vol_accumulator_floor",
+  "nearest_prior_failures": [
+    "baseline-split-side-protection-v3",
+    "filtered-cluster-state"
+  ],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "external_idea": "filtered_volatility_floor",
+    "intent": "fee_discipline"
+  },
+  "parent_hypothesis_id": null,
+  "primary_layer_changed": "state",
+  "quote_topology": "two-timescale quote assembly",
+  "rationale": "Replace short-horizon event carry with a filtered volatility accumulator that sets the symmetric floor, while a faster side-tax path handles one-sided toxicity.",
+  "research_refs": [
+    "docs/plans/active/apr17-screen480-0928.md",
+    "artifacts/research/amm_seed_refresh_apr13-screen480-0907/memo.md"
+  ],
+  "seed_eval_id": "screen_0001",
+  "status": "queued",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "arb_loss_to_retail_gain": 0.12,
+    "low_retail_mean_edge": 410.0,
+    "mean_edge": 480.0
+  },
+  "title": "Vol accumulator with side tax relay",
+  "updated_at": "2026-04-17T16:30:53+00:00",
+  "why_not_coefficient_retune": "This changes state semantics to a two-timescale controller before quote assembly rather than reweighting the same additive surface."
+}

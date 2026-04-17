@@ -1,0 +1,49 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr17-screen480-batch1",
+  "created_at": "2026-04-17T15:57:58+00:00",
+  "eval_ids": [
+    "screen_0006"
+  ],
+  "expected_effect": "Preserve most of screen_0004's raw edge and arb discipline while recovering some retail edge and mean-fee spend in confirmed calm windows.",
+  "expected_failure_mode": "weak_slice_improvement_without_overall_gain",
+  "expected_failure_signature": "If fee spend and retail edge remain pinned near screen_0004, the calm-window gate is still too weak; if raw edge drops back toward screen_0003, the reclaim leaked outside true non-toxic windows.",
+  "expected_win_condition": "Stay near screen_0004 on mean_edge while reducing time_weighted_mean_fee and pulling retail_edge back above 540.",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.124,
+    "time_weighted_mean_fee": 0.00435
+  },
+  "hidden_coupling_removed": "screen_0004 still forces recovery cuts to stay uniformly tight even in confirmed calm windows, so non-toxic reclaim cannot reappear without reopening the full surface.",
+  "hypothesis_id": "baseline-split-side-protection-v5",
+  "is_topology_branch": false,
+  "layer_held_fixed": "state",
+  "mutation_family": "two_channel_spread_split",
+  "nearest_prior_failures": [
+    "baseline-split-side-protection-v4"
+  ],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "local_refinement",
+    "external_idea": "gated_calm_window_reclaim",
+    "intent": "weak_slice"
+  },
+  "parent_hypothesis_id": "baseline-split-side-protection-v4",
+  "primary_layer_changed": "quote_map",
+  "quote_topology": "baseline-plus-side-specific-protection",
+  "rationale": "screen_0005 showed the previous non-toxic recovery gate was too strict. Keep screen_0004's stronger toxic overlay intact and restore only the healing-rebate and baseline-flex reductions from screen_0003->screen_0004 as calm-window increments on the non-toxic side.",
+  "research_refs": [
+    "artifacts/research/amm_seed_refresh_apr13-screen480-0907/memo.md",
+    "docs/plans/active/apr17-screen480-0834.md"
+  ],
+  "seed_eval_id": "screen_0004",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "mean_edge": 480.0,
+    "retail_edge": 540.0
+  },
+  "title": "Baseline split with gated calm-window reclaim",
+  "updated_at": "2026-04-17T15:58:11+00:00",
+  "why_not_coefficient_retune": "This preserves the screen_0004 split but changes when the recovery path reactivates by tying the recovered rebates to the existing calm-window gate, rather than loosening both sides globally."
+}

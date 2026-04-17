@@ -1,0 +1,879 @@
+{
+  "artifact_version": "hill_climb.analysis.v1",
+  "batch_diversity": {
+    "batch_id": "apr17-screen480-0928-batch1",
+    "distinct_primary_layer_count": 4,
+    "force_layer_pivot": false,
+    "has_topology_branch": true,
+    "issues": [],
+    "near_replay_survivor_ids": [],
+    "open_hypothesis_ids": [
+      "drawdown-budget-shell",
+      "inventory-toxicity-triad",
+      "recovery-corridor-auction",
+      "vol-accumulator-side-tax"
+    ],
+    "open_primary_layers": [
+      "opportunity_budget",
+      "quote_map",
+      "risk_budget",
+      "state"
+    ],
+    "phenotype_family_groups": {
+      "multi-channel quote assembly": [
+        "inventory-toxicity-triad"
+      ],
+      "non-toxic-side recovery corridor": [
+        "recovery-corridor-auction"
+      ],
+      "three-zone quote assembly": [
+        "drawdown-budget-shell"
+      ],
+      "two-timescale quote assembly": [
+        "vol-accumulator-side-tax"
+      ]
+    },
+    "quote_topology_groups": {
+      "non-toxic-side recovery corridor": [
+        "recovery-corridor-auction"
+      ],
+      "three-channel quote assembly": [
+        "inventory-toxicity-triad"
+      ],
+      "three-zone quote assembly": [
+        "drawdown-budget-shell"
+      ],
+      "two-timescale quote assembly": [
+        "vol-accumulator-side-tax"
+      ]
+    },
+    "repeated_phenotype_family_groups": {},
+    "repeated_quote_topology_groups": {},
+    "same_phenotype_failure_groups": {},
+    "same_spine_failure_groups": {},
+    "selection_mode": "explicit_batch_id",
+    "topology_branch_hypothesis_ids": [
+      "inventory-toxicity-triad"
+    ]
+  },
+  "decomposition_coverage": {
+    "opportunity_budget": {
+      "all_hypothesis_ids": [
+        "recovery-corridor-auction"
+      ],
+      "open_hypothesis_ids": [
+        "recovery-corridor-auction"
+      ]
+    },
+    "quote_map": {
+      "all_hypothesis_ids": [
+        "inventory-toxicity-triad"
+      ],
+      "open_hypothesis_ids": [
+        "inventory-toxicity-triad"
+      ]
+    },
+    "risk_budget": {
+      "all_hypothesis_ids": [
+        "drawdown-budget-shell"
+      ],
+      "open_hypothesis_ids": [
+        "drawdown-budget-shell"
+      ]
+    },
+    "state": {
+      "all_hypothesis_ids": [
+        "vol-accumulator-side-tax"
+      ],
+      "open_hypothesis_ids": [
+        "vol-accumulator-side-tax"
+      ]
+    },
+    "unclassified": {
+      "all_hypothesis_ids": [],
+      "open_hypothesis_ids": []
+    }
+  },
+  "decomposition_gaps": [],
+  "failure_clusters": {},
+  "family_scoreboard": {
+    "drawdown_budget_shell": {
+      "attempt_count": 0,
+      "best_eval_id": null,
+      "best_mean_edge": null,
+      "dead_end": false,
+      "discard_count": 0,
+      "failure_modes": [],
+      "fragility": 0.0,
+      "hypothesis_ids": [
+        "drawdown-budget-shell"
+      ],
+      "invalid_count": 0,
+      "keep_count": 0,
+      "last_eval_id": null,
+      "last_status": null,
+      "mutation_family": "drawdown_budget_shell",
+      "open_hypothesis_ids": [
+        "drawdown-budget-shell"
+      ],
+      "risk_label": "unproven",
+      "seed_count": 0,
+      "survivor_count": 0
+    },
+    "inventory_toxicity_triad": {
+      "attempt_count": 0,
+      "best_eval_id": null,
+      "best_mean_edge": null,
+      "dead_end": false,
+      "discard_count": 0,
+      "failure_modes": [],
+      "fragility": 0.0,
+      "hypothesis_ids": [
+        "inventory-toxicity-triad"
+      ],
+      "invalid_count": 0,
+      "keep_count": 0,
+      "last_eval_id": null,
+      "last_status": null,
+      "mutation_family": "inventory_toxicity_triad",
+      "open_hypothesis_ids": [
+        "inventory-toxicity-triad"
+      ],
+      "risk_label": "unproven",
+      "seed_count": 0,
+      "survivor_count": 0
+    },
+    "recovery_corridor_auction": {
+      "attempt_count": 0,
+      "best_eval_id": null,
+      "best_mean_edge": null,
+      "dead_end": false,
+      "discard_count": 0,
+      "failure_modes": [],
+      "fragility": 0.0,
+      "hypothesis_ids": [
+        "recovery-corridor-auction"
+      ],
+      "invalid_count": 0,
+      "keep_count": 0,
+      "last_eval_id": null,
+      "last_status": null,
+      "mutation_family": "recovery_corridor_auction",
+      "open_hypothesis_ids": [
+        "recovery-corridor-auction"
+      ],
+      "risk_label": "unproven",
+      "seed_count": 0,
+      "survivor_count": 0
+    },
+    "vol_accumulator_floor": {
+      "attempt_count": 0,
+      "best_eval_id": null,
+      "best_mean_edge": null,
+      "dead_end": false,
+      "discard_count": 0,
+      "failure_modes": [],
+      "fragility": 0.0,
+      "hypothesis_ids": [
+        "vol-accumulator-side-tax"
+      ],
+      "invalid_count": 0,
+      "keep_count": 0,
+      "last_eval_id": null,
+      "last_status": null,
+      "mutation_family": "vol_accumulator_floor",
+      "open_hypothesis_ids": [
+        "vol-accumulator-side-tax"
+      ],
+      "risk_label": "unproven",
+      "seed_count": 0,
+      "survivor_count": 0
+    }
+  },
+  "frontier_bank": {
+    "best_anti_arb": {
+      "eval_id": "screen_0001",
+      "failure_tags": [],
+      "hypothesis_id": null,
+      "label": "baseline-latent-toxic-v1",
+      "mean_edge": 473.61639344802524,
+      "profile": {
+        "arb_edge": -66.77135092827479,
+        "arb_loss_to_retail_gain": 0.12356192682596893,
+        "high_decile_mean_edge": 622.0080798306832,
+        "low_decile_mean_edge": 361.497702023848,
+        "low_retail_mean_edge": 405.47245008814957,
+        "low_volatility_mean_edge": 451.7047749173429,
+        "max_fee_jump": 0.05697810742895679,
+        "mean_edge": 473.61639344802524,
+        "median_decile_mean_edge": 446.61686784788895,
+        "quote_selectivity_ratio": 29.083060147918708,
+        "retail_edge": 540.3877443763,
+        "time_weighted_ask_fee": 0.004259354004241511,
+        "time_weighted_bid_fee": 0.00423782106588683,
+        "time_weighted_mean_fee": 0.00424858753506417
+      },
+      "stage": "screen",
+      "status": "seed"
+    },
+    "best_fee_discipline": {
+      "eval_id": "screen_0001",
+      "failure_tags": [],
+      "hypothesis_id": null,
+      "label": "baseline-latent-toxic-v1",
+      "mean_edge": 473.61639344802524,
+      "profile": {
+        "arb_edge": -66.77135092827479,
+        "arb_loss_to_retail_gain": 0.12356192682596893,
+        "high_decile_mean_edge": 622.0080798306832,
+        "low_decile_mean_edge": 361.497702023848,
+        "low_retail_mean_edge": 405.47245008814957,
+        "low_volatility_mean_edge": 451.7047749173429,
+        "max_fee_jump": 0.05697810742895679,
+        "mean_edge": 473.61639344802524,
+        "median_decile_mean_edge": 446.61686784788895,
+        "quote_selectivity_ratio": 29.083060147918708,
+        "retail_edge": 540.3877443763,
+        "time_weighted_ask_fee": 0.004259354004241511,
+        "time_weighted_bid_fee": 0.00423782106588683,
+        "time_weighted_mean_fee": 0.00424858753506417
+      },
+      "stage": "screen",
+      "status": "seed"
+    },
+    "best_low_retail": {
+      "eval_id": "screen_0001",
+      "failure_tags": [],
+      "hypothesis_id": null,
+      "label": "baseline-latent-toxic-v1",
+      "mean_edge": 473.61639344802524,
+      "profile": {
+        "arb_edge": -66.77135092827479,
+        "arb_loss_to_retail_gain": 0.12356192682596893,
+        "high_decile_mean_edge": 622.0080798306832,
+        "low_decile_mean_edge": 361.497702023848,
+        "low_retail_mean_edge": 405.47245008814957,
+        "low_volatility_mean_edge": 451.7047749173429,
+        "max_fee_jump": 0.05697810742895679,
+        "mean_edge": 473.61639344802524,
+        "median_decile_mean_edge": 446.61686784788895,
+        "quote_selectivity_ratio": 29.083060147918708,
+        "retail_edge": 540.3877443763,
+        "time_weighted_ask_fee": 0.004259354004241511,
+        "time_weighted_bid_fee": 0.00423782106588683,
+        "time_weighted_mean_fee": 0.00424858753506417
+      },
+      "stage": "screen",
+      "status": "seed"
+    },
+    "best_low_volatility": {
+      "eval_id": "screen_0001",
+      "failure_tags": [],
+      "hypothesis_id": null,
+      "label": "baseline-latent-toxic-v1",
+      "mean_edge": 473.61639344802524,
+      "profile": {
+        "arb_edge": -66.77135092827479,
+        "arb_loss_to_retail_gain": 0.12356192682596893,
+        "high_decile_mean_edge": 622.0080798306832,
+        "low_decile_mean_edge": 361.497702023848,
+        "low_retail_mean_edge": 405.47245008814957,
+        "low_volatility_mean_edge": 451.7047749173429,
+        "max_fee_jump": 0.05697810742895679,
+        "mean_edge": 473.61639344802524,
+        "median_decile_mean_edge": 446.61686784788895,
+        "quote_selectivity_ratio": 29.083060147918708,
+        "retail_edge": 540.3877443763,
+        "time_weighted_ask_fee": 0.004259354004241511,
+        "time_weighted_bid_fee": 0.00423782106588683,
+        "time_weighted_mean_fee": 0.00424858753506417
+      },
+      "stage": "screen",
+      "status": "seed"
+    },
+    "best_quote_selectivity": {
+      "eval_id": "screen_0001",
+      "failure_tags": [],
+      "hypothesis_id": null,
+      "label": "baseline-latent-toxic-v1",
+      "mean_edge": 473.61639344802524,
+      "profile": {
+        "arb_edge": -66.77135092827479,
+        "arb_loss_to_retail_gain": 0.12356192682596893,
+        "high_decile_mean_edge": 622.0080798306832,
+        "low_decile_mean_edge": 361.497702023848,
+        "low_retail_mean_edge": 405.47245008814957,
+        "low_volatility_mean_edge": 451.7047749173429,
+        "max_fee_jump": 0.05697810742895679,
+        "mean_edge": 473.61639344802524,
+        "median_decile_mean_edge": 446.61686784788895,
+        "quote_selectivity_ratio": 29.083060147918708,
+        "retail_edge": 540.3877443763,
+        "time_weighted_ask_fee": 0.004259354004241511,
+        "time_weighted_bid_fee": 0.00423782106588683,
+        "time_weighted_mean_fee": 0.00424858753506417
+      },
+      "stage": "screen",
+      "status": "seed"
+    },
+    "best_raw": [
+      {
+        "eval_id": "screen_0001",
+        "failure_tags": [],
+        "hypothesis_id": null,
+        "label": "baseline-latent-toxic-v1",
+        "mean_edge": 473.61639344802524,
+        "profile": {
+          "arb_edge": -66.77135092827479,
+          "arb_loss_to_retail_gain": 0.12356192682596893,
+          "high_decile_mean_edge": 622.0080798306832,
+          "low_decile_mean_edge": 361.497702023848,
+          "low_retail_mean_edge": 405.47245008814957,
+          "low_volatility_mean_edge": 451.7047749173429,
+          "max_fee_jump": 0.05697810742895679,
+          "mean_edge": 473.61639344802524,
+          "median_decile_mean_edge": 446.61686784788895,
+          "quote_selectivity_ratio": 29.083060147918708,
+          "retail_edge": 540.3877443763,
+          "time_weighted_ask_fee": 0.004259354004241511,
+          "time_weighted_bid_fee": 0.00423782106588683,
+          "time_weighted_mean_fee": 0.00424858753506417
+        },
+        "stage": "screen",
+        "status": "seed"
+      }
+    ],
+    "incumbents": [
+      {
+        "eval_id": "screen_0001",
+        "failure_tags": [],
+        "hypothesis_id": null,
+        "label": "baseline-latent-toxic-v1",
+        "mean_edge": 473.61639344802524,
+        "profile": {
+          "arb_edge": -66.77135092827479,
+          "arb_loss_to_retail_gain": 0.12356192682596893,
+          "high_decile_mean_edge": 622.0080798306832,
+          "low_decile_mean_edge": 361.497702023848,
+          "low_retail_mean_edge": 405.47245008814957,
+          "low_volatility_mean_edge": 451.7047749173429,
+          "max_fee_jump": 0.05697810742895679,
+          "mean_edge": 473.61639344802524,
+          "median_decile_mean_edge": 446.61686784788895,
+          "quote_selectivity_ratio": 29.083060147918708,
+          "retail_edge": 540.3877443763,
+          "time_weighted_ask_fee": 0.004259354004241511,
+          "time_weighted_bid_fee": 0.00423782106588683,
+          "time_weighted_mean_fee": 0.00424858753506417
+        },
+        "stage": "screen",
+        "status": "seed"
+      }
+    ]
+  },
+  "generated_at": "2026-04-17T16:31:42+00:00",
+  "intent_coverage": {
+    "anti_arb": {
+      "all_hypothesis_ids": [
+        "drawdown-budget-shell",
+        "inventory-toxicity-triad",
+        "recovery-corridor-auction",
+        "vol-accumulator-side-tax"
+      ],
+      "open_hypothesis_ids": [
+        "drawdown-budget-shell",
+        "inventory-toxicity-triad",
+        "recovery-corridor-auction",
+        "vol-accumulator-side-tax"
+      ]
+    },
+    "fee_discipline": {
+      "all_hypothesis_ids": [
+        "drawdown-budget-shell",
+        "inventory-toxicity-triad",
+        "vol-accumulator-side-tax"
+      ],
+      "open_hypothesis_ids": [
+        "drawdown-budget-shell",
+        "inventory-toxicity-triad",
+        "vol-accumulator-side-tax"
+      ]
+    },
+    "local_refine": {
+      "all_hypothesis_ids": [
+        "drawdown-budget-shell",
+        "inventory-toxicity-triad",
+        "recovery-corridor-auction",
+        "vol-accumulator-side-tax"
+      ],
+      "open_hypothesis_ids": [
+        "drawdown-budget-shell",
+        "inventory-toxicity-triad",
+        "recovery-corridor-auction",
+        "vol-accumulator-side-tax"
+      ]
+    },
+    "structural_pivot": {
+      "all_hypothesis_ids": [
+        "drawdown-budget-shell",
+        "inventory-toxicity-triad",
+        "recovery-corridor-auction",
+        "vol-accumulator-side-tax"
+      ],
+      "open_hypothesis_ids": [
+        "drawdown-budget-shell",
+        "inventory-toxicity-triad",
+        "recovery-corridor-auction",
+        "vol-accumulator-side-tax"
+      ]
+    },
+    "weak_slice": {
+      "all_hypothesis_ids": [
+        "drawdown-budget-shell",
+        "recovery-corridor-auction",
+        "vol-accumulator-side-tax"
+      ],
+      "open_hypothesis_ids": [
+        "drawdown-budget-shell",
+        "recovery-corridor-auction",
+        "vol-accumulator-side-tax"
+      ]
+    }
+  },
+  "layer_scoreboard": {
+    "opportunity_budget": {
+      "attempt_count": 0,
+      "discard_count": 0,
+      "fragility": 0.0,
+      "hypothesis_ids": [
+        "recovery-corridor-auction"
+      ],
+      "invalid_count": 0,
+      "mutation_families": [
+        "recovery_corridor_auction"
+      ],
+      "open_hypothesis_ids": [
+        "recovery-corridor-auction"
+      ],
+      "primary_layer": "opportunity_budget",
+      "risk_label": "unproven",
+      "survivor_count": 0
+    },
+    "quote_map": {
+      "attempt_count": 0,
+      "discard_count": 0,
+      "fragility": 0.0,
+      "hypothesis_ids": [
+        "inventory-toxicity-triad"
+      ],
+      "invalid_count": 0,
+      "mutation_families": [
+        "inventory_toxicity_triad"
+      ],
+      "open_hypothesis_ids": [
+        "inventory-toxicity-triad"
+      ],
+      "primary_layer": "quote_map",
+      "risk_label": "unproven",
+      "survivor_count": 0
+    },
+    "risk_budget": {
+      "attempt_count": 0,
+      "discard_count": 0,
+      "fragility": 0.0,
+      "hypothesis_ids": [
+        "drawdown-budget-shell"
+      ],
+      "invalid_count": 0,
+      "mutation_families": [
+        "drawdown_budget_shell"
+      ],
+      "open_hypothesis_ids": [
+        "drawdown-budget-shell"
+      ],
+      "primary_layer": "risk_budget",
+      "risk_label": "unproven",
+      "survivor_count": 0
+    },
+    "state": {
+      "attempt_count": 0,
+      "discard_count": 0,
+      "fragility": 0.0,
+      "hypothesis_ids": [
+        "vol-accumulator-side-tax"
+      ],
+      "invalid_count": 0,
+      "mutation_families": [
+        "vol_accumulator_floor"
+      ],
+      "open_hypothesis_ids": [
+        "vol-accumulator-side-tax"
+      ],
+      "primary_layer": "state",
+      "risk_label": "unproven",
+      "survivor_count": 0
+    }
+  },
+  "phenotype_coverage": {
+    "drawdown-budget-shell": {
+      "actual_failure_mode": null,
+      "batch_id": "apr17-screen480-0928-batch1",
+      "expected_failure_mode": null,
+      "expected_failure_signature": "If the shell stays engaged too long, average fee rises without enough incremental edge; if it refills too slowly, the line misses true stress.",
+      "expected_win_condition": "Improve anti-arb and weak slices while staying below the fee drag that blocked promotion in the strongest raw branch.",
+      "hard_guardrails": {
+        "arb_loss_to_retail_gain": 0.124,
+        "time_weighted_mean_fee": 0.0046
+      },
+      "hidden_coupling_removed": "Persistent protection and one-sided stress response should not spend from the same untracked risk budget.",
+      "intents": [
+        "anti_arb",
+        "fee_discipline",
+        "local_refine",
+        "structural_pivot",
+        "weak_slice"
+      ],
+      "is_topology_branch": false,
+      "layer_held_fixed": "state",
+      "mutation_family": "drawdown_budget_shell",
+      "novelty_coordinates": {
+        "classification": "novel",
+        "external_idea": "loss_budget_shell",
+        "intent": "anti_arb"
+      },
+      "phenotype_family": "three-zone quote assembly",
+      "primary_layer_changed": "risk_budget",
+      "quote_topology": "three-zone quote assembly",
+      "synthesis_eligible": true,
+      "target_metrics": {
+        "arb_loss_to_retail_gain": 0.118,
+        "low_retail_mean_edge": 410.0,
+        "mean_edge": 480.0
+      },
+      "why_not_coefficient_retune": "This introduces explicit budget accounting and refill semantics rather than another regime toggle or additive surcharge retune."
+    },
+    "inventory-toxicity-triad": {
+      "actual_failure_mode": null,
+      "batch_id": "apr17-screen480-0928-batch1",
+      "expected_failure_mode": null,
+      "expected_failure_signature": "If the final quote still behaves like one smoothed additive envelope, the branch is a disguised replay; if inventory centering fights toxicity, either broad overpricing or silent cheapening returns.",
+      "expected_win_condition": "Deliver a structural pivot that preserves selective protection and lowers average fee relative to the dead split-side family.",
+      "hard_guardrails": {
+        "arb_loss_to_retail_gain": 0.124,
+        "time_weighted_mean_fee": 0.00455
+      },
+      "hidden_coupling_removed": "One broad surface should not absorb baseline defense, toxic charging, and inventory-centering pressure at the same time.",
+      "intents": [
+        "anti_arb",
+        "fee_discipline",
+        "local_refine",
+        "structural_pivot"
+      ],
+      "is_topology_branch": true,
+      "layer_held_fixed": "opportunity_budget",
+      "mutation_family": "inventory_toxicity_triad",
+      "novelty_coordinates": {
+        "classification": "novel",
+        "external_idea": "inventory_tax_blend",
+        "intent": "structural_pivot"
+      },
+      "phenotype_family": "multi-channel quote assembly",
+      "primary_layer_changed": "quote_map",
+      "quote_topology": "three-channel quote assembly",
+      "synthesis_eligible": true,
+      "target_metrics": {
+        "arb_loss_to_retail_gain": 0.12,
+        "mean_edge": 480.0,
+        "quote_selectivity_ratio": 24.0
+      },
+      "why_not_coefficient_retune": "This changes quote assembly itself by introducing a third orthogonal channel instead of reweighting the dead two-channel split."
+    },
+    "recovery-corridor-auction": {
+      "actual_failure_mode": null,
+      "batch_id": "apr17-screen480-0928-batch1",
+      "expected_failure_mode": "arb_leak_regression",
+      "expected_failure_signature": "If relief appears on both sides or survives renewed stress, arb leakage and weak-slice collapse return.",
+      "expected_win_condition": "Lift low-retail and low-volatility performance while keeping low-decile support and arb-loss ratio inside baseline guardrails.",
+      "hard_guardrails": {
+        "arb_loss_to_retail_gain": 0.124,
+        "low_decile_mean_edge": 361.0
+      },
+      "hidden_coupling_removed": "Calm recovery should not be earned and spent as a broad global discount path.",
+      "intents": [
+        "anti_arb",
+        "local_refine",
+        "structural_pivot",
+        "weak_slice"
+      ],
+      "is_topology_branch": false,
+      "layer_held_fixed": "risk_budget",
+      "mutation_family": "recovery_corridor_auction",
+      "novelty_coordinates": {
+        "classification": "novel",
+        "external_idea": "selective_recovery_corridor",
+        "intent": "weak_slice"
+      },
+      "phenotype_family": "non-toxic-side recovery corridor",
+      "primary_layer_changed": "opportunity_budget",
+      "quote_topology": "non-toxic-side recovery corridor",
+      "synthesis_eligible": true,
+      "target_metrics": {
+        "low_retail_mean_edge": 410.0,
+        "low_volatility_mean_edge": 456.0,
+        "mean_edge": 480.0
+      },
+      "why_not_coefficient_retune": "This changes where recovery is allowed to appear in the quote rather than merely shrinking or growing the same rebate envelope."
+    },
+    "vol-accumulator-side-tax": {
+      "actual_failure_mode": null,
+      "batch_id": "apr17-screen480-0928-batch1",
+      "expected_failure_mode": "arb_leak_regression",
+      "expected_failure_signature": "If the slow floor lags true stress, arb leakage returns; if it stays wide too long, fee drag blocks promotion.",
+      "expected_win_condition": "Lift mean_edge above 480 without recreating the fee drag of the dead split-side family and while keeping arb_loss_to_retail_gain inside guardrail.",
+      "hard_guardrails": {
+        "arb_loss_to_retail_gain": 0.124,
+        "time_weighted_mean_fee": 0.00455
+      },
+      "hidden_coupling_removed": "Instantaneous shocks should not decide both protective-floor activation and release timing.",
+      "intents": [
+        "anti_arb",
+        "fee_discipline",
+        "local_refine",
+        "structural_pivot",
+        "weak_slice"
+      ],
+      "is_topology_branch": false,
+      "layer_held_fixed": "opportunity_budget",
+      "mutation_family": "vol_accumulator_floor",
+      "novelty_coordinates": {
+        "classification": "novel",
+        "external_idea": "filtered_volatility_floor",
+        "intent": "fee_discipline"
+      },
+      "phenotype_family": "two-timescale quote assembly",
+      "primary_layer_changed": "state",
+      "quote_topology": "two-timescale quote assembly",
+      "synthesis_eligible": true,
+      "target_metrics": {
+        "arb_loss_to_retail_gain": 0.12,
+        "low_retail_mean_edge": 410.0,
+        "mean_edge": 480.0
+      },
+      "why_not_coefficient_retune": "This changes state semantics to a two-timescale controller before quote assembly rather than reweighting the same additive surface."
+    }
+  },
+  "portfolio_gaps": [],
+  "recent_failures": [],
+  "recommended_next_batch": [
+    {
+      "anchor_eval_id": "screen_0001",
+      "covered": true,
+      "intent": "local_refine",
+      "reason": "Exploit the strongest raw survivor screen_0001 before widening again."
+    },
+    {
+      "covered": true,
+      "intent": "anti_arb",
+      "reason": "Keep one branch explicitly aimed at arb-loss improvement so cheaper calm quoting is not selected blindly."
+    },
+    {
+      "covered": true,
+      "intent": "weak_slice",
+      "reason": "Keep one branch focused on weak low-retail, low-volatility, or tail slices instead of only overall mean_edge."
+    },
+    {
+      "covered": true,
+      "intent": "fee_discipline",
+      "reason": "Keep one branch with explicit quote-selectivity and fee-discipline guardrails so structural pivots fail fast."
+    },
+    {
+      "covered": true,
+      "intent": "structural_pivot",
+      "reason": "Reserve one orthogonal pivot so the batch does not collapse into semantically different versions of the same phenotype."
+    }
+  ],
+  "research_notebook": {
+    "artifact_version": "hill_climb.notebook.v1",
+    "dead_ends": [],
+    "findings": [],
+    "search_surface_risk": {
+      "mutation_families": [
+        {
+          "attempt_count": 0,
+          "best_eval_id": null,
+          "best_mean_edge": null,
+          "dead_end": false,
+          "discard_count": 0,
+          "failure_modes": [],
+          "fragility": 0.0,
+          "hypothesis_ids": [
+            "drawdown-budget-shell"
+          ],
+          "invalid_count": 0,
+          "keep_count": 0,
+          "last_eval_id": null,
+          "last_status": null,
+          "mutation_family": "drawdown_budget_shell",
+          "open_hypothesis_ids": [
+            "drawdown-budget-shell"
+          ],
+          "risk_label": "unproven",
+          "seed_count": 0,
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 0,
+          "best_eval_id": null,
+          "best_mean_edge": null,
+          "dead_end": false,
+          "discard_count": 0,
+          "failure_modes": [],
+          "fragility": 0.0,
+          "hypothesis_ids": [
+            "inventory-toxicity-triad"
+          ],
+          "invalid_count": 0,
+          "keep_count": 0,
+          "last_eval_id": null,
+          "last_status": null,
+          "mutation_family": "inventory_toxicity_triad",
+          "open_hypothesis_ids": [
+            "inventory-toxicity-triad"
+          ],
+          "risk_label": "unproven",
+          "seed_count": 0,
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 0,
+          "best_eval_id": null,
+          "best_mean_edge": null,
+          "dead_end": false,
+          "discard_count": 0,
+          "failure_modes": [],
+          "fragility": 0.0,
+          "hypothesis_ids": [
+            "recovery-corridor-auction"
+          ],
+          "invalid_count": 0,
+          "keep_count": 0,
+          "last_eval_id": null,
+          "last_status": null,
+          "mutation_family": "recovery_corridor_auction",
+          "open_hypothesis_ids": [
+            "recovery-corridor-auction"
+          ],
+          "risk_label": "unproven",
+          "seed_count": 0,
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 0,
+          "best_eval_id": null,
+          "best_mean_edge": null,
+          "dead_end": false,
+          "discard_count": 0,
+          "failure_modes": [],
+          "fragility": 0.0,
+          "hypothesis_ids": [
+            "vol-accumulator-side-tax"
+          ],
+          "invalid_count": 0,
+          "keep_count": 0,
+          "last_eval_id": null,
+          "last_status": null,
+          "mutation_family": "vol_accumulator_floor",
+          "open_hypothesis_ids": [
+            "vol-accumulator-side-tax"
+          ],
+          "risk_label": "unproven",
+          "seed_count": 0,
+          "survivor_count": 0
+        }
+      ],
+      "primary_layers": [
+        {
+          "attempt_count": 0,
+          "discard_count": 0,
+          "fragility": 0.0,
+          "hypothesis_ids": [
+            "recovery-corridor-auction"
+          ],
+          "invalid_count": 0,
+          "mutation_families": [
+            "recovery_corridor_auction"
+          ],
+          "open_hypothesis_ids": [
+            "recovery-corridor-auction"
+          ],
+          "primary_layer": "opportunity_budget",
+          "risk_label": "unproven",
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 0,
+          "discard_count": 0,
+          "fragility": 0.0,
+          "hypothesis_ids": [
+            "inventory-toxicity-triad"
+          ],
+          "invalid_count": 0,
+          "mutation_families": [
+            "inventory_toxicity_triad"
+          ],
+          "open_hypothesis_ids": [
+            "inventory-toxicity-triad"
+          ],
+          "primary_layer": "quote_map",
+          "risk_label": "unproven",
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 0,
+          "discard_count": 0,
+          "fragility": 0.0,
+          "hypothesis_ids": [
+            "drawdown-budget-shell"
+          ],
+          "invalid_count": 0,
+          "mutation_families": [
+            "drawdown_budget_shell"
+          ],
+          "open_hypothesis_ids": [
+            "drawdown-budget-shell"
+          ],
+          "primary_layer": "risk_budget",
+          "risk_label": "unproven",
+          "survivor_count": 0
+        },
+        {
+          "attempt_count": 0,
+          "discard_count": 0,
+          "fragility": 0.0,
+          "hypothesis_ids": [
+            "vol-accumulator-side-tax"
+          ],
+          "invalid_count": 0,
+          "mutation_families": [
+            "vol_accumulator_floor"
+          ],
+          "open_hypothesis_ids": [
+            "vol-accumulator-side-tax"
+          ],
+          "primary_layer": "state",
+          "risk_label": "unproven",
+          "survivor_count": 0
+        }
+      ]
+    }
+  },
+  "run_id": "apr17-screen480-0928",
+  "structural_recommendations": [
+    {
+      "covered": true,
+      "kind": "batch_contract",
+      "reason": "Open hypotheses satisfy the minimum layer and topology diversity contract."
+    }
+  ],
+  "warnings": []
+}

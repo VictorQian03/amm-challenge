@@ -1,0 +1,48 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr17-screen480-0928-batch1",
+  "created_at": "2026-04-17T16:31:38+00:00",
+  "eval_ids": [],
+  "expected_effect": "Keep anti-arb gains while reducing unnecessary symmetric fee spend through a cleaner tri-channel assembly.",
+  "expected_failure_mode": null,
+  "expected_failure_signature": "If the final quote still behaves like one smoothed additive envelope, the branch is a disguised replay; if inventory centering fights toxicity, either broad overpricing or silent cheapening returns.",
+  "expected_win_condition": "Deliver a structural pivot that preserves selective protection and lowers average fee relative to the dead split-side family.",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.124,
+    "time_weighted_mean_fee": 0.00455
+  },
+  "hidden_coupling_removed": "One broad surface should not absorb baseline defense, toxic charging, and inventory-centering pressure at the same time.",
+  "hypothesis_id": "inventory-toxicity-triad",
+  "is_topology_branch": true,
+  "layer_held_fixed": "opportunity_budget",
+  "mutation_family": "inventory_toxicity_triad",
+  "nearest_prior_failures": [
+    "baseline-split-side-protection-v3",
+    "hazard-gated-side-regime"
+  ],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "external_idea": "inventory_tax_blend",
+    "intent": "structural_pivot"
+  },
+  "parent_hypothesis_id": null,
+  "primary_layer_changed": "quote_map",
+  "quote_topology": "three-channel quote assembly",
+  "rationale": "Assemble final quotes from a persistent floor, a toxic-side adverse-selection tax, and an inventory-centering channel that cannot fight the toxic signal.",
+  "research_refs": [
+    "docs/plans/active/apr17-screen480-0928.md"
+  ],
+  "seed_eval_id": "screen_0001",
+  "status": "planned",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "arb_loss_to_retail_gain": 0.12,
+    "mean_edge": 480.0,
+    "quote_selectivity_ratio": 24.0
+  },
+  "title": "Inventory-toxicity tri-channel router",
+  "updated_at": "2026-04-17T16:31:38+00:00",
+  "why_not_coefficient_retune": "This changes quote assembly itself by introducing a third orthogonal channel instead of reweighting the dead two-channel split."
+}

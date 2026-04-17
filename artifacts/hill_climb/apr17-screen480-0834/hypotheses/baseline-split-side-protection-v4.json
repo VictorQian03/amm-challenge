@@ -1,0 +1,49 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr17-screen480-batch1",
+  "created_at": "2026-04-17T15:50:29+00:00",
+  "eval_ids": [
+    "screen_0005"
+  ],
+  "expected_effect": "Hold most of screen_0004's raw edge and arb-discipline gain while reducing fee spend and restoring retail-edge competitiveness.",
+  "expected_failure_mode": "weak_slice_improvement_without_overall_gain",
+  "expected_failure_signature": "If fee spend stays elevated and retail edge does not recover, the line is overspending; if raw edge collapses quickly, the overlay was carrying the result and the split is not robust.",
+  "expected_win_condition": "Stay near screen_0004 on mean_edge while bringing time-weighted mean fee and retail edge back toward the incumbent.",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.124,
+    "time_weighted_mean_fee": 0.00435
+  },
+  "hidden_coupling_removed": "The harder toxic overlay now buys raw edge, but retail recovery is still tied too directly to the same fee spend, so reclaim must happen through a narrower non-toxic path.",
+  "hypothesis_id": "baseline-split-side-protection-v4",
+  "is_topology_branch": false,
+  "layer_held_fixed": "state",
+  "mutation_family": "two_channel_spread_split",
+  "nearest_prior_failures": [
+    "baseline-split-side-protection-v3"
+  ],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "local_refinement",
+    "external_idea": "reclaimed_retail_spend",
+    "intent": "weak_slice"
+  },
+  "parent_hypothesis_id": "baseline-split-side-protection-v3",
+  "primary_layer_changed": "quote_map",
+  "quote_topology": "baseline-plus-side-specific-protection",
+  "rationale": "Exploit screen_0004 as the strongest raw split variant by keeping its stronger toxic overlay but reclaiming some retail edge and mean-fee spend through a narrower non-toxic recovery path instead of broad cheapening.",
+  "research_refs": [
+    "artifacts/research/amm_seed_refresh_apr13-screen480-0907/memo.md",
+    "docs/plans/active/apr17-screen480-0834.md"
+  ],
+  "seed_eval_id": "screen_0004",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "mean_edge": 480.0,
+    "retail_edge": 540.0
+  },
+  "title": "Baseline split with reclaimed retail spend",
+  "updated_at": "2026-04-17T15:56:21+00:00",
+  "why_not_coefficient_retune": "This keeps the two-channel split but changes how retail recovery is reintroduced after the harder toxic overlay, instead of globally relaxing the whole surface."
+}
