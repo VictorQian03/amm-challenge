@@ -13,7 +13,7 @@ from amm_competition.competition.match import LightweightSimResult, MatchResult
 SUBMISSION_KEY = "submission"
 NORMALIZER_KEY = "normalizer"
 EPSILON = 1e-9
-SCORECARD_VERSION = "1.3"
+SCORECARD_VERSION = "1.4"
 TELEMETRY_VERSION = "1.2"
 
 REQUIRED_GATE_METRIC_FIELDS = (
@@ -36,7 +36,9 @@ OPTIONAL_DIAGNOSTIC_METRIC_FIELDS = (
     "max_fee_jump",
     "time_weighted_bid_fee",
     "time_weighted_ask_fee",
+    "time_weighted_mean_fee",
     "arb_loss_to_retail_gain",
+    "quote_selectivity_ratio",
     "min_edge",
     "max_edge",
     "edge_stddev",
@@ -382,10 +384,22 @@ def _summarize_records(records: list[ScorecardRecord]) -> dict[str, float | int 
     max_fee_jump = _mean([record.max_fee_jump for record in records])
     time_weighted_bid_fee = _mean([record.time_weighted_bid_fee for record in records])
     time_weighted_ask_fee = _mean([record.time_weighted_ask_fee for record in records])
+    time_weighted_mean_fee = None
+    if time_weighted_bid_fee is not None and time_weighted_ask_fee is not None:
+        time_weighted_mean_fee = (
+            time_weighted_bid_fee + time_weighted_ask_fee
+        ) / 2.0
 
     arb_loss_to_retail_gain = None
     if retail_edge is not None and arb_edge is not None and retail_edge > EPSILON:
         arb_loss_to_retail_gain = -arb_edge / max(retail_edge, EPSILON)
+    quote_selectivity_ratio = None
+    if (
+        arb_loss_to_retail_gain is not None
+        and time_weighted_mean_fee is not None
+        and time_weighted_mean_fee > EPSILON
+    ):
+        quote_selectivity_ratio = arb_loss_to_retail_gain / time_weighted_mean_fee
 
     return {
         "simulation_count": len(records),
@@ -407,7 +421,9 @@ def _summarize_records(records: list[ScorecardRecord]) -> dict[str, float | int 
         "max_fee_jump": max_fee_jump,
         "time_weighted_bid_fee": time_weighted_bid_fee,
         "time_weighted_ask_fee": time_weighted_ask_fee,
+        "time_weighted_mean_fee": time_weighted_mean_fee,
         "arb_loss_to_retail_gain": arb_loss_to_retail_gain,
+        "quote_selectivity_ratio": quote_selectivity_ratio,
         "min_edge": min(mean_edges),
         "max_edge": max(mean_edges),
         "edge_stddev": _stddev(mean_edges),

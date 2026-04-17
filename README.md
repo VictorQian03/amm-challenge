@@ -10,6 +10,12 @@ Upload a `.sol` file containing a contract named `Strategy` that inherits from `
 
 Local results may diverge slightly from submission scores due to different RNG seeds. Run more simulations locally (`--simulations 1000`) to reduce variance and get closer to expected server results.
 
+## Canonical Docs
+
+- [docs/agent_harness_guide.md](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/agent_harness_guide.md): agent read order, retained-lane analysis, and evidence gathering
+- [docs/hill_climb_loop.md](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/hill_climb_loop.md): harness contract, artifact schema, stage gates, and stop policy
+- [docs/codex_idea_generation_prompt.md](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/codex_idea_generation_prompt.md): fresh-batch prompt contract and anti-replay rules
+
 ## The Simulation
 
 Each simulation runs 10,000 steps. At each step:
@@ -90,7 +96,7 @@ The normalizer also means there's no "free lunch"—you can't beat 30 bps just b
 
 ## Writing a Strategy
 
-**Start with `contracts/src/StarterStrategy.sol`** and copy it into `contracts/src/Strategy.sol`. The hill-climb harness treats `contracts/src/Strategy.sol` as the only active edit path for a run. `contracts/src/StarterStrategy.sol`, `contracts/src/Reference.sol`, and `contracts/src/VanillaStrategy.sol` are read-only support fixtures.
+**Start with `contracts/src/StarterStrategy.sol`** and copy it into `contracts/src/Strategy.sol`. The hill-climb harness treats `contracts/src/Strategy.sol` as the only active edit path for a run. `contracts/src/StarterStrategy.sol` is the starter template, `contracts/src/VanillaStrategy.sol` is the fixed-fee normalizer fixture, and `contracts/src/Reference.sol` is a protected benchmark fixture that should only be opened when the user explicitly authorizes access.
 
 ```solidity
 // SPDX-License-Identifier: MIT

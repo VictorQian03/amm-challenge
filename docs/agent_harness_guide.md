@@ -2,14 +2,20 @@
 
 This is the canonical agent-facing map for the current AMM harness.
 
+## Canonical Scope
+
+- Use this file for active-run read order, retained-lane analysis, and evidence gathering before seeding a new batch.
+- Use `docs/hill_climb_loop.md` for artifact schema, stage gates, promotion rules, and stop policy.
+- Use `docs/codex_idea_generation_prompt.md` for hypothesis-batch shape, entropy, and anti-replay constraints.
+
 ## Start Here
 
 - Use `uv run amm-match ...` for repo-local commands. Do not rely on a globally installed `amm-match` binary or an activated virtualenv.
 - The only mutable strategy file is `contracts/src/Strategy.sol`.
 - `contracts/src/StarterStrategy.sol` is the starter template.
-- `contracts/src/Reference.sol` is an architectural benchmark, not a porting target.
+- `contracts/src/Reference.sol` is a protected benchmark source. Do not open, read, diff, summarize, or compare against it unless the user explicitly authorizes that file access in the current turn.
 - `contracts/src/VanillaStrategy.sol` is the fixed-fee normalizer fixture.
-- Use `docs/reference_strategy_debrief.md` when generating new batches.
+- For new batches, jump directly to `docs/codex_idea_generation_prompt.md`.
 
 ## Fresh-Run State
 
@@ -110,11 +116,32 @@ Interpretation:
 When seeding a fresh batch or escaping a local optimum, gather:
 
 - `uv run amm-match hill-climb analyze-run --run-id <id> --json`
+- `uv run amm-match hill-climb show-hypothesis --run-id <id> --hypothesis-id <id> --json` for each recent non-promoted branch you might replay, rename, or supersede
 - one incumbent profile and one failed-branch profile from `compare-profiles`
 - `artifacts/hill_climb/<run_id>/notebook/search_risk.md`
 - `artifacts/hill_climb/<run_id>/notebook/findings.md`
 - the linked research memo under `artifacts/research/<topic>/memo.md`
-- `docs/reference_strategy_debrief.md`
 - `docs/codex_idea_generation_prompt.md`
 
 Prefer architectural hypotheses over line edits. The prompt contract assumes the four-layer decomposition used by the retained-run analysis surfaces.
+
+Use the derived benchmark debrief to calibrate the screening language. As of
+`2026-04-16`, the protected benchmark phenotype was locally stronger than the incumbent on
+both `prescreen` and `screen` even though its `max_fee_jump` was higher, so raw jump size
+is not a safe hard proxy for architectural quality.
+
+Do not seed a batch from labels alone. Read these `analyze-run --json` surfaces explicitly:
+
+- `batch_diversity.quote_topology_groups`
+- `batch_diversity.repeated_quote_topology_groups`
+- `batch_diversity.phenotype_family_groups`
+- `batch_diversity.repeated_phenotype_family_groups`
+- `batch_diversity.same_spine_failure_groups`
+- `batch_diversity.same_phenotype_failure_groups`
+- `phenotype_coverage`
+- `failure_clusters`
+
+If you cannot point to one recent `compare-profiles` read and one recent hypothesis payload that the new idea is reacting to, the batch is under-evidenced.
+
+For topology diversity, neutral naming, anti-replay checks, and held-fixed-layer rules, use
+`docs/codex_idea_generation_prompt.md` as the canonical batch-shaping contract.

@@ -1,12 +1,19 @@
 # Hill-Climb Loop Contract
 
-This is the canonical repo-local reference for the hill-climb loop. Keep `README.md`,
-`program.md`, and agent prompts short and route schema questions here.
+This is the canonical repo-local reference for the hill-climb loop.
+
+## Canonical Scope
+
+- Use this file for artifact schema, stage gates, promotion rules, read-surface contract, and stop policy.
+- Use `docs/agent_harness_guide.md` for retained-lane read order and evidence gathering.
+- Use `docs/codex_idea_generation_prompt.md` for batch-generation constraints and output shape.
 
 ## Active Edit Path
 
 - The active strategy file is `contracts/src/Strategy.sol`.
-- `contracts/src/StarterStrategy.sol` is the starter template; `contracts/src/Reference.sol` and `contracts/src/VanillaStrategy.sol` are read-only reference fixtures.
+- `contracts/src/StarterStrategy.sol` is the starter template.
+- `contracts/src/Reference.sol` is a protected benchmark fixture. Do not inspect it unless the user explicitly authorizes that file access.
+- `contracts/src/VanillaStrategy.sol` is the fixed-fee normalizer fixture.
 - `uv run amm-match hill-climb eval` only accepts `contracts/src/Strategy.sol` for normal runs.
 - A run is pinned to one active strategy path in `run.json`. Normal eval flows fail fast if the run is resumed through a different source path.
 
@@ -16,7 +23,8 @@ Each eval makes two decisions in order:
 
 1. Stage gate:
    - `smoke` has no minimum `mean_edge`.
-   - `prescreen` requires `mean_edge >= 0.0`, `arb_loss_to_retail_gain <= 0.20`, and `max_fee_jump <= 0.0075`.
+   - `prescreen` requires `mean_edge >= 0.0` and `arb_loss_to_retail_gain <= 0.20`.
+   - `max_fee_jump` remains a diagnostic profile field for `prescreen`, but it is not a hard gate because the protected benchmark phenotype is locally stronger than the incumbent despite larger jump amplitudes.
    - `screen`, `climb`, `confirm`, and `final` require `mean_edge >= 0.0`.
    - If the stage gate fails, the result is `discard`.
 2. Incumbent replacement:
@@ -107,13 +115,6 @@ Agent-facing contract:
 - Treat `family_scoreboard`, `layer_scoreboard`, and `research_notebook` as planning aids, not replacement acceptance rules. Promotion still depends on stage gates plus the promotion margin.
 - Use `--read-only` on `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, and `compare-profiles` when protected-surface drift should block mutation but not historical analysis.
 - `compare-profiles` is fail-fast: each slot must provide exactly one of `--*-eval-id` or `--*-source`, and stored evals must match the requested `--stage`.
-- When a new batch is being seeded, generate ideas at the decomposition level first:
-  `state estimation`, `risk budget`, `opportunity budget`, and `quote map`.
-- Treat branch labels alone as insufficient evidence of diversity. A batch should cover at
-  least three distinct decomposition targets, and at least one branch should be a topology
-  change rather than a same-spine retune.
-- Use `docs/reference_strategy_debrief.md` for the architectural benchmark and
-  `docs/codex_idea_generation_prompt.md` for the batch-seeding prompt contract.
 - If `artifacts/index.json` shows no active retained lane, use the latest historical lane
   only as read context and start a fresh `run_id`.
 

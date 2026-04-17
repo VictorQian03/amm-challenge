@@ -8,9 +8,9 @@ Start here:
 
 Current state:
 
-- no retained hill-climb lane is active
-- `contracts/src/Strategy.sol` is parked on the baseline snapshot for a fresh run
-- use `apr13-screen480-0907` as the latest historical read surface, then start a new `run_id`
+- no active retained hill-climb lane is registered after the harness-architecture reset
+- use `apr13-screen480-0907` as the latest historical read surface when seeding the next fresh run
+- stale `apr16-screen480-1758` retained-lane artifacts were pruned after the run was abandoned
 
 ## 2026-03-27
 

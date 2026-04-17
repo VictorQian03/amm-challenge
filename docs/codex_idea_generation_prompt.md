@@ -4,6 +4,12 @@ Use this prompt when seeding a new hypothesis batch or when the current lane loo
 in a local optimum.
 This is for idea generation and harness planning, not direct code generation.
 
+## Canonical Scope
+
+- Use this file for batch-generation constraints, entropy rules, anti-replay checks, and required output format.
+- Use `docs/agent_harness_guide.md` to gather the retained-run evidence before invoking this prompt.
+- Use `docs/hill_climb_loop.md` for stage gates and harness contract details.
+
 ## Prompt Template
 
 ```text
@@ -12,15 +18,14 @@ the AMM hill-climb harness.
 
 Context:
 - Active strategy: contracts/src/Strategy.sol
-- Architectural reference only: contracts/src/Reference.sol
 - Harness references:
   - docs/hill_climb_loop.md
   - docs/agent_harness_guide.md
-  - docs/reference_strategy_debrief.md
 - Current retained lane artifacts:
-  - <run analysis file or analyze-run output>
+  - <run analysis file or analyze-run output, including batch_diversity and phenotype_coverage>
   - <derived notebook findings/dead ends/search risk>
   - <hypothesis registry or current plan note>
+  - <one or two recent hypothesis json payloads from the exhausted batch>
   - <one or two representative eval/profile comparisons>
 
 Task:
@@ -29,11 +34,17 @@ Task:
    - risk budget
    - opportunity budget
    - quote map
-2. Describe the same four-layer decomposition for Reference.sol without copying its
-   implementation details.
+2. Describe the target benchmark phenotype in the same four-layer decomposition using only
+   the derived benchmark debrief and retained comparison findings.
 3. Identify the main local-optimum trap in the incumbent and name the hidden coupling that
    keeps recent hypotheses too similar.
-4. Propose exactly 4 new hypotheses.
+4. Diagnose whether the search failure is primarily:
+   - phenotype collapse
+   - decomposition-label collapse
+   - screening-metric collapse
+   - missing evidence from the harness inputs
+   - or a combination
+5. Propose exactly 4 new hypotheses.
 
 Hard constraints:
 - Stay at the architectural and control-design level.
@@ -42,8 +53,28 @@ Hard constraints:
   remains clean.
 - Treat lower average fees alone as non-evidence; explain why any cheapening is narrowly
   gated and why it should not recreate a hidden cheap mode.
+- Treat `max_fee_jump` as diagnostic context, not a hard proxy for quality. Use
+  `time_weighted_mean_fee`, `arb_loss_to_retail_gain`, and `quote_selectivity_ratio`
+  before concluding that a higher-motion branch is invalid.
 - At least 3 of the 4 hypotheses must target different primary layers.
 - At least 1 hypothesis must be a true topology pivot, not a coefficient retune.
+- Layer labels are not enough. Diversify `quote_topology`, `mutation_family`, and
+  `novelty_coordinates.external_idea`, not only `primary_layer_changed`.
+- At most 1 hypothesis may reuse a `quote_topology` named in
+  `repeated_quote_topology_groups` or `same_spine_failure_groups`, unless it is an explicit
+  falsification-control branch.
+- At most 2 hypotheses may remain inside the same coarse `phenotype_family`, and only if
+  they isolate different layers.
+- At least 2 hypotheses must introduce a `quote_topology` and
+  `novelty_coordinates.external_idea` pair that was absent from the most recent exhausted
+  batch.
+- At least 1 hypothesis must change state semantics or quote assembly rather than proposing
+  another floor / release / envelope / latch controller on the same additive surface.
+- Use neutral, high-level labels. Prefer `single-surface additive`,
+  `baseline-plus-side-specific protection`, `two-channel quote assembly`, and
+  `regime-switched quote assembly` over incumbent-shaped labels like `shared-floor-*` or
+  controller-shaped labels like `credit-envelope`, `latch`, or `defensive-core-router`.
+- For every hypothesis, name the anti-target phenotype that would prove it is still a replay.
 - For each hypothesis, explicitly state one layer that should remain fixed.
 
 Output format:
@@ -54,7 +85,7 @@ Output format:
 - <opportunity budget>
 - <quote map>
 
-## Reference Decomposition
+## Benchmark Decomposition
 - <state estimation>
 - <risk budget>
 - <opportunity budget>
@@ -63,11 +94,20 @@ Output format:
 ## Local-Optimum Trap
 - <one paragraph>
 
+## Failure Diagnosis
+- <one paragraph on whether this is phenotype collapse, decomposition collapse, evidence gap, or mixed>
+
 ## Hypotheses
 1. <short name>
    - Primary layer changed: <layer>
    - Layer held fixed: <layer>
+   - Quote topology: <topology label>
+   - Phenotype family: <coarse family such as shared-surface quote control or multi-channel quote assembly>
+   - Mutation family: <family label>
+   - Novelty coordinates: <json-like short object>
    - Hidden coupling removed: <one sentence>
+   - Evidence anchor: <which prior failure / compare-profile this reacts to>
+   - Anti-target phenotype: <one sentence>
    - Core idea: <2-3 sentences>
    - Why this is structurally different: <1 sentence>
    - Expected upside: <1 sentence>
@@ -76,7 +116,13 @@ Output format:
 2. <short name>
    - Primary layer changed: <layer>
    - Layer held fixed: <layer>
+   - Quote topology: <topology label>
+   - Phenotype family: <coarse family such as shared-surface quote control or multi-channel quote assembly>
+   - Mutation family: <family label>
+   - Novelty coordinates: <json-like short object>
    - Hidden coupling removed: <one sentence>
+   - Evidence anchor: <which prior failure / compare-profile this reacts to>
+   - Anti-target phenotype: <one sentence>
    - Core idea: <2-3 sentences>
    - Why this is structurally different: <1 sentence>
    - Expected upside: <1 sentence>
@@ -85,7 +131,13 @@ Output format:
 3. <short name>
    - Primary layer changed: <layer>
    - Layer held fixed: <layer>
+   - Quote topology: <topology label>
+   - Phenotype family: <coarse family such as shared-surface quote control or multi-channel quote assembly>
+   - Mutation family: <family label>
+   - Novelty coordinates: <json-like short object>
    - Hidden coupling removed: <one sentence>
+   - Evidence anchor: <which prior failure / compare-profile this reacts to>
+   - Anti-target phenotype: <one sentence>
    - Core idea: <2-3 sentences>
    - Why this is structurally different: <1 sentence>
    - Expected upside: <1 sentence>
@@ -94,27 +146,27 @@ Output format:
 4. <short name>
    - Primary layer changed: <layer>
    - Layer held fixed: <layer>
+   - Quote topology: <topology label>
+   - Phenotype family: <coarse family such as shared-surface quote control or multi-channel quote assembly>
+   - Mutation family: <family label>
+   - Novelty coordinates: <json-like short object>
    - Hidden coupling removed: <one sentence>
+   - Evidence anchor: <which prior failure / compare-profile this reacts to>
+   - Anti-target phenotype: <one sentence>
    - Core idea: <2-3 sentences>
    - Why this is structurally different: <1 sentence>
    - Expected upside: <1 sentence>
    - Expected failure signature: <1 sentence>
+
+## Entropy Check
+- Reused quote topologies: <list or none>
+- Reused phenotype families: <list or none>
+- New quote topologies vs exhausted batch: <list>
+- New external ideas vs exhausted batch: <list>
+- Why this batch should not collapse into one phenotype: <2-3 sentences>
 
 ## Best Next Batch
 - Recommend the first 2 hypotheses to test.
 - Explain why they are the highest-leverage pair for breakout search rather than local
   refinement.
 ```
-
-## Usage Notes
-
-- Prefer feeding Codex `analyze-run --json`, one current incumbent profile, and one failed
-  branch profile instead of a long narrative recap.
-- Include `notebook/findings.md` or `notebook/search_risk.md` when the next batch should react
-  to repeated dead ends instead of only the latest raw frontier.
-- Use the latest retained lane for evidence, but start a new `run_id` if the index says the
-  retained lane is historical or exhausted.
-- If the last batch already contained a topology pivot, ask Codex whether it falsified the
-  whole topology or only one unsafe release path.
-- If the last two best survivors are near-replays, say that explicitly and require a layer
-  pivot.

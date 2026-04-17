@@ -635,7 +635,7 @@ def test_cross_run_index_demotes_older_active_lane_when_latest_history_is_closed
     )
 
 
-def test_prescreen_stage_rejects_spiky_or_arb_leaky_candidates(tmp_path):
+def test_prescreen_stage_rejects_arb_leaky_candidates(tmp_path):
     source_path = tmp_path / "Strategy.sol"
     source_path.write_text("// candidate")
 
@@ -656,9 +656,32 @@ def test_prescreen_stage_rejects_spiky_or_arb_leaky_candidates(tmp_path):
     assert summary["status"] == "discard"
     assert summary["scorecard"]["gate"]["passed"] is False
     assert any(
-        "max_fee_jump" in failure
+        "arb_loss_to_retail_gain" in failure
         for failure in summary["scorecard"]["gate"]["failures"]
     )
+    assert "max_fee_jump" not in summary["scorecard"]["gate"]["thresholds"]
+
+
+def test_prescreen_stage_allows_large_fee_jumps_when_other_gates_pass(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    result = _make_match_result(mean_edges=[1.0, 1.0, 1.0, 1.0])
+    for simulation in result.simulation_results:
+        simulation.arb_edge["submission"] = -1.0
+        simulation.retail_edge["submission"] = 20.0
+        simulation.max_fee_jump["submission"] = 0.08
+
+    harness = _build_test_harness(tmp_path, match_results=[result])
+    summary = harness.evaluate(
+        run_id="mar26",
+        stage="prescreen",
+        source_path=source_path,
+        label="high-motion-but-selective",
+    )
+
+    assert summary["status"] == "seed"
+    assert summary["scorecard"]["gate"]["passed"] is True
 
 
 def test_evaluate_discards_small_noisy_improvement(tmp_path):
@@ -1940,6 +1963,68 @@ def test_analyze_run_keeps_same_spine_failure_signal_beyond_last_five_results(tm
             "Recent survivors or failures show same-spine replay pressure; "
             "switch primary layer before another coefficient retune."
         ),
+    }
+
+
+def test_analyze_run_tracks_coarse_phenotype_family_groups(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// baseline")
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[_make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0])],
+    )
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="state-branch",
+        title="State branch",
+        rationale="Shared-surface state split.",
+        expected_effect="Test a same-family branch with a different layer.",
+        mutation_family="state-branch",
+        status="queued",
+        **_structural_hypothesis_kwargs(
+            primary_layer_changed="state",
+            layer_held_fixed="quote_map",
+            quote_topology="single-surface additive",
+        ),
+    )
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="risk-branch",
+        title="Risk branch",
+        rationale="Shared-surface side protection.",
+        expected_effect="Test coarse phenotype grouping.",
+        mutation_family="risk-branch",
+        status="queued",
+        **_structural_hypothesis_kwargs(
+            primary_layer_changed="risk_budget",
+            layer_held_fixed="opportunity_budget",
+            quote_topology="baseline-plus-side-specific protection",
+        ),
+    )
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="topology-branch",
+        title="Topology branch",
+        rationale="Separate channels for quote assembly.",
+        expected_effect="Introduce a different phenotype family.",
+        mutation_family="topology-branch",
+        status="queued",
+        **_structural_hypothesis_kwargs(
+            primary_layer_changed="quote_map",
+            layer_held_fixed="state",
+            quote_topology="two-channel quote assembly",
+            is_topology_branch=True,
+        ),
+    )
+
+    payload = harness.analyze_run(run_id="mar26")
+    assert payload["batch_diversity"]["phenotype_family_groups"] == {
+        "multi-channel quote assembly": ["topology-branch"],
+        "shared-surface quote control": ["risk-branch", "state-branch"],
+    }
+    assert payload["batch_diversity"]["repeated_phenotype_family_groups"] == {
+        "shared-surface quote control": ["risk-branch", "state-branch"]
     }
 
 

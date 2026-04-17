@@ -1,6 +1,6 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-17T00:52:02+00:00",
+  "generated_at": "2026-04-17T06:20:48+00:00",
   "hill_climb_runs": [
     {
       "active_stage": "screen",
@@ -348,7 +348,7 @@
         ]
       },
       "notes": [
-        "superseded by latest retained history apr13-screen480-0907",
+        "superseded by retained lane apr16-screen480-1758",
         "pending (screen incumbent 473.616393 is below target 480.000000)",
         "next hypothesis structural-pivot-two-mode-controller: Pause and re-check read surfaces before any wider structural retry: prescreen_0009 cut time-weighted fees to about 16.6 bps but failed with mean_edge 286.876, arb_loss_to_retail_gain 0.488874, low_retail_mean_edge 255.060, and max_fee_jump 0.008691."
       ],

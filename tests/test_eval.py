@@ -130,7 +130,7 @@ def test_compute_scorecard_is_deterministic_and_json_ready():
     second = compute_scorecard(match_result, stage="fast_screen")
 
     assert first == second
-    assert first["scorecard_version"] == "1.3"
+    assert first["scorecard_version"] == "1.4"
     assert first["run_metadata"]["telemetry_version"] == "1.2"
     assert first["overall"]["mean_edge"] == pytest.approx(3.5)
     assert first["overall"]["benchmark_mean_edge"] == pytest.approx(2.5)
@@ -148,7 +148,11 @@ def test_compute_scorecard_is_deterministic_and_json_ready():
     assert first["overall"]["max_fee_jump"] == pytest.approx(0.0035)
     assert first["overall"]["time_weighted_bid_fee"] == pytest.approx(0.003)
     assert first["overall"]["time_weighted_ask_fee"] == pytest.approx(0.004)
+    assert first["overall"]["time_weighted_mean_fee"] == pytest.approx(0.0035)
     assert first["overall"]["arb_loss_to_retail_gain"] == pytest.approx(0.25)
+    assert first["overall"]["quote_selectivity_ratio"] == pytest.approx(
+        71.42857142857143
+    )
     assert first["overall"]["min_edge"] == pytest.approx(1.0)
     assert first["overall"]["max_edge"] == pytest.approx(6.0)
     assert first["overall"]["edge_stddev"] == pytest.approx(1.707825127659933)

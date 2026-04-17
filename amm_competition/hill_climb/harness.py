@@ -81,6 +81,8 @@ PROFILE_FIELDS = (
     "arb_loss_to_retail_gain",
     "time_weighted_bid_fee",
     "time_weighted_ask_fee",
+    "time_weighted_mean_fee",
+    "quote_selectivity_ratio",
     "max_fee_jump",
 )
 SLICE_PROFILE_FIELDS = (
@@ -95,6 +97,7 @@ FAILURE_TAGS = {
     "arb_leak_regression",
     "overpriced_calm_flow",
     "over_spiky_fee_surface",
+    "quote_motion_regression",
     "tail_protection_loss",
     "weak_slice_improvement_without_overall_gain",
 }
@@ -1411,6 +1414,7 @@ class HillClimbHarness:
             "expected_win_condition": payload.get("expected_win_condition"),
             "expected_failure_signature": payload.get("expected_failure_signature"),
             "quote_topology": payload.get("quote_topology"),
+            "phenotype_family": self._infer_phenotype_family(payload),
             "is_topology_branch": payload.get("is_topology_branch"),
         }
 
@@ -1452,6 +1456,8 @@ class HillClimbHarness:
         if experiment_fields & {
             "time_weighted_bid_fee",
             "time_weighted_ask_fee",
+            "time_weighted_mean_fee",
+            "quote_selectivity_ratio",
             "max_fee_jump",
         } or any(
             token in search_blob
@@ -1464,6 +1470,30 @@ class HillClimbHarness:
         ):
             intents.append("structural_pivot")
         return _sorted_unique(intents)
+
+    def _infer_phenotype_family(self, payload: dict[str, Any]) -> str | None:
+        quote_topology = payload.get("quote_topology")
+        if not isinstance(quote_topology, str):
+            return None
+        normalized = quote_topology.strip().lower()
+        if not normalized:
+            return None
+        if any(token in normalized for token in ("channel", "router")):
+            return "multi-channel quote assembly"
+        if any(
+            token in normalized
+            for token in (
+                "single-surface",
+                "baseline-plus",
+                "regime-switched",
+                "shared-floor",
+                "credit-envelope",
+                "sideband",
+                "latch",
+            )
+        ):
+            return "shared-surface quote control"
+        return quote_topology
 
     def _hypothesis_time_marker(self, payload: dict[str, Any]) -> str:
         for field in ("updated_at", "created_at"):
@@ -1638,6 +1668,35 @@ class HillClimbHarness:
             if len(_sorted_unique(hypothesis_ids)) >= 2
         }
 
+    def _same_phenotype_failure_groups(
+        self,
+        results: list[dict[str, Any]],
+        hypotheses: dict[str, dict[str, Any]],
+    ) -> dict[str, list[str]]:
+        grouped: dict[str, list[str]] = {}
+        seen: set[str] = set()
+        for summary in reversed(results):
+            if summary.get("status") not in {"discard", "invalid"}:
+                continue
+            hypothesis_id = summary.get("hypothesis_id")
+            if not isinstance(hypothesis_id, str) or hypothesis_id in seen:
+                continue
+            seen.add(hypothesis_id)
+            payload = hypotheses.get(hypothesis_id)
+            if payload is None:
+                continue
+            phenotype_family = self._infer_phenotype_family(payload)
+            if phenotype_family is None:
+                continue
+            grouped.setdefault(phenotype_family, []).append(hypothesis_id)
+            if len(seen) >= SAME_SPINE_FAILURE_LOOKBACK:
+                break
+        return {
+            phenotype_family: _sorted_unique(hypothesis_ids)
+            for phenotype_family, hypothesis_ids in sorted(grouped.items())
+            if len(_sorted_unique(hypothesis_ids)) >= 2
+        }
+
     def _build_batch_diversity(
         self,
         *,
@@ -1663,24 +1722,43 @@ class HillClimbHarness:
             ]
         )
         quote_topology_groups: dict[str, list[str]] = {}
+        phenotype_family_groups: dict[str, list[str]] = {}
         for payload in open_payloads:
             quote_topology = payload.get("quote_topology")
-            if not isinstance(quote_topology, str):
-                continue
-            quote_topology_groups.setdefault(quote_topology, []).append(
-                payload["hypothesis_id"]
-            )
+            if isinstance(quote_topology, str):
+                quote_topology_groups.setdefault(quote_topology, []).append(
+                    payload["hypothesis_id"]
+                )
+            phenotype_family = self._infer_phenotype_family(payload)
+            if phenotype_family is not None:
+                phenotype_family_groups.setdefault(phenotype_family, []).append(
+                    payload["hypothesis_id"]
+                )
         quote_topology_groups = {
             quote_topology: _sorted_unique(hypothesis_ids)
             for quote_topology, hypothesis_ids in sorted(quote_topology_groups.items())
+        }
+        phenotype_family_groups = {
+            phenotype_family: _sorted_unique(hypothesis_ids)
+            for phenotype_family, hypothesis_ids in sorted(
+                phenotype_family_groups.items()
+            )
         }
         repeated_quote_topology_groups = {
             quote_topology: hypothesis_ids
             for quote_topology, hypothesis_ids in quote_topology_groups.items()
             if len(hypothesis_ids) >= 2
         }
+        repeated_phenotype_family_groups = {
+            phenotype_family: hypothesis_ids
+            for phenotype_family, hypothesis_ids in phenotype_family_groups.items()
+            if len(hypothesis_ids) >= 2
+        }
         near_replay_survivor_ids = self._near_replay_survivor_ids(results, hypotheses)
         same_spine_failure_groups = self._same_spine_failure_groups(results, hypotheses)
+        same_phenotype_failure_groups = self._same_phenotype_failure_groups(
+            results, hypotheses
+        )
         issues: list[str] = []
         if open_payloads and len(open_primary_layers) < 3:
             missing_layers = ", ".join(self._decomposition_gaps(decomposition_coverage))
@@ -1692,6 +1770,8 @@ class HillClimbHarness:
             issues.append("Open batch has no true topology branch")
         if len(open_payloads) >= 2 and len(quote_topology_groups) == 1:
             issues.append("Open batch stays inside a single quote topology")
+        if len(open_payloads) >= 2 and len(phenotype_family_groups) == 1:
+            issues.append("Open batch stays inside a single phenotype family")
         if near_replay_survivor_ids:
             issues.append(
                 "Recent surviving branches are near-replays; pivot layers before another retune"
@@ -1699,6 +1779,10 @@ class HillClimbHarness:
         if same_spine_failure_groups:
             issues.append(
                 "Recent failures cluster inside the same spine; pivot layers instead of replaying the spine"
+            )
+        if same_phenotype_failure_groups:
+            issues.append(
+                "Recent failures cluster inside the same phenotype family; widen quote assembly before another replay"
             )
         return {
             "batch_id": batch_id,
@@ -1712,10 +1796,15 @@ class HillClimbHarness:
             "topology_branch_hypothesis_ids": topology_branch_ids,
             "quote_topology_groups": quote_topology_groups,
             "repeated_quote_topology_groups": repeated_quote_topology_groups,
+            "phenotype_family_groups": phenotype_family_groups,
+            "repeated_phenotype_family_groups": repeated_phenotype_family_groups,
             "near_replay_survivor_ids": near_replay_survivor_ids,
             "same_spine_failure_groups": same_spine_failure_groups,
+            "same_phenotype_failure_groups": same_phenotype_failure_groups,
             "force_layer_pivot": bool(
-                near_replay_survivor_ids or same_spine_failure_groups
+                near_replay_survivor_ids
+                or same_spine_failure_groups
+                or same_phenotype_failure_groups
             ),
             "issues": issues,
         }
@@ -1839,10 +1928,11 @@ class HillClimbHarness:
             ),
             "weak_slice": "Keep one branch focused on weak low-retail, low-volatility, or tail slices instead of only overall mean_edge.",
             "fee_discipline": (
-                "Recent failures show fee-surface shape matters; keep one branch constrained on average fee drift or max_fee_jump."
-                if failure_clusters.get("over_spiky_fee_surface", 0) > 0
+                "Recent failures show quote-motion discipline matters; constrain average fees, quote_selectivity_ratio, and abrupt jump regressions."
+                if failure_clusters.get("quote_motion_regression", 0) > 0
+                or failure_clusters.get("over_spiky_fee_surface", 0) > 0
                 or failure_clusters.get("overpriced_calm_flow", 0) > 0
-                else "Keep one branch with explicit fee-discipline guardrails so structural pivots fail fast."
+                else "Keep one branch with explicit quote-selectivity and fee-discipline guardrails so structural pivots fail fast."
             ),
             "structural_pivot": "Reserve one orthogonal pivot so the batch does not collapse into semantically different versions of the same phenotype.",
         }
@@ -2197,12 +2287,25 @@ class HillClimbHarness:
             tags.append("overpriced_calm_flow")
             notes.append("calm-flow slice regressed while average fees moved up")
         max_fee_jump_delta = deltas.get("max_fee_jump")
-        profile_max_fee_jump = _safe_float(profile.get("max_fee_jump"))
-        if (max_fee_jump_delta is not None and max_fee_jump_delta > 0.0025) or (
-            profile_max_fee_jump is not None and profile_max_fee_jump > 0.01
+        meaningful_upside = any(
+            (delta := deltas.get(metric)) is not None and delta > threshold
+            for metric, threshold in (
+                ("mean_edge", 5.0),
+                ("low_retail_mean_edge", 10.0),
+                ("low_volatility_mean_edge", 10.0),
+                ("low_decile_mean_edge", 10.0),
+                ("arb_edge", 10.0),
+            )
+        )
+        if (
+            max_fee_jump_delta is not None
+            and max_fee_jump_delta > 0.01
+            and not meaningful_upside
         ):
-            tags.append("over_spiky_fee_surface")
-            notes.append("fee jumps look too abrupt for viable screening")
+            tags.append("quote_motion_regression")
+            notes.append(
+                "quote motion became more abrupt without enough offsetting edge or slice gain"
+            )
         low_decile_delta = deltas.get("low_decile_mean_edge")
         high_decile_delta = deltas.get("high_decile_mean_edge")
         if (
@@ -2335,9 +2438,14 @@ class HillClimbHarness:
             "best_low_volatility": self._best_summary_for_metric(
                 valid, "low_volatility_mean_edge"
             ),
-            "best_anti_arb": self._best_summary_for_metric(valid, "arb_edge"),
-            "best_fee_discipline": self._best_summary_for_metric(
+            "best_anti_arb": self._best_summary_for_metric(
                 valid, "arb_loss_to_retail_gain", reverse=False
+            ),
+            "best_fee_discipline": self._best_summary_for_metric(
+                valid, "time_weighted_mean_fee", reverse=False
+            ),
+            "best_quote_selectivity": self._best_summary_for_metric(
+                valid, "quote_selectivity_ratio", reverse=False
             ),
         }
 

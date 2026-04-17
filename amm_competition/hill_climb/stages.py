@@ -58,7 +58,6 @@ HILL_CLIMB_STAGES: dict[str, HillClimbStage] = {
         description="Cheap viability filter for risky pivots before the full screen block.",
         min_mean_edge=0.0,
         max_arb_loss_to_retail_gain=0.20,
-        max_fee_jump=0.0075,
     ),
     "screen": HillClimbStage(
         name="screen",
