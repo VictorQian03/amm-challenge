@@ -53,6 +53,29 @@ def _print_warnings(warnings: list[str]) -> None:
         print(f"Warning: {warning}")
 
 
+def _screen_incumbent_entry(frontier_bank: dict[str, Any]) -> dict[str, Any] | None:
+    incumbent = None
+    for entry in frontier_bank.get("incumbents", []):
+        if entry.get("stage") == "screen":
+            incumbent = entry
+    return incumbent
+
+
+def _recommended_anchor_pair(
+    recommended_next_batch: list[dict[str, Any]],
+) -> list[str] | None:
+    for entry in recommended_next_batch:
+        if entry.get("intent") != "local_refine":
+            continue
+        anchor_eval_ids = entry.get("anchor_eval_ids")
+        if isinstance(anchor_eval_ids, list) and anchor_eval_ids:
+            return [str(eval_id) for eval_id in anchor_eval_ids]
+        anchor_eval_id = entry.get("anchor_eval_id")
+        if isinstance(anchor_eval_id, str):
+            return [anchor_eval_id]
+    return None
+
+
 def _json_default(value: object) -> object:
     if isinstance(value, Path):
         return str(value)
@@ -438,6 +461,25 @@ def hill_climb_status_command(args: argparse.Namespace) -> int:
             "Incumbent: "
             f"{status.incumbent['eval_id']} "
             f"({status.incumbent['mean_edge']:.6f}, {status.incumbent['status']})"
+        )
+    if status.best_raw is None:
+        print("Best Raw: none")
+    else:
+        best_raw_delta = ""
+        if (
+            status.incumbent is not None
+            and status.best_raw["eval_id"] != status.incumbent["eval_id"]
+            and status.incumbent.get("mean_edge") is not None
+        ):
+            best_raw_delta = (
+                ", delta_vs_incumbent="
+                f"{status.best_raw['mean_edge'] - status.incumbent['mean_edge']:.6f}"
+            )
+        print(
+            "Best Raw: "
+            f"{status.best_raw['eval_id']} "
+            f"({status.best_raw['mean_edge']:.6f}, {status.best_raw['status']}"
+            f"{best_raw_delta})"
         )
     if status.latest is None:
         print("Latest: none")
@@ -863,11 +905,35 @@ def hill_climb_summarize_run_command(args: argparse.Namespace) -> int:
         print(
             f"  {entry['eval_id']} {entry['stage']} {entry['status']} {mean_edge_text}"
         )
+    official_incumbent = _screen_incumbent_entry(summary["frontier_bank"])
+    if official_incumbent is None or official_incumbent.get("mean_edge") is None:
+        print("Screen-Stage Official Incumbent: none")
+    else:
+        print(
+            "Screen-Stage Official Incumbent: "
+            f"{official_incumbent['eval_id']} "
+            f"{official_incumbent['mean_edge']:.6f}"
+        )
     print("Abandoned Families: " + (", ".join(summary["abandoned_families"]) or "none"))
     print(
         "Frontier Bank: "
         + ", ".join(entry["eval_id"] for entry in summary["frontier_bank"]["best_raw"])
     )
+    print("Screen-Stage Planning Bank:")
+    if summary["portfolio_bank"]:
+        for entry in summary["portfolio_bank"]:
+            print(
+                "  "
+                f"{entry['eval_id']} {entry['mean_edge']:.6f} "
+                f"{entry['anchor_reason']}"
+            )
+    else:
+        print("  none")
+    anchor_pair = _recommended_anchor_pair(summary["recommended_next_batch"])
+    if anchor_pair is None:
+        print("Recommended Anchor Eval IDs: none")
+    else:
+        print("Recommended Anchor Eval IDs: " + ", ".join(anchor_pair))
     print("Decomposition Gaps: " + (", ".join(summary["decomposition_gaps"]) or "none"))
     batch_diversity = summary["batch_diversity"]
     print(
@@ -991,6 +1057,30 @@ def hill_climb_analyze_run_command(args: argparse.Namespace) -> int:
     print("Best Raw Frontier:")
     for entry in payload["frontier_bank"]["best_raw"]:
         print(f"  {entry['eval_id']} {entry['stage']} {entry['mean_edge']:.6f}")
+    official_incumbent = _screen_incumbent_entry(payload["frontier_bank"])
+    if official_incumbent is None or official_incumbent.get("mean_edge") is None:
+        print("Screen-Stage Official Incumbent: none")
+    else:
+        print(
+            "Screen-Stage Official Incumbent: "
+            f"{official_incumbent['eval_id']} "
+            f"{official_incumbent['mean_edge']:.6f}"
+        )
+    print("Screen-Stage Planning Bank:")
+    if payload["portfolio_bank"]:
+        for entry in payload["portfolio_bank"]:
+            print(
+                "  "
+                f"{entry['eval_id']} {entry['mean_edge']:.6f} "
+                f"{entry['anchor_reason']}"
+            )
+    else:
+        print("  none")
+    anchor_pair = _recommended_anchor_pair(payload["recommended_next_batch"])
+    if anchor_pair is None:
+        print("Recommended Anchor Eval IDs: none")
+    else:
+        print("Recommended Anchor Eval IDs: " + ", ".join(anchor_pair))
     print("Recommended Next Batch:")
     for entry in payload["recommended_next_batch"]:
         covered = "covered" if entry["covered"] else "missing"

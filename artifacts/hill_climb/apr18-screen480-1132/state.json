@@ -12,12 +12,12 @@
     "minimum_mean_edge": 480.0,
     "stage": "screen"
   },
-  "run_id": "apr17-screen480-0928",
+  "run_id": "apr18-screen480-1132",
   "run_mode": "foreground",
   "stop_rules": {
     "pivot_after_non_improving_iterations": 5,
     "refine_after_non_improving_iterations": 3,
     "stop_after_non_improving_iterations": 8
   },
-  "updated_at": "2026-04-18T00:46:51+00:00"
+  "updated_at": "2026-04-18T19:03:53+00:00"
 }

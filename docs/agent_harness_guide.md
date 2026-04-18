@@ -124,6 +124,10 @@ When seeding a fresh batch or escaping a local optimum, gather:
 - `docs/codex_idea_generation_prompt.md`
 
 Prefer architectural hypotheses over line edits. The prompt contract assumes the four-layer decomposition used by the retained-run analysis surfaces.
+Treat `portfolio_bank` as the preferred screen-stage planning anchor surface when multiple structurally distinct near-frontier strategies exist. When you intentionally branch from one of those anchors, carry the reused eval id into the new hypothesis through `nearest_prior_successes`.
+Before you name or queue a new branch, describe both the official incumbent and the strongest raw survivor in fair-mid terms: what latent or fair mid they estimate, how quickly it updates, when it recenters, and how divergence from that estimate is turned into protection or relief.
+When a branch changes `state`, reflect that fair-mid semantics directly in the title, label, and rationale instead of using only generic words like `toxic`, `state`, or `filter`.
+For fresh idea generation, prefer at least two targeted web searches for outside statistical, market-making, inventory-control, adverse-selection, or microstructure ideas that are absent from the retained lane. Record the concept in `novelty_coordinates.external_idea` and the supporting file or URL in `research_refs`.
 
 Use the derived benchmark debrief to calibrate the screening language. As of
 `2026-04-16`, the protected benchmark phenotype was locally stronger than the incumbent on
@@ -138,6 +142,7 @@ Do not seed a batch from labels alone. Read these `analyze-run --json` surfaces 
 - `batch_diversity.repeated_phenotype_family_groups`
 - `batch_diversity.same_spine_failure_groups`
 - `batch_diversity.same_phenotype_failure_groups`
+- `portfolio_bank`
 - `phenotype_coverage`
 - `failure_clusters`
 

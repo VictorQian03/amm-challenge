@@ -244,8 +244,9 @@ Agent-facing read surfaces:
 
 - `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, `compare-profiles`, and `pull-best` all support `--json`.
 - `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, and `compare-profiles` support `--read-only` so old runs remain inspectable after protected-surface drift.
-- `analyze-run` planning outputs depend on maintained hypothesis records; update branches with `set-hypothesis` if you want decomposition coverage, batch-diversity checks, structural recommendations, `intent_coverage`, `portfolio_gaps`, `family_scoreboard`, `layer_scoreboard`, and `recommended_next_batch` to reflect the real search portfolio.
-- `analyze-run` now exposes failure clusters, layer/topology diversity checks, phenotype intent coverage, mutation-family and primary-layer risk scoreboards, notebook-style findings/dead ends, and a recommended next-batch scaffold instead of only raw frontier ids.
+- `status` now surfaces the official incumbent, the strongest raw survivor, the latest eval, and the current loop guidance separately so retained-lane triage does not collapse those roles together.
+- `analyze-run` planning outputs depend on maintained hypothesis records; update branches with `set-hypothesis` if you want decomposition coverage, batch-diversity checks, structural recommendations, `intent_coverage`, `portfolio_gaps`, `family_scoreboard`, `layer_scoreboard`, `portfolio_bank`, and `recommended_next_batch` to reflect the real search portfolio.
+- `analyze-run` now exposes failure clusters, layer/topology diversity checks, phenotype intent coverage, mutation-family and primary-layer risk scoreboards, notebook-style findings/dead ends, a screen-stage `portfolio_bank` of near-frontier planning anchors, the screen-stage official incumbent, and recommended anchor eval ids instead of only raw frontier ids.
 - each retained lane also renders a derived notebook under `artifacts/hill_climb/<run_id>/notebook/` with `findings.md`, `dead_ends.md`, and `search_risk.md`; these are convenience outputs rebuilt from canonical ledgers, not authoritative state.
 - `docs/agent_harness_guide.md` is the canonical map for active-run CLI usage, historical retained-lane analysis, and research / idea-generation artifact read order.
 

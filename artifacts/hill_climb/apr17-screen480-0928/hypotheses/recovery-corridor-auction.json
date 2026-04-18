@@ -3,7 +3,10 @@
   "artifact_version": "hill_climb.hypothesis.v1",
   "batch_id": "apr17-screen480-0928-batch1",
   "created_at": "2026-04-17T16:31:28+00:00",
-  "eval_ids": [],
+  "eval_ids": [
+    "screen_0007",
+    "screen_0008"
+  ],
   "expected_effect": "Recover weak calm slices through narrow non-toxic-side relief instead of a broad cheap mode.",
   "expected_failure_mode": "arb_leak_regression",
   "expected_failure_signature": "If relief appears on both sides or survives renewed stress, arb leakage and weak-slice collapse return.",
@@ -34,7 +37,7 @@
     "docs/plans/active/apr17-screen480-0928.md"
   ],
   "seed_eval_id": "screen_0001",
-  "status": "planned",
+  "status": "discard",
   "synthesis_eligible": true,
   "target_metrics": {
     "low_retail_mean_edge": 410.0,
@@ -42,6 +45,6 @@
     "mean_edge": 480.0
   },
   "title": "Recovery corridor on non-toxic side",
-  "updated_at": "2026-04-17T16:31:28+00:00",
+  "updated_at": "2026-04-18T00:43:56+00:00",
   "why_not_coefficient_retune": "This changes where recovery is allowed to appear in the quote rather than merely shrinking or growing the same rebate envelope."
 }

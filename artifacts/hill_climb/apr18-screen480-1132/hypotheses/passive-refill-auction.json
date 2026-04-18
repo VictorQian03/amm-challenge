@@ -1,0 +1,50 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr18-screen480-1132-batch2",
+  "created_at": "2026-04-18T18:36:16+00:00",
+  "eval_ids": [
+    "screen_0006"
+  ],
+  "expected_effect": "Recover weak calm slices and retail retention without reopening the broad cheap mode that broke earlier recovery and accumulator branches.",
+  "expected_failure_mode": "weak_slice_improvement_without_overall_gain",
+  "expected_failure_signature": "If the refill window stays open through renewed toxic flow, the branch replays a weak-slice-only gain or broad cheap-mode arb leakage without promotion.",
+  "expected_win_condition": "Lift weak calm slices above the raw anchor while keeping anti-arb discipline and the fresh lane above the 480 breakout gate.",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.12,
+    "time_weighted_mean_fee": 0.00475
+  },
+  "hidden_coupling_removed": "Passive refill should not be earned and spent through the same calm-memory path as broad recovery rebates.",
+  "hypothesis_id": "passive-refill-auction",
+  "is_topology_branch": false,
+  "layer_held_fixed": "risk_budget",
+  "mutation_family": "passive_refill_auction",
+  "nearest_prior_failures": [
+    "recovery-corridor-auction"
+  ],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "external_idea": "adverse_selection_depth_tradeoff",
+    "intent": "weak_slice"
+  },
+  "parent_hypothesis_id": "inventory-triad-replay-control",
+  "primary_layer_changed": "opportunity_budget",
+  "quote_topology": "safe-side refill corridor",
+  "rationale": "Let the non-toxic side refill through a narrow passive auction window that opens only after repeated calm confirmations and closes immediately on renewed stress.",
+  "research_refs": [
+    "docs/plans/active/apr18-screen480-1132.md",
+    "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2504061"
+  ],
+  "seed_eval_id": "screen_0004",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "low_retail_mean_edge": 418.0,
+    "low_volatility_mean_edge": 466.0,
+    "mean_edge": 486.0
+  },
+  "title": "Passive refill auction on safe side",
+  "updated_at": "2026-04-18T18:49:06+00:00",
+  "why_not_coefficient_retune": "This changes where and when safe-side relief can appear relative to the raw tri-channel anchor, instead of scaling the incumbent rebate coefficients."
+}

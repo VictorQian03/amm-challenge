@@ -8,8 +8,8 @@ Start here:
 
 Current state:
 
-- active retained `screen` lane: `apr17-screen480-0928`
-- latest historical read surface on the current protected-surface fingerprint: `apr17-screen480-0834`
+- active retained `screen` lane: none; seed a fresh `run_id` before the next mutation
+- latest historical read surface on the current protected-surface fingerprint: `apr18-screen480-1132`
 - stale `apr16-screen480-1758` retained-lane artifacts were pruned after the run was abandoned
 
 ## 2026-03-27
@@ -48,8 +48,13 @@ Current state:
 
 - `artifacts/hill_climb/apr17-screen480-0834/`: retained historical `screen` lane on the current protected-surface fingerprint; baseline `473.616393`, strongest raw branch `screen_0004 @ 483.890738`, and the batch closed with no queued next hypothesis after the family was exhausted
 - `docs/plans/completed/apr17-screen480-0834.md`: retained narrative for the closed `apr17-screen480-0834` batch after its successor lane became active
-- `artifacts/hill_climb/apr17-screen480-0928/`: active retained `screen` lane; baseline `473.616393`, breakout gate still pending at `480.0`, and `vol-accumulator-side-tax` is the queued next hypothesis
-- `docs/plans/active/apr17-screen480-0928.md`: active planning surface for the live retained lane
+- `artifacts/hill_climb/apr17-screen480-0928/`: retained historical `screen` lane; baseline `473.616393`, strongest raw branch `screen_0009 @ 485.703883`, and the lane is closed after the stop-rule threshold was hit
+- `docs/plans/completed/apr17-screen480-0928.md`: canonical retained narrative for the closed `apr17-screen480-0928` lane, with the old active-path stub preserved only as a redirect target for historical metadata
+
+## 2026-04-18
+
+- `artifacts/hill_climb/apr18-screen480-1132/`: latest retained historical `screen` lane on the current protected-surface fingerprint; official incumbent stayed at `473.616393`, best raw branch reached `screen_0008 @ 485.923771`, and the harness stopped the lane after 8 consecutive non-improving screen evals
+- `docs/plans/completed/apr18-screen480-1132.md`: canonical retained narrative for the closed `apr18-screen480-1132` lane, with the old active-path stub preserved only as a redirect target for historical metadata
 
 Per-run contract:
 

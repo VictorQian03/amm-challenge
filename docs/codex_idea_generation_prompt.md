@@ -22,11 +22,18 @@ Context:
   - docs/hill_climb_loop.md
   - docs/agent_harness_guide.md
 - Current retained lane artifacts:
-  - <run analysis file or analyze-run output, including batch_diversity and phenotype_coverage>
+  - <run analysis file or analyze-run output, including batch_diversity, phenotype_coverage, and portfolio_bank>
   - <derived notebook findings/dead ends/search risk>
   - <hypothesis registry or current plan note>
   - <one or two recent hypothesis json payloads from the exhausted batch>
   - <one or two representative eval/profile comparisons>
+
+If the retained lane exposes a non-empty `portfolio_bank`, treat it as the preferred list
+of structurally distinct screen-stage anchors before you fall back to only the official
+incumbent. When you intentionally reuse one of those anchors in a new hypothesis, plan to
+record its eval id through the hypothesis field `nearest_prior_successes`.
+Before drafting hypotheses, restate both the official incumbent and the strongest raw survivor in fair-mid terms: what latent or fair mid is being estimated, how it updates, when it recenters, and how quote logic uses the gap between spot and fair mid.
+If web access is available, do targeted web searches to widen the idea set before finalizing the batch. Prefer outside concepts that are absent from the exhausted batch, and plan to carry them into the eventual hypothesis records through `novelty_coordinates.external_idea` plus `research_refs`.
 
 Task:
 1. Describe the incumbent in four layers only:
@@ -48,6 +55,7 @@ Task:
 
 Hard constraints:
 - Stay at the architectural and control-design level.
+- Treat `state estimation` as fair-mid estimation first, not as a vague bucket. Name the latent or fair mid, its update rule, its recenter rule, and how divergence from that estimate changes quoting.
 - Do not suggest line-by-line ports, constants, slot layouts, or implementation details.
 - Do not propose "add one more overlay" ideas unless you can explain why the quote topology
   remains clean.
@@ -68,12 +76,14 @@ Hard constraints:
 - At least 2 hypotheses must introduce a `quote_topology` and
   `novelty_coordinates.external_idea` pair that was absent from the most recent exhausted
   batch.
+- Prefer at least 2 hypotheses whose `novelty_coordinates.external_idea` came from explicit web searches rather than only from relabeling local evidence. If you do not use web search, say why the retained evidence was sufficient.
 - At least 1 hypothesis must change state semantics or quote assembly rather than proposing
   another floor / release / envelope / latch controller on the same additive surface.
 - Use neutral, high-level labels. Prefer `single-surface additive`,
   `baseline-plus-side-specific protection`, `two-channel quote assembly`, and
   `regime-switched quote assembly` over incumbent-shaped labels like `shared-floor-*` or
   controller-shaped labels like `credit-envelope`, `latch`, or `defensive-core-router`.
+- If the branch changes state estimation, make the label and title mention the fair-mid semantic change, such as persistence, recentering, anchoring, or divergence handling.
 - For every hypothesis, name the anti-target phenotype that would prove it is still a replay.
 - For each hypothesis, explicitly state one layer that should remain fixed.
 
@@ -101,10 +111,12 @@ Output format:
 1. <short name>
    - Primary layer changed: <layer>
    - Layer held fixed: <layer>
+   - Fair-mid implication: <one sentence on how the latent/fair mid estimate changes or stays fixed>
    - Quote topology: <topology label>
    - Phenotype family: <coarse family such as shared-surface quote control or multi-channel quote assembly>
    - Mutation family: <family label>
    - Novelty coordinates: <json-like short object>
+   - External research hook: <web-searched concept, paper idea, or domain phrase>
    - Hidden coupling removed: <one sentence>
    - Evidence anchor: <which prior failure / compare-profile this reacts to>
    - Anti-target phenotype: <one sentence>
@@ -116,10 +128,12 @@ Output format:
 2. <short name>
    - Primary layer changed: <layer>
    - Layer held fixed: <layer>
+   - Fair-mid implication: <one sentence on how the latent/fair mid estimate changes or stays fixed>
    - Quote topology: <topology label>
    - Phenotype family: <coarse family such as shared-surface quote control or multi-channel quote assembly>
    - Mutation family: <family label>
    - Novelty coordinates: <json-like short object>
+   - External research hook: <web-searched concept, paper idea, or domain phrase>
    - Hidden coupling removed: <one sentence>
    - Evidence anchor: <which prior failure / compare-profile this reacts to>
    - Anti-target phenotype: <one sentence>
@@ -131,10 +145,12 @@ Output format:
 3. <short name>
    - Primary layer changed: <layer>
    - Layer held fixed: <layer>
+   - Fair-mid implication: <one sentence on how the latent/fair mid estimate changes or stays fixed>
    - Quote topology: <topology label>
    - Phenotype family: <coarse family such as shared-surface quote control or multi-channel quote assembly>
    - Mutation family: <family label>
    - Novelty coordinates: <json-like short object>
+   - External research hook: <web-searched concept, paper idea, or domain phrase>
    - Hidden coupling removed: <one sentence>
    - Evidence anchor: <which prior failure / compare-profile this reacts to>
    - Anti-target phenotype: <one sentence>
@@ -146,10 +162,12 @@ Output format:
 4. <short name>
    - Primary layer changed: <layer>
    - Layer held fixed: <layer>
+   - Fair-mid implication: <one sentence on how the latent/fair mid estimate changes or stays fixed>
    - Quote topology: <topology label>
    - Phenotype family: <coarse family such as shared-surface quote control or multi-channel quote assembly>
    - Mutation family: <family label>
    - Novelty coordinates: <json-like short object>
+   - External research hook: <web-searched concept, paper idea, or domain phrase>
    - Hidden coupling removed: <one sentence>
    - Evidence anchor: <which prior failure / compare-profile this reacts to>
    - Anti-target phenotype: <one sentence>
@@ -163,6 +181,7 @@ Output format:
 - Reused phenotype families: <list or none>
 - New quote topologies vs exhausted batch: <list>
 - New external ideas vs exhausted batch: <list>
+- Web-searched external ideas: <list or explain why web search was skipped>
 - Why this batch should not collapse into one phenotype: <2-3 sentences>
 
 ## Best Next Batch

@@ -43,10 +43,39 @@ from amm_competition.hill_climb.stages import (
 )
 
 
-def _make_match_result(*, mean_edges: list[float]) -> MatchResult:
+def _metric_value(value: float | list[float], index: int) -> float:
+    if isinstance(value, list):
+        return value[index]
+    return value
+
+
+def _make_match_result(
+    *,
+    mean_edges: list[float],
+    retail_edges: float | list[float] = 5.0,
+    arb_edges: float | list[float] = -1.0,
+    max_fee_jumps: float | list[float] = 0.001,
+    time_weighted_bid_fees: float | list[float] = 0.0075,
+    time_weighted_ask_fees: float | list[float] = 0.0075,
+    gbm_sigmas: float | list[float] = 0.00095,
+    retail_arrival_rates: float | list[float] = 0.8,
+    retail_mean_sizes: float | list[float] = 20.0,
+    retail_volumes: float | list[float] = 10.0,
+    arb_volumes: float | list[float] = 2.0,
+) -> MatchResult:
     simulation_results = []
     for seed, candidate_edge in enumerate(mean_edges):
         benchmark_edge = candidate_edge - 1.0
+        retail_edge = _metric_value(retail_edges, seed)
+        arb_edge = _metric_value(arb_edges, seed)
+        max_fee_jump = _metric_value(max_fee_jumps, seed)
+        bid_fee = _metric_value(time_weighted_bid_fees, seed)
+        ask_fee = _metric_value(time_weighted_ask_fees, seed)
+        gbm_sigma = _metric_value(gbm_sigmas, seed)
+        retail_arrival_rate = _metric_value(retail_arrival_rates, seed)
+        retail_mean_size = _metric_value(retail_mean_sizes, seed)
+        retail_volume = _metric_value(retail_volumes, seed)
+        arb_volume = _metric_value(arb_volumes, seed)
         simulation_results.append(
             LightweightSimResult(
                 seed=seed,
@@ -65,22 +94,22 @@ def _make_match_result(*, mean_edges: list[float]) -> MatchResult:
                     "normalizer": (100.0, 10000.0),
                 },
                 steps=[],
-                arb_volume_y={"submission": 2.0, "normalizer": 1.0},
-                retail_volume_y={"submission": 10.0, "normalizer": 5.0},
+                arb_volume_y={"submission": arb_volume, "normalizer": 1.0},
+                retail_volume_y={"submission": retail_volume, "normalizer": 5.0},
                 average_fees={
-                    "submission": (0.0075, 0.0075),
+                    "submission": (bid_fee, ask_fee),
                     "normalizer": (0.003, 0.003),
                 },
-                gbm_sigma=0.00095,
-                retail_arrival_rate=0.8,
-                retail_mean_size=20.0,
-                retail_edge={"submission": 5.0, "normalizer": 4.0},
-                arb_edge={"submission": -1.0, "normalizer": -1.0},
+                gbm_sigma=gbm_sigma,
+                retail_arrival_rate=retail_arrival_rate,
+                retail_mean_size=retail_mean_size,
+                retail_edge={"submission": retail_edge, "normalizer": 4.0},
+                arb_edge={"submission": arb_edge, "normalizer": -1.0},
                 retail_trade_count={"submission": 3, "normalizer": 2},
                 arb_trade_count={"submission": 1, "normalizer": 1},
-                max_fee_jump={"submission": 0.001, "normalizer": 0.0},
+                max_fee_jump={"submission": max_fee_jump, "normalizer": 0.0},
                 time_weighted_fees={
-                    "submission": (0.0075, 0.0075),
+                    "submission": (bid_fee, ask_fee),
                     "normalizer": (0.003, 0.003),
                 },
             )
@@ -635,6 +664,57 @@ def test_cross_run_index_demotes_older_active_lane_when_latest_history_is_closed
     )
 
 
+def test_cross_run_index_marks_stop_guidance_lane_historical_even_with_stale_next_hypothesis(
+    tmp_path,
+):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate 0")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0]),
+            _make_match_result(mean_edges=[4.0, 4.0, 4.0, 4.0]),
+            _make_match_result(mean_edges=[4.0, 4.0, 4.0, 4.0]),
+            _make_match_result(mean_edges=[4.0, 4.0, 4.0, 4.0]),
+            _make_match_result(mean_edges=[4.0, 4.0, 4.0, 4.0]),
+            _make_match_result(mean_edges=[4.0, 4.0, 4.0, 4.0]),
+            _make_match_result(mean_edges=[4.0, 4.0, 4.0, 4.0]),
+            _make_match_result(mean_edges=[4.0, 4.0, 4.0, 4.0]),
+            _make_match_result(mean_edges=[4.0, 4.0, 4.0, 4.0]),
+        ],
+    )
+
+    for idx in range(9):
+        source_path.write_text(f"// candidate {idx}")
+        harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="stale-next",
+        title="Stale next",
+        rationale="Queued before the operator noticed the stop rule was already hit.",
+        expected_effect="None",
+        mutation_family="stale_next",
+        status="queued",
+        **_structural_hypothesis_kwargs(),
+    )
+    harness.update_run_state(
+        run_id="mar26",
+        next_hypothesis_id="stale-next",
+        next_hypothesis_id_set=True,
+    )
+
+    index_payload = json.loads((tmp_path / "index.json").read_text())
+    run_entry = index_payload["hill_climb_runs"][0]
+
+    assert run_entry["run_id"] == "mar26"
+    assert run_entry["status"] == "historical"
+    assert "stop now (8 consecutive non-improving screen evaluations; threshold 8)" in (
+        run_entry["notes"]
+    )
+
+
 def test_prescreen_stage_rejects_arb_leaky_candidates(tmp_path):
     source_path = tmp_path / "Strategy.sol"
     source_path.write_text("// candidate")
@@ -926,6 +1006,7 @@ def test_status_and_summary_allow_read_only_analysis_on_protected_surface_drift(
         "Warning: Run 'mar26' is pinned to a different protected competition mechanics surface"
         in status_output
     )
+    assert "Best Raw: screen_0001 (5.000000, seed)" in status_output
 
     assert hill_climb_summarize_run_command(summarize_args) == 0
     summarize_output = capsys.readouterr().out
@@ -1186,6 +1267,41 @@ def test_set_state_updates_loop_metadata_and_status_reports_guidance(
     )
     assert "Target-Stage Non-Improving Streak: 5" in output
     assert "Stop-Rule Guidance: pivot now" in output
+
+
+def test_status_surfaces_best_raw_separately_from_official_incumbent(
+    tmp_path, capsys, monkeypatch
+):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// baseline")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[0.0, 5.0, 10.0, 5.0]),
+            _make_match_result(mean_edges=[0.5, 5.5, 10.5, 5.5]),
+        ],
+    )
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    source_path.write_text("// near frontier")
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    monkeypatch.setattr(
+        "amm_competition.hill_climb.harness.ProtectedSurfaceChecker.discover",
+        lambda: _NoopProtectedSurfaceChecker(),
+    )
+
+    status_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+        stage="screen",
+    )
+    assert hill_climb_status_command(status_args) == 0
+    output = capsys.readouterr().out
+    assert "Incumbent: screen_0001 (5.000000, seed)" in output
+    assert (
+        "Best Raw: screen_0002 (5.500000, discard, delta_vs_incumbent=0.500000)"
+        in output
+    )
 
 
 def test_set_hypothesis_supports_structured_experiment_fields(tmp_path):
@@ -1563,6 +1679,9 @@ def test_hill_climb_history_and_lookup_commands_surface_agent_facing_read_models
     summarize_output = capsys.readouterr().out
     assert "Incumbent Chain:" in summarize_output
     assert "screen_0002 screen keep 6.000000" in summarize_output
+    assert "Screen-Stage Official Incumbent: screen_0002 6.000000" in summarize_output
+    assert "Screen-Stage Planning Bank:" in summarize_output
+    assert "Recommended Anchor Eval IDs: screen_0002" in summarize_output
     assert (
         "Decomposition Gaps: state, risk_budget, opportunity_budget, quote_map"
         in summarize_output
@@ -1610,6 +1729,9 @@ def test_analyze_run_and_compare_profiles_commands_surface_frontier_and_profile_
     )
     assert "Best Raw Frontier:" in analyze_output
     assert "screen_0002 screen 6.000000" in analyze_output
+    assert "Screen-Stage Official Incumbent: screen_0002 6.000000" in analyze_output
+    assert "Screen-Stage Planning Bank:" in analyze_output
+    assert "Recommended Anchor Eval IDs: screen_0002" in analyze_output
     assert (
         "Portfolio Gaps: anti_arb, weak_slice, fee_discipline, structural_pivot"
         in analyze_output
@@ -1634,6 +1756,132 @@ def test_analyze_run_and_compare_profiles_commands_surface_frontier_and_profile_
     assert "Candidate vs Baseline:" in compare_output
     assert "mean_edge: 1.000000" in compare_output
     assert "Baseline vs Anchor:" in compare_output
+
+
+def test_cli_commands_render_multiple_recommended_anchor_eval_ids(
+    tmp_path, capsys, monkeypatch
+):
+    frontier_bank = {
+        "incumbents": [
+            {
+                "eval_id": "screen_0001",
+                "stage": "screen",
+                "status": "seed",
+                "mean_edge": 473.616393,
+            }
+        ],
+        "best_raw": [
+            {
+                "eval_id": "screen_0008",
+                "stage": "screen",
+                "status": "discard",
+                "mean_edge": 485.923771,
+            }
+        ],
+    }
+    portfolio_bank = [
+        {
+            "eval_id": "screen_0008",
+            "mean_edge": 485.923771,
+            "anchor_reason": "best raw anti-arb anchor",
+        },
+        {
+            "eval_id": "screen_0006",
+            "mean_edge": 485.92044,
+            "anchor_reason": "second distinct planning anchor",
+        },
+    ]
+    recommended_next_batch = [
+        {
+            "intent": "local_refine",
+            "covered": False,
+            "reason": "Explore both near-frontier anchors before collapsing back to one line.",
+            "anchor_eval_ids": ["screen_0008", "screen_0006"],
+        }
+    ]
+
+    monkeypatch.setattr(
+        HillClimbHarness,
+        "summarize_run",
+        lambda self, run_id, allow_protected_surface_drift=False: {
+            "warnings": [],
+            "run_id": run_id,
+            "current_target_stage": "screen",
+            "outcome_gate": {
+                "message": "pending (screen incumbent 473.616393 is below target 480.000000)"
+            },
+            "incumbent_chain": [
+                {
+                    "eval_id": "screen_0001",
+                    "stage": "screen",
+                    "status": "seed",
+                    "mean_edge": 473.616393,
+                }
+            ],
+            "frontier_bank": frontier_bank,
+            "abandoned_families": [],
+            "portfolio_bank": portfolio_bank,
+            "recommended_next_batch": recommended_next_batch,
+            "decomposition_gaps": [],
+            "batch_diversity": {
+                "distinct_primary_layer_count": 2,
+                "has_topology_branch": True,
+            },
+            "portfolio_gaps": [],
+            "research_notebook": {"findings": [], "dead_ends": []},
+            "structural_recommendations": [],
+            "unresolved_hypotheses": [],
+            "notable_failures": [],
+        },
+    )
+    monkeypatch.setattr(
+        HillClimbHarness,
+        "analyze_run",
+        lambda self, run_id, allow_protected_surface_drift=False: {
+            "warnings": [],
+            "run_id": run_id,
+            "failure_clusters": {},
+            "decomposition_gaps": [],
+            "decomposition_coverage": {
+                "state": {"open_hypothesis_ids": []},
+            },
+            "batch_diversity": {
+                "distinct_primary_layer_count": 2,
+                "has_topology_branch": True,
+                "issues": [],
+            },
+            "portfolio_gaps": [],
+            "family_scoreboard": {},
+            "research_notebook": {"dead_ends": []},
+            "intent_coverage": {
+                "local_refine": {"open_hypothesis_ids": []},
+            },
+            "structural_recommendations": [],
+            "frontier_bank": frontier_bank,
+            "portfolio_bank": portfolio_bank,
+            "recommended_next_batch": recommended_next_batch,
+        },
+    )
+
+    summarize_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+        read_only=False,
+        json=False,
+    )
+    assert hill_climb_summarize_run_command(summarize_args) == 0
+    summarize_output = capsys.readouterr().out
+    assert "Recommended Anchor Eval IDs: screen_0008, screen_0006" in summarize_output
+
+    analyze_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+        read_only=False,
+        json=False,
+    )
+    assert hill_climb_analyze_run_command(analyze_args) == 0
+    analyze_output = capsys.readouterr().out
+    assert "Recommended Anchor Eval IDs: screen_0008, screen_0006" in analyze_output
 
 
 def test_compare_profiles_command_requires_run_id_for_stored_eval_ids(tmp_path, capsys):
@@ -1681,6 +1929,7 @@ def test_analyze_run_command_json_surfaces_planning_payload(
 
     assert hill_climb_analyze_run_command(args) == 0
     payload = json.loads(capsys.readouterr().out)
+    assert payload["portfolio_bank"] == []
     assert payload["portfolio_gaps"] == [
         "anti_arb",
         "weak_slice",
@@ -1696,6 +1945,167 @@ def test_analyze_run_command_json_surfaces_planning_payload(
     assert payload["batch_diversity"]["distinct_primary_layer_count"] == 0
     assert payload["batch_diversity"]["has_topology_branch"] is False
     assert payload["recommended_next_batch"][0]["intent"] == "local_refine"
+    assert payload["recommended_next_batch"][0]["anchor_eval_ids"] == ["screen_0001"]
+
+
+def test_analyze_run_portfolio_bank_keeps_near_frontier_and_filters_gate_failures(
+    tmp_path,
+):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// baseline")
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[0.0, 5.0, 10.0, 5.0]),
+            _make_match_result(mean_edges=[0.5, 5.5, 10.5, 5.5]),
+            _make_match_result(
+                mean_edges=[-1.0, -1.0, -1.0, -1.0],
+                retail_edges=[12.0, 12.0, 12.0, 12.0],
+                arb_edges=[-0.05, -0.05, -0.05, -0.05],
+                time_weighted_bid_fees=[0.002, 0.002, 0.002, 0.002],
+                time_weighted_ask_fees=[0.002, 0.002, 0.002, 0.002],
+            ),
+        ],
+    )
+
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    source_path.write_text("// near frontier")
+    near_frontier = harness.evaluate(
+        run_id="mar26",
+        stage="screen",
+        source_path=source_path,
+        label="near-frontier",
+    )
+    source_path.write_text("// gate fail")
+    gate_fail = harness.evaluate(
+        run_id="mar26",
+        stage="screen",
+        source_path=source_path,
+        label="gate-fail",
+    )
+
+    payload = harness.analyze_run(run_id="mar26")
+    assert near_frontier["status"] == "discard"
+    assert gate_fail["scorecard"]["gate"]["passed"] is False
+    assert payload["portfolio_bank"] == [
+        {
+            "anchor_reason": "near_uncertainty_frontier+best_anti_arb+best_low_retail+best_low_volatility+best_fee_discipline",
+            "delta_vs_incumbent": pytest.approx(0.5),
+            "eval_id": "screen_0002",
+            "hypothesis_id": None,
+            "label": "near-frontier",
+            "mean_edge": pytest.approx(5.5),
+            "mutation_family": None,
+            "phenotype_family": None,
+            "primary_layer_changed": None,
+            "profile": near_frontier["derived_analysis"]["profile"],
+            "promotion_margin": pytest.approx(2.5),
+            "quote_topology": None,
+            "snapshot_path": near_frontier["snapshot_path"],
+        }
+    ]
+    assert all(entry["eval_id"] != "screen_0003" for entry in payload["portfolio_bank"])
+
+
+def test_analyze_run_portfolio_bank_suppresses_clones_and_retains_distinct_specialists(
+    tmp_path,
+):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// baseline")
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[
+            _make_match_result(mean_edges=[0.0, 5.0, 10.0, 5.0]),
+            _make_match_result(mean_edges=[0.5, 5.5, 10.5, 5.5]),
+            _make_match_result(mean_edges=[0.4, 5.4, 10.4, 5.4]),
+            _make_match_result(
+                mean_edges=[5.2, 5.2, 5.2, 5.2],
+                retail_edges=[5.0, 5.0, 5.0, 5.0],
+                arb_edges=[-0.1, -0.1, -0.1, -0.1],
+                time_weighted_bid_fees=[0.005, 0.005, 0.005, 0.005],
+                time_weighted_ask_fees=[0.005, 0.005, 0.005, 0.005],
+            ),
+            _make_match_result(
+                mean_edges=[8.0, 7.0, 3.0, 2.0],
+                gbm_sigmas=[0.0004, 0.0005, 0.0012, 0.0013],
+                retail_arrival_rates=[0.2, 0.3, 1.0, 1.1],
+            ),
+        ],
+    )
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    hypothesis_specs = [
+        (
+            "clone-a",
+            _structural_hypothesis_kwargs(
+                mutation_family="clone-family",
+                quote_topology="clone-topology",
+            ),
+            "// clone a",
+        ),
+        (
+            "clone-b",
+            _structural_hypothesis_kwargs(
+                mutation_family="clone-family",
+                quote_topology="clone-topology",
+            ),
+            "// clone b",
+        ),
+        (
+            "anti-arb",
+            _structural_hypothesis_kwargs(
+                mutation_family="anti-arb-family",
+                quote_topology="anti-arb-topology",
+                primary_layer_changed="risk_budget",
+            ),
+            "// anti arb",
+        ),
+        (
+            "weak-slice",
+            _structural_hypothesis_kwargs(
+                mutation_family="weak-slice-family",
+                quote_topology="weak-slice-topology",
+                primary_layer_changed="opportunity_budget",
+                layer_held_fixed="risk_budget",
+            ),
+            "// weak slice",
+        ),
+    ]
+    for hypothesis_id, kwargs, source_text in hypothesis_specs:
+        harness.upsert_hypothesis(
+            run_id="mar26",
+            hypothesis_id=hypothesis_id,
+            title=hypothesis_id,
+            rationale=f"{hypothesis_id} rationale",
+            expected_effect=f"{hypothesis_id} effect",
+            status="queued",
+            **kwargs,
+        )
+        source_path.write_text(source_text)
+        harness.evaluate(
+            run_id="mar26",
+            stage="screen",
+            source_path=source_path,
+            hypothesis_id=hypothesis_id,
+        )
+
+    payload = harness.analyze_run(run_id="mar26")
+    eval_ids = [entry["eval_id"] for entry in payload["portfolio_bank"]]
+    assert eval_ids == ["screen_0002", "screen_0004", "screen_0005"]
+    assert "screen_0003" not in eval_ids
+    anti_arb_entry = payload["portfolio_bank"][1]
+    weak_slice_entry = payload["portfolio_bank"][2]
+    assert anti_arb_entry["anchor_reason"] == (
+        "near_uncertainty_frontier+best_anti_arb+best_fee_discipline"
+    )
+    assert weak_slice_entry["anchor_reason"] == (
+        "near_uncertainty_frontier+best_low_retail+best_low_volatility"
+    )
+    assert anti_arb_entry["mutation_family"] == "anti-arb-family"
+    assert weak_slice_entry["mutation_family"] == "weak-slice-family"
+    assert payload["recommended_next_batch"][0]["anchor_eval_ids"] == [
+        "screen_0002",
+        "screen_0004",
+    ]
 
 
 def test_analyze_run_treats_three_layer_open_batch_as_contract_complete(tmp_path):
@@ -2049,10 +2459,12 @@ def test_analyze_run_builds_research_notebook_and_search_risk_files(tmp_path):
         expected_effect="Lift screen mean_edge.",
         mutation_family="winner-family",
         status="queued",
+        research_refs=["artifacts/research/winner/memo.md"],
         **_structural_hypothesis_kwargs(
             primary_layer_changed="state",
             layer_held_fixed="quote_map",
             quote_topology="winner-topology",
+            novelty_coordinates={"external_idea": "fair_mid_filter"},
         ),
     )
     source_path.write_text("// winner")
@@ -2133,6 +2545,14 @@ def test_analyze_run_builds_research_notebook_and_search_risk_files(tmp_path):
     search_risk = (run_dir / "search_risk.md").read_text()
     assert "dead-family [HIGH risk, fragility=1.00]" in search_risk
     assert "winner-family [LOW risk, fragility=0.00]" in search_risk
+    assert "## Fair-Mid / State Estimation" in search_risk
+    assert "Recorded fair-mid/state branches: winner" in search_risk
+    assert "Treat `state` as fair-mid estimation first" in search_risk
+    assert "## External Ideas / Web Search" in search_risk
+    assert "External ideas seen: fair_mid_filter" in search_risk
+    assert "Missing `novelty_coordinates.external_idea`: dead-end" in search_risk
+    assert "Missing `research_refs`: dead-end" in search_risk
+    assert "do explicit web searches" in search_risk
 
 
 def test_compare_profiles_command_rejects_mixed_inputs_and_stage_mismatch(

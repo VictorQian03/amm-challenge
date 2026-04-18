@@ -1,0 +1,47 @@
+{
+  "actual_failure_mode": "arb_leak_regression",
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr18-screen480-1132-batch1",
+  "created_at": "2026-04-18T18:36:16+00:00",
+  "eval_ids": [
+    "screen_0005"
+  ],
+  "expected_effect": "Improve breakout odds by recentering later during toxic continuation and earlier during benign passive flow, without changing the quote-map topology.",
+  "expected_failure_mode": "arb_leak_regression",
+  "expected_failure_signature": "If the alpha state lags or overreacts, arb leakage returns or the strategy recenters too slowly and overprices calm flow.",
+  "expected_win_condition": "Improve overall edge by holding protective posture through toxic drift while preserving calm-slice performance.",
+  "hard_guardrails": {
+    "low_decile_mean_edge": 361.0,
+    "time_weighted_mean_fee": 0.00465
+  },
+  "hidden_coupling_removed": "Short-horizon spot jumps should not decide both fair-mid recentering speed and toxic continuation state.",
+  "hypothesis_id": "flow-alpha-fair-mid",
+  "is_topology_branch": false,
+  "layer_held_fixed": "quote_map",
+  "mutation_family": "flow_alpha_fair_mid",
+  "nearest_prior_failures": [],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "external_idea": "flow_alpha_signal",
+    "intent": "anti_arb"
+  },
+  "parent_hypothesis_id": null,
+  "primary_layer_changed": "state",
+  "quote_topology": "alpha-anchored two-timescale quote assembly",
+  "rationale": "Add a slower signed-flow alpha to the fair-mid estimate so persistent toxic drift is separated from transient spot jumps before quote assembly reacts.",
+  "research_refs": [
+    "docs/plans/active/apr18-screen480-1132.md"
+  ],
+  "seed_eval_id": "screen_0001",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "arb_loss_to_retail_gain": 0.115,
+    "low_volatility_mean_edge": 456.0,
+    "mean_edge": 488.0
+  },
+  "title": "Flow alpha fair mid with toxic recenter veto",
+  "updated_at": "2026-04-18T18:41:22+00:00",
+  "why_not_coefficient_retune": "This adds a new fair-mid state with its own decay and veto logic instead of only changing spread weights."
+}

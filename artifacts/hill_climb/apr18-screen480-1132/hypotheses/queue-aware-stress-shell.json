@@ -1,0 +1,50 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr18-screen480-1132-batch2",
+  "created_at": "2026-04-18T18:36:16+00:00",
+  "eval_ids": [
+    "screen_0009"
+  ],
+  "expected_effect": "Keep the continuation shell available for true toxic extensions while reducing unnecessary symmetric fee spend in calmer paths.",
+  "expected_failure_mode": "over_spiky_fee_surface",
+  "expected_failure_signature": "If the queue-aware trigger still fires on short noise, the branch recreates an over-spiky shell without enough extra edge.",
+  "expected_win_condition": "Retain the raw anchor anti-arb profile while trimming broad fee drag enough to make the line promotable.",
+  "hard_guardrails": {
+    "retail_edge": 538.0,
+    "time_weighted_mean_fee": 0.00475
+  },
+  "hidden_coupling_removed": "The same event pulse should not both widen the shared floor and fully arm the continuation shell.",
+  "hypothesis_id": "queue-aware-stress-shell",
+  "is_topology_branch": false,
+  "layer_held_fixed": "state",
+  "mutation_family": "queue_aware_stress_shell",
+  "nearest_prior_failures": [
+    "drawdown-budget-shell"
+  ],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "external_idea": "queue_position_risk",
+    "intent": "anti_arb"
+  },
+  "parent_hypothesis_id": "inventory-triad-replay-control",
+  "primary_layer_changed": "risk_budget",
+  "quote_topology": "continuation shell with queue gate",
+  "rationale": "Spend continuation protection only when toxic flow stays aligned long enough to look like an adverse queue state, rather than paying a broad shell all the time.",
+  "research_refs": [
+    "docs/plans/active/apr18-screen480-1132.md",
+    "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3991930"
+  ],
+  "seed_eval_id": "screen_0004",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "arb_loss_to_retail_gain": 0.11,
+    "mean_edge": 486.0,
+    "quote_selectivity_ratio": 24.0
+  },
+  "title": "Queue-aware continuation shell",
+  "updated_at": "2026-04-18T18:55:13+00:00",
+  "why_not_coefficient_retune": "This introduces a new continuation-budget trigger keyed to aligned toxic persistence instead of a stronger version of the old shell."
+}

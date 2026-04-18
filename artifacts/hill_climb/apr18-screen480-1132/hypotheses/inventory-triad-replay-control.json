@@ -1,0 +1,48 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr18-screen480-1132-batch1",
+  "created_at": "2026-04-18T18:39:49+00:00",
+  "eval_ids": [
+    "screen_0004"
+  ],
+  "expected_effect": "Confirm whether the original tri-channel split still reproduces its anti-arb and mean-edge profile on the fresh lane before more structural edits.",
+  "expected_failure_mode": null,
+  "expected_failure_signature": "If the anchor itself no longer reproduces, the family should be treated as stale and the lane should pivot.",
+  "expected_win_condition": "Reproduce the prior raw anchor profile closely enough to justify further work on this family.",
+  "hard_guardrails": {
+    "retail_edge": 539.0,
+    "time_weighted_mean_fee": 0.00475
+  },
+  "hidden_coupling_removed": "This is a replay control, so it intentionally removes the new synthesis layer and preserves the anchor routing unchanged.",
+  "hypothesis_id": "inventory-triad-replay-control",
+  "is_topology_branch": true,
+  "layer_held_fixed": "opportunity_budget",
+  "mutation_family": "inventory_triad_replay_control",
+  "nearest_prior_failures": [
+    "inventory-price-reading-router"
+  ],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "control",
+    "external_idea": "raw_anchor_replay",
+    "intent": "local_refine"
+  },
+  "parent_hypothesis_id": null,
+  "primary_layer_changed": "quote_map",
+  "quote_topology": "three-channel quote assembly",
+  "rationale": "Replay the strongest raw tri-channel anchor from the prior lane on the new run so the lane can distinguish a bad synthesis from a bad anchor.",
+  "research_refs": [
+    "docs/plans/active/apr18-screen480-1132.md"
+  ],
+  "seed_eval_id": "screen_0001",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "arb_loss_to_retail_gain": 0.1,
+    "mean_edge": 485.0
+  },
+  "title": "Inventory tri-channel replay control",
+  "updated_at": "2026-04-18T18:40:14+00:00",
+  "why_not_coefficient_retune": "This is not a retune; it is a control replay of the prior raw anchor on the fresh lane."
+}

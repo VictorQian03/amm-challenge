@@ -1,0 +1,49 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr18-screen480-1132-batch2",
+  "created_at": "2026-04-18T18:47:53+00:00",
+  "eval_ids": [
+    "screen_0007"
+  ],
+  "expected_effect": "Widen quote-map coverage with a true topology branch that can preserve anti-arb protection while cutting unnecessary calm-path fee spend.",
+  "expected_failure_mode": "arb_leak_regression",
+  "expected_failure_signature": "If the router flips too eagerly, the branch replays the cheap-mode arb leak seen in earlier quote-map experiments.",
+  "expected_win_condition": "Keep the raw anchor anti-arb improvement while routing calm flow into a cheaper neutral or refill lane often enough to clear the promotion margin.",
+  "hard_guardrails": {
+    "retail_edge": 538.0,
+    "time_weighted_mean_fee": 0.0048
+  },
+  "hidden_coupling_removed": "Safe-side refill should not be implicitly blended into the same continuous quote map that arms toxic protection.",
+  "hypothesis_id": "regime-switchboard-router",
+  "is_topology_branch": true,
+  "layer_held_fixed": "opportunity_budget",
+  "mutation_family": "regime_switchboard_router",
+  "nearest_prior_failures": [
+    "inventory-price-reading-router"
+  ],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "external_idea": "regime_switchboard",
+    "intent": "structural_pivot"
+  },
+  "parent_hypothesis_id": "inventory-triad-replay-control",
+  "primary_layer_changed": "quote_map",
+  "quote_topology": "regime-switched quote assembly",
+  "rationale": "Swap the replayed three-lane quote assembly for a regime-switched router that picks between toxic, neutral, and refill lanes from state rather than blending all three continuously.",
+  "research_refs": [
+    "docs/plans/active/apr18-screen480-1132.md"
+  ],
+  "seed_eval_id": "screen_0004",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "arb_loss_to_retail_gain": 0.105,
+    "low_retail_mean_edge": 418.0,
+    "mean_edge": 488.0
+  },
+  "title": "Regime switchboard router",
+  "updated_at": "2026-04-18T18:50:47+00:00",
+  "why_not_coefficient_retune": "This changes how the quote is assembled across regimes instead of retuning the weights inside the existing three-channel replay."
+}

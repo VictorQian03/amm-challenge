@@ -36,9 +36,10 @@ SNAPSHOT_LAYOUT_VERSION = "flat_snapshots.v1"
 HISTORY_VERSION = "hill_climb.history.v1"
 HYPOTHESIS_VERSION = "hill_climb.hypothesis.v1"
 CROSS_RUN_INDEX_VERSION = "hill_climb.index.v1"
-ANALYSIS_VERSION = "hill_climb.analysis.v1"
+ANALYSIS_VERSION = "hill_climb.analysis.v2"
 SEARCH_NOTEBOOK_VERSION = "hill_climb.notebook.v1"
 INCUMBENT_EPSILON = 1e-9
+PORTFOLIO_BANK_LIMIT = 5
 NEXT_EVAL_INDEX_FILENAME = ".next_eval_index"
 LEGACY_NEXT_EVAL_ID_FILENAME = ".next_eval_id"
 LEGACY_BATCH_KEY = "__legacy__"
@@ -157,6 +158,7 @@ class StageStatus:
     run_id: str
     stage: str
     incumbent: dict[str, Any] | None
+    best_raw: dict[str, Any] | None
     latest: dict[str, Any] | None
 
 
@@ -508,12 +510,15 @@ class HillClimbHarness:
             run_dir,
             allow_protected_surface_drift=allow_protected_surface_drift,
         )
+        results = self._read_results(run_dir)
         latest = self._read_latest(run_dir, stage_config.name)
         incumbent = self._read_incumbent(run_dir, stage_config.name)
+        best_raw = self._best_stage_raw(results, stage=stage_config.name)
         return StageStatus(
             run_id=normalized_run_id,
             stage=stage_config.name,
             incumbent=incumbent,
+            best_raw=best_raw,
             latest=latest,
         )
 
@@ -933,6 +938,7 @@ class HillClimbHarness:
             "warnings": context["warnings"],
             "incumbent_chain": promoted,
             "frontier_bank": analysis["frontier_bank"],
+            "portfolio_bank": analysis["portfolio_bank"],
             "failure_clusters": analysis["failure_clusters"],
             "intent_coverage": analysis["intent_coverage"],
             "decomposition_coverage": analysis["decomposition_coverage"],
@@ -1031,6 +1037,10 @@ class HillClimbHarness:
         warnings: list[str],
     ) -> dict[str, Any]:
         frontier_bank = self._build_frontier_bank(results)
+        portfolio_bank = self._build_portfolio_bank(
+            results=results,
+            hypotheses=hypotheses,
+        )
         failure_clusters = self._build_failure_clusters(results)
         active_batch_id, selection_mode, active_open_payloads = (
             self._select_active_open_batch(hypotheses)
@@ -1079,12 +1089,14 @@ class HillClimbHarness:
         research_notebook = self._build_research_notebook(
             family_scoreboard=family_scoreboard,
             layer_scoreboard=layer_scoreboard,
+            hypotheses=hypotheses,
         )
         return {
             "artifact_version": ANALYSIS_VERSION,
             "run_id": run_dir.name,
             "warnings": warnings,
             "frontier_bank": frontier_bank,
+            "portfolio_bank": portfolio_bank,
             "failure_clusters": failure_clusters,
             "recent_failures": [
                 summary
@@ -1106,6 +1118,7 @@ class HillClimbHarness:
             "portfolio_gaps": self._portfolio_gaps(intent_coverage),
             "recommended_next_batch": self._recommended_next_batch(
                 frontier_bank=frontier_bank,
+                portfolio_bank=portfolio_bank,
                 failure_clusters=failure_clusters,
                 intent_coverage=intent_coverage,
             ),
@@ -1309,6 +1322,7 @@ class HillClimbHarness:
         *,
         family_scoreboard: dict[str, dict[str, Any]],
         layer_scoreboard: dict[str, dict[str, Any]],
+        hypotheses: dict[str, dict[str, Any]],
     ) -> dict[str, Any]:
         finding_entries = sorted(
             (
@@ -1373,6 +1387,53 @@ class HillClimbHarness:
             }
             for entry in dead_end_entries[:5]
         ]
+        state_entry = layer_scoreboard.get(
+            "state",
+            {
+                "primary_layer": "state",
+                "attempt_count": 0,
+                "survivor_count": 0,
+                "fragility": 0.0,
+                "risk_label": "unproven",
+                "hypothesis_ids": [],
+                "open_hypothesis_ids": [],
+            },
+        )
+        external_ideas = _sorted_unique(
+            [
+                str(external_idea).strip()
+                for payload in hypotheses.values()
+                if isinstance(
+                    (
+                        external_idea := payload.get("novelty_coordinates", {}).get(
+                            "external_idea"
+                        )
+                    ),
+                    str,
+                )
+                and external_idea.strip()
+            ]
+        )
+        missing_external_idea = _sorted_unique(
+            [
+                payload["hypothesis_id"]
+                for payload in hypotheses.values()
+                if not isinstance(
+                    payload.get("novelty_coordinates", {}).get("external_idea"),
+                    str,
+                )
+                or not str(
+                    payload.get("novelty_coordinates", {}).get("external_idea")
+                ).strip()
+            ]
+        )
+        missing_research_refs = _sorted_unique(
+            [
+                payload["hypothesis_id"]
+                for payload in hypotheses.values()
+                if not payload.get("research_refs")
+            ]
+        )
         return {
             "artifact_version": SEARCH_NOTEBOOK_VERSION,
             "findings": findings,
@@ -1384,6 +1445,19 @@ class HillClimbHarness:
                 "primary_layers": [
                     layer_scoreboard[name] for name in sorted(layer_scoreboard)
                 ],
+                "fair_mid_state_estimation": {
+                    "attempt_count": int(state_entry["attempt_count"]),
+                    "survivor_count": int(state_entry["survivor_count"]),
+                    "fragility": float(state_entry["fragility"]),
+                    "risk_label": str(state_entry["risk_label"]),
+                    "hypothesis_ids": list(state_entry["hypothesis_ids"]),
+                    "open_hypothesis_ids": list(state_entry["open_hypothesis_ids"]),
+                },
+                "external_research": {
+                    "external_ideas": external_ideas,
+                    "hypotheses_missing_external_idea": missing_external_idea,
+                    "hypotheses_missing_research_refs": missing_research_refs,
+                },
             },
         }
 
@@ -1902,12 +1976,49 @@ class HillClimbHarness:
         self,
         *,
         frontier_bank: dict[str, Any],
+        portfolio_bank: list[dict[str, Any]],
         failure_clusters: dict[str, int],
         intent_coverage: dict[str, dict[str, Any]],
     ) -> list[dict[str, Any]]:
         recommendations: list[dict[str, Any]] = []
         best_raw = frontier_bank.get("best_raw", [])
-        if best_raw:
+        if len(portfolio_bank) >= 2:
+            anchor_eval_ids = [entry["eval_id"] for entry in portfolio_bank[:2]]
+            recommendations.append(
+                {
+                    "intent": "local_refine",
+                    "covered": bool(
+                        intent_coverage.get("local_refine", {}).get(
+                            "open_hypothesis_ids"
+                        )
+                    ),
+                    "reason": (
+                        "Explore both "
+                        f"{anchor_eval_ids[0]} and {anchor_eval_ids[1]} as distinct "
+                        "screen-stage planning anchors before collapsing back to one line."
+                    ),
+                    "anchor_eval_id": anchor_eval_ids[0],
+                    "anchor_eval_ids": anchor_eval_ids,
+                }
+            )
+        elif portfolio_bank:
+            recommendations.append(
+                {
+                    "intent": "local_refine",
+                    "covered": bool(
+                        intent_coverage.get("local_refine", {}).get(
+                            "open_hypothesis_ids"
+                        )
+                    ),
+                    "reason": (
+                        "Exploit the strongest planning-bank anchor "
+                        f"{portfolio_bank[0]['eval_id']} before widening again."
+                    ),
+                    "anchor_eval_id": portfolio_bank[0]["eval_id"],
+                    "anchor_eval_ids": [portfolio_bank[0]["eval_id"]],
+                }
+            )
+        elif best_raw:
             recommendations.append(
                 {
                     "intent": "local_refine",
@@ -1918,6 +2029,7 @@ class HillClimbHarness:
                     ),
                     "reason": f"Exploit the strongest raw survivor {best_raw[0]['eval_id']} before widening again.",
                     "anchor_eval_id": best_raw[0]["eval_id"],
+                    "anchor_eval_ids": [best_raw[0]["eval_id"]],
                 }
             )
         intent_reasons = {
@@ -1947,6 +2059,293 @@ class HillClimbHarness:
                 }
             )
         return recommendations
+
+    def _build_portfolio_bank(
+        self,
+        *,
+        results: list[dict[str, Any]],
+        hypotheses: dict[str, dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        official_incumbent = self._current_stage_incumbent(results, stage="screen")
+        if official_incumbent is None or official_incumbent.get("scorecard") is None:
+            return []
+
+        incumbent_mean_edge = _safe_float(official_incumbent.get("mean_edge"))
+        if incumbent_mean_edge is None:
+            return []
+
+        eligible = [
+            summary
+            for summary in results
+            if summary.get("stage") == "screen"
+            and summary.get("status") != "invalid"
+            and summary.get("eval_id") != official_incumbent.get("eval_id")
+            and self._summary_gate_passed(summary)
+            and isinstance(summary.get("scorecard"), dict)
+            and _safe_float(summary.get("mean_edge")) is not None
+        ]
+        if not eligible:
+            return []
+
+        candidates: list[dict[str, Any]] = []
+        for summary in eligible:
+            candidate_mean_edge = float(summary["mean_edge"])
+            promotion_margin = self._promotion_margin(
+                candidate_scorecard=summary["scorecard"],
+                incumbent_before=official_incumbent,
+            )
+            delta_vs_incumbent = candidate_mean_edge - incumbent_mean_edge
+            metadata = self._portfolio_metadata(summary, hypotheses=hypotheses)
+            candidates.append(
+                {
+                    "summary": summary,
+                    "mean_edge": candidate_mean_edge,
+                    "delta_vs_incumbent": delta_vs_incumbent,
+                    "promotion_margin": promotion_margin,
+                    "profile": summary.get("derived_analysis", {}).get("profile", {}),
+                    **metadata,
+                }
+            )
+
+        reason_map: dict[str, list[str]] = {}
+
+        def add_reason(eval_id: str, reason: str) -> None:
+            reasons = reason_map.setdefault(eval_id, [])
+            if reason not in reasons:
+                reasons.append(reason)
+
+        near_uncertainty_frontier = sorted(
+            (
+                candidate
+                for candidate in candidates
+                if abs(candidate["delta_vs_incumbent"]) <= candidate["promotion_margin"]
+            ),
+            key=lambda candidate: (
+                -candidate["mean_edge"],
+                candidate["summary"]["eval_id"],
+            ),
+        )
+        for candidate in near_uncertainty_frontier:
+            add_reason(candidate["summary"]["eval_id"], "near_uncertainty_frontier")
+
+        viable_candidates = [
+            candidate
+            for candidate in candidates
+            if candidate["delta_vs_incumbent"] >= -candidate["promotion_margin"]
+        ]
+        metric_specialists: list[dict[str, Any]] = []
+        metric_specs = (
+            ("best_anti_arb", "arb_loss_to_retail_gain", False),
+            ("best_low_retail", "low_retail_mean_edge", True),
+            ("best_low_volatility", "low_volatility_mean_edge", True),
+        )
+        for reason, metric, reverse in metric_specs:
+            specialist = self._best_portfolio_candidate_for_metric(
+                viable_candidates,
+                metric,
+                reverse=reverse,
+            )
+            if specialist is None:
+                continue
+            metric_specialists.append(specialist)
+            add_reason(specialist["summary"]["eval_id"], reason)
+
+        fee_specialists = [
+            candidate
+            for candidate in (
+                self._best_portfolio_candidate_for_metric(
+                    viable_candidates,
+                    "time_weighted_mean_fee",
+                    reverse=False,
+                ),
+                self._best_portfolio_candidate_for_metric(
+                    viable_candidates,
+                    "quote_selectivity_ratio",
+                    reverse=False,
+                ),
+            )
+            if candidate is not None
+        ]
+        if fee_specialists:
+            fee_specialist = max(
+                fee_specialists,
+                key=lambda candidate: (
+                    candidate["mean_edge"],
+                    -self._portfolio_metric_or_inf(
+                        candidate,
+                        "time_weighted_mean_fee",
+                    ),
+                    -self._portfolio_metric_or_inf(
+                        candidate,
+                        "quote_selectivity_ratio",
+                    ),
+                ),
+            )
+            metric_specialists.append(fee_specialist)
+            add_reason(fee_specialist["summary"]["eval_id"], "best_fee_discipline")
+
+        metric_specialists = sorted(
+            metric_specialists,
+            key=lambda candidate: (
+                -candidate["mean_edge"],
+                candidate["summary"]["eval_id"],
+            ),
+        )
+
+        ordered_candidates = near_uncertainty_frontier + metric_specialists
+        seen_eval_ids: set[str] = set()
+        seen_source_sha256: set[str] = set()
+        seen_clusters: set[tuple[Any, ...]] = set()
+        portfolio_bank: list[dict[str, Any]] = []
+        for candidate in ordered_candidates:
+            summary = candidate["summary"]
+            eval_id = summary["eval_id"]
+            source_sha256 = str(summary.get("source_sha256"))
+            if eval_id in seen_eval_ids or source_sha256 in seen_source_sha256:
+                continue
+            cluster_key = candidate["cluster_key"]
+            if cluster_key in seen_clusters:
+                continue
+            seen_eval_ids.add(eval_id)
+            seen_source_sha256.add(source_sha256)
+            seen_clusters.add(cluster_key)
+            portfolio_bank.append(
+                {
+                    "eval_id": eval_id,
+                    "hypothesis_id": summary.get("hypothesis_id"),
+                    "label": summary.get("label"),
+                    "mean_edge": candidate["mean_edge"],
+                    "delta_vs_incumbent": candidate["delta_vs_incumbent"],
+                    "promotion_margin": candidate["promotion_margin"],
+                    "anchor_reason": "+".join(reason_map.get(eval_id, [])),
+                    "snapshot_path": summary.get("snapshot_path"),
+                    "profile": candidate["profile"],
+                    "mutation_family": candidate["mutation_family"],
+                    "primary_layer_changed": candidate["primary_layer_changed"],
+                    "quote_topology": candidate["quote_topology"],
+                    "phenotype_family": candidate["phenotype_family"],
+                }
+            )
+            if len(portfolio_bank) >= PORTFOLIO_BANK_LIMIT:
+                break
+        return portfolio_bank
+
+    def _summary_gate_passed(self, summary: dict[str, Any]) -> bool:
+        scorecard = summary.get("scorecard", {})
+        gate = scorecard.get("gate", {}) if isinstance(scorecard, dict) else {}
+        return bool(gate.get("passed", False))
+
+    def _current_stage_incumbent(
+        self, results: list[dict[str, Any]], *, stage: str
+    ) -> dict[str, Any] | None:
+        incumbent = None
+        for summary in results:
+            if summary.get("stage") == stage and summary.get("status") in {
+                "seed",
+                "keep",
+            }:
+                incumbent = summary
+        return incumbent
+
+    def _best_stage_raw(
+        self, results: list[dict[str, Any]], *, stage: str
+    ) -> dict[str, Any] | None:
+        candidates = [
+            summary
+            for summary in results
+            if summary.get("stage") == stage
+            and summary.get("status") != "invalid"
+            and self._summary_gate_passed(summary)
+            and _safe_float(summary.get("mean_edge")) is not None
+        ]
+        if not candidates:
+            return None
+        return max(
+            candidates,
+            key=lambda summary: (
+                float(summary["mean_edge"]),
+                str(summary.get("eval_id", "")),
+            ),
+        )
+
+    def _portfolio_metadata(
+        self,
+        summary: dict[str, Any],
+        *,
+        hypotheses: dict[str, dict[str, Any]],
+    ) -> dict[str, Any]:
+        hypothesis_id = summary.get("hypothesis_id")
+        payload = hypotheses.get(hypothesis_id) if hypothesis_id is not None else None
+        if payload is None:
+            return {
+                "mutation_family": None,
+                "primary_layer_changed": None,
+                "quote_topology": None,
+                "phenotype_family": None,
+                "cluster_key": (
+                    "fallback",
+                    summary.get("label"),
+                    summary.get("strategy_name"),
+                ),
+            }
+        phenotype_family = self._infer_phenotype_family(payload)
+        quote_topology = payload.get("quote_topology")
+        mutation_family = payload.get("mutation_family")
+        return {
+            "mutation_family": mutation_family,
+            "primary_layer_changed": payload.get("primary_layer_changed"),
+            "quote_topology": quote_topology,
+            "phenotype_family": phenotype_family,
+            "cluster_key": (
+                "hypothesis",
+                phenotype_family,
+                quote_topology,
+                mutation_family,
+            ),
+        }
+
+    def _best_portfolio_candidate_for_metric(
+        self,
+        candidates: list[dict[str, Any]],
+        metric: str,
+        *,
+        reverse: bool,
+    ) -> dict[str, Any] | None:
+        best: dict[str, Any] | None = None
+        best_value: float | None = None
+        for candidate in candidates:
+            value = self._safe_portfolio_metric(candidate, metric, fallback=None)
+            if value is None:
+                continue
+            if (
+                best is None
+                or best_value is None
+                or (value > best_value if reverse else value < best_value)
+            ):
+                best = candidate
+                best_value = value
+        return best
+
+    def _safe_portfolio_metric(
+        self,
+        candidate: dict[str, Any],
+        metric: str,
+        *,
+        fallback: float | None,
+    ) -> float | None:
+        profile = candidate.get("profile", {})
+        if not isinstance(profile, dict):
+            return fallback
+        value = _safe_float(profile.get(metric))
+        return fallback if value is None else value
+
+    def _portfolio_metric_or_inf(
+        self,
+        candidate: dict[str, Any],
+        metric: str,
+    ) -> float:
+        value = self._safe_portfolio_metric(candidate, metric, fallback=None)
+        return math.inf if value is None else value
 
     def pull_best(self, *, run_id: str, stage: str, destination: Path | str) -> Path:
         """Copy the incumbent stage strategy snapshot into the destination path."""
@@ -2814,6 +3213,58 @@ class HillClimbHarness:
                 )
         else:
             lines.append("- none")
+        lines.extend(["", "## Fair-Mid / State Estimation", ""])
+        fair_mid = payload.get("fair_mid_state_estimation", {})
+        if fair_mid:
+            lines.append(
+                "- "
+                + (
+                    f"state [{str(fair_mid['risk_label']).upper()} risk, "
+                    f"fragility={fair_mid['fragility']:.2f}]: "
+                    f"{fair_mid['survivor_count']}/{fair_mid['attempt_count']} survivors"
+                )
+            )
+            if fair_mid.get("hypothesis_ids"):
+                lines.append(
+                    "- Recorded fair-mid/state branches: "
+                    + ", ".join(fair_mid["hypothesis_ids"])
+                )
+            else:
+                lines.append(
+                    "- No explicit fair-mid/state branch is recorded yet; add at least one hypothesis that changes latent fair-mid estimation, recenter timing, or divergence semantics."
+                )
+            lines.append(
+                "- Treat `state` as fair-mid estimation first: name the latent/fair mid, how it updates, when it recenters, and how quote logic consumes divergence from that estimate."
+            )
+        else:
+            lines.append(
+                "- No explicit fair-mid/state branch is recorded yet; add at least one hypothesis that changes latent fair-mid estimation, recenter timing, or divergence semantics."
+            )
+        lines.extend(["", "## External Ideas / Web Search", ""])
+        external_research = payload.get("external_research", {})
+        external_ideas = external_research.get("external_ideas", [])
+        if external_ideas:
+            lines.append("- External ideas seen: " + ", ".join(external_ideas))
+        else:
+            lines.append(
+                "- No `novelty_coordinates.external_idea` values are recorded yet."
+            )
+        missing_external = external_research.get(
+            "hypotheses_missing_external_idea", []
+        )
+        if missing_external:
+            lines.append(
+                "- Missing `novelty_coordinates.external_idea`: "
+                + ", ".join(missing_external)
+            )
+        missing_refs = external_research.get("hypotheses_missing_research_refs", [])
+        if missing_refs:
+            lines.append(
+                "- Missing `research_refs`: " + ", ".join(missing_refs)
+            )
+        lines.append(
+            "- For new idea batches, do explicit web searches for market-making, inventory-control, adverse-selection, and microstructure concepts that are absent from the exhausted batch, then record the hook in `novelty_coordinates.external_idea` and the sources in `research_refs`."
+        )
         return "\n".join(lines) + "\n"
 
     def _collect_research_artifact_paths(self, run_dir: Path) -> list[str]:
@@ -2847,6 +3298,9 @@ class HillClimbHarness:
                     manifest = _json_load(manifest_path)
                     results = self._read_results(run_dir)
                     state = self._load_state_payload(run_dir, require_current=False)
+                    run_state_status = self._run_state_status_from_payload(
+                        state, results
+                    )
                     hypotheses = self._load_hypotheses(run_dir)
                     history = self._build_history(results)
                     analysis = self._build_run_analysis(
@@ -2866,19 +3320,24 @@ class HillClimbHarness:
                     }
                     status = "active"
                     notes: list[str] = []
-                    outcome_gate = state.get("outcome_gate")
-                    if outcome_gate is not None:
-                        gate_status = self._build_outcome_gate_status(state, results)
-                        if gate_status is not None:
-                            notes.append(gate_status.message)
-                            if gate_status.passed:
-                                status = "goal-passed"
+                    gate_status = run_state_status.outcome_gate
+                    if gate_status is not None:
+                        notes.append(gate_status.message)
+                        if gate_status.passed:
+                            status = "goal-passed"
                     if not history:
                         status = "empty"
                     elif any(entry["status"] == "invalid" for entry in history):
                         notes.append("contains invalid evaluations")
+                    closed_by_stop_guidance = (
+                        run_state_status.guidance.action == "stop"
+                        and status == "active"
+                    )
+                    if closed_by_stop_guidance:
+                        status = "historical"
+                        notes.append(run_state_status.guidance.message)
                     next_hypothesis_id = state.get("next_hypothesis_id")
-                    if next_hypothesis_id is not None:
+                    if next_hypothesis_id is not None and not closed_by_stop_guidance:
                         note = state.get("next_hypothesis_note")
                         if note:
                             notes.append(
@@ -2896,6 +3355,15 @@ class HillClimbHarness:
                         and status == "active"
                     ):
                         status = "historical"
+                        notes.append(
+                            "batch closed with no queued next hypothesis; seed a fresh run_id for the next branch"
+                        )
+                    elif (
+                        len(history) > 1
+                        and next_hypothesis_id is None
+                        and not open_hypothesis_ids
+                        and closed_by_stop_guidance
+                    ):
                         notes.append(
                             "batch closed with no queued next hypothesis; seed a fresh run_id for the next branch"
                         )
@@ -2970,7 +3438,9 @@ class HillClimbHarness:
                 key=lambda entry: (entry["created_at"], entry["run_id"]),
             )
             latest_retained_run_id = latest_retained["run_id"]
-            latest_retained_is_closed_history = latest_retained["status"] == "historical"
+            latest_retained_is_closed_history = (
+                latest_retained["status"] == "historical"
+            )
             if current_run_id is None or (
                 latest_retained_is_closed_history
                 and latest_retained_run_id != current_run_id

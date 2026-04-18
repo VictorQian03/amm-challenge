@@ -1,0 +1,49 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr18-screen480-1132-batch2",
+  "created_at": "2026-04-18T18:47:53+00:00",
+  "eval_ids": [
+    "screen_0008"
+  ],
+  "expected_effect": "Recover some calm-side edge without replaying the broad cheapening that broke the first state-layer pivot.",
+  "expected_failure_mode": "arb_leak_regression",
+  "expected_failure_signature": "If the veto suppresses fair-mid release too broadly, calm slices stay too expensive or the branch slides back into arb leakage.",
+  "expected_win_condition": "Preserve the raw anchor quote assembly while reducing calm-path overpricing enough to convert the improving variant into a promoted one.",
+  "hard_guardrails": {
+    "quote_selectivity_ratio": 22.0,
+    "time_weighted_mean_fee": 0.0048
+  },
+  "hidden_coupling_removed": "Fair-mid recentering should not automatically inherit the same persistence memory that arms toxic-side quoting.",
+  "hypothesis_id": "continuation-veto-fair-mid",
+  "is_topology_branch": false,
+  "layer_held_fixed": "quote_map",
+  "mutation_family": "continuation_veto_fair_mid",
+  "nearest_prior_failures": [
+    "flow-alpha-fair-mid"
+  ],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "external_idea": "continuation_veto_state",
+    "intent": "local_refine"
+  },
+  "parent_hypothesis_id": "inventory-triad-replay-control",
+  "primary_layer_changed": "state",
+  "quote_topology": "three-channel quote assembly",
+  "rationale": "Separate toxic continuation memory from benign recentering by letting the fair-mid update veto only aligned toxic drift while preserving calm release.",
+  "research_refs": [
+    "docs/plans/active/apr18-screen480-1132.md"
+  ],
+  "seed_eval_id": "screen_0004",
+  "status": "discard",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "arb_loss_to_retail_gain": 0.105,
+    "low_volatility_mean_edge": 466.0,
+    "mean_edge": 486.0
+  },
+  "title": "Continuation veto fair mid",
+  "updated_at": "2026-04-18T18:54:13+00:00",
+  "why_not_coefficient_retune": "This adds a new veto contract between continuation state and fair-mid updates instead of changing the strength of an existing alpha."
+}

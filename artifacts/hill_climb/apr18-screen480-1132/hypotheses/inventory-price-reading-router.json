@@ -1,0 +1,46 @@
+{
+  "actual_failure_mode": "arb_leak_regression",
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr18-screen480-1132-batch1",
+  "created_at": "2026-04-18T18:35:45+00:00",
+  "eval_ids": [
+    "screen_0002",
+    "screen_0003"
+  ],
+  "expected_effect": "Preserve the anti-arb and low-slice gains of the tri-channel anchor while lifting retail retention and keeping passive relief narrowly targeted.",
+  "expected_failure_mode": null,
+  "expected_failure_signature": "If inventory centering still behaves like a broad passive rebate, quote_selectivity falls and retail_edge does not recover enough to clear the promotion margin.",
+  "expected_win_condition": "Beat the breakout gate with arb_loss_to_retail_gain below 0.11 while keeping retail_edge at or above baseline.",
+  "hard_guardrails": {
+    "low_retail_mean_edge": 410.0,
+    "time_weighted_mean_fee": 0.0047
+  },
+  "hidden_coupling_removed": "Inventory centering should not share the same visible release path as the toxic-side protection channel.",
+  "hypothesis_id": "inventory-price-reading-router",
+  "is_topology_branch": true,
+  "layer_held_fixed": "opportunity_budget",
+  "mutation_family": "inventory_price_reading_router",
+  "nearest_prior_failures": [],
+  "nearest_prior_successes": [],
+  "novelty_coordinates": {
+    "classification": "novel",
+    "external_idea": "price_reading_inventory_mask",
+    "intent": "structural_pivot"
+  },
+  "parent_hypothesis_id": null,
+  "primary_layer_changed": "quote_map",
+  "quote_topology": "three-channel quote assembly",
+  "rationale": "Carry forward the raw screen_0009 tri-channel split, but gate inventory-centering relief behind quiet balanced conditions so the quote does not reveal or subsidize inventory pressure.",
+  "research_refs": [],
+  "seed_eval_id": "screen_0001",
+  "status": "completed",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "arb_loss_to_retail_gain": 0.11,
+    "mean_edge": 490.0,
+    "retail_edge": 540.0
+  },
+  "title": "Inventory-toxicity router with price-reading mask",
+  "updated_at": "2026-04-18T18:39:49+00:00",
+  "why_not_coefficient_retune": "This changes the route and visibility of the inventory channel rather than only reweighting the same additive fee surface."
+}

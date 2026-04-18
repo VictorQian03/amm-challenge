@@ -99,19 +99,21 @@ Promotion policy:
 
 ## Read Surfaces
 
-- `uv run amm-match hill-climb status`: quick incumbent/latest plus loop guidance.
+- `uv run amm-match hill-climb status`: quick official-incumbent, best-raw, latest, outcome-gate, and loop-guidance read.
 - `uv run amm-match hill-climb history --run-id <id>`: compact per-eval timeline.
 - `uv run amm-match hill-climb show-eval --run-id <id> --eval-id <id>`: one eval with lineage metadata.
 - `uv run amm-match hill-climb set-hypothesis --run-id <id> --hypothesis-id <id> ...`: create or update the first-class hypothesis registry.
 - `uv run amm-match hill-climb show-hypothesis --run-id <id> --hypothesis-id <id>`: one hypothesis with linked evals.
 - `uv run amm-match hill-climb summarize-run --run-id <id>`: incumbent chain, unresolved ideas, notebook-style findings/dead ends, abandoned families, and notable failures.
-- `uv run amm-match hill-climb analyze-run --run-id <id>`: structured frontier bank, failure clusters, intent coverage, family/layer risk scoreboards, notebook-style search memory, portfolio gaps, and recommended next-batch coverage.
+- `uv run amm-match hill-climb analyze-run --run-id <id>`: structured frontier bank, screen-stage `portfolio_bank`, failure clusters, intent coverage, family/layer risk scoreboards, notebook-style search memory, portfolio gaps, and recommended next-batch coverage.
 - `uv run amm-match hill-climb compare-profiles --stage <stage> ...`: stage-aligned phenotype deltas for baseline, candidate, and optional anchor inputs.
 
 Agent-facing contract:
 
 - Prefer `--json` for all read commands and `pull-best` when another agent or harness is consuming the output.
-- Keep `set-hypothesis` current for active branches; `intent_coverage`, `portfolio_gaps`, and `recommended_next_batch` are derived from the hypothesis registry, not only from raw eval history.
+- Keep `set-hypothesis` current for active branches; `intent_coverage`, `portfolio_gaps`, `portfolio_bank`, and `recommended_next_batch` are derived from the hypothesis registry plus recorded eval structure, not only from raw eval history.
+- In the text output for `summarize-run` and `analyze-run`, the new anchor surfaces are explicitly labeled as screen-stage: `Screen-Stage Official Incumbent`, `Screen-Stage Planning Bank`, and `Recommended Anchor Eval IDs`.
+- When a new batch is seeded from `portfolio_bank` anchors, record the reused eval ids in the new hypothesis via `nearest_prior_successes` so later synthesis can distinguish true branch reuse from fresh pivots.
 - Treat `family_scoreboard`, `layer_scoreboard`, and `research_notebook` as planning aids, not replacement acceptance rules. Promotion still depends on stage gates plus the promotion margin.
 - Use `--read-only` on `status`, `history`, `show-eval`, `show-hypothesis`, `summarize-run`, `analyze-run`, and `compare-profiles` when protected-surface drift should block mutation but not historical analysis.
 - `compare-profiles` is fail-fast: each slot must provide exactly one of `--*-eval-id` or `--*-source`, and stored evals must match the requested `--stage`.
