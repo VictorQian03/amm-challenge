@@ -33,7 +33,7 @@ of structurally distinct screen-stage anchors before you fall back to only the o
 incumbent. When you intentionally reuse one of those anchors in a new hypothesis, plan to
 record its eval id through the hypothesis field `nearest_prior_successes`.
 Before drafting hypotheses, restate both the official incumbent and the strongest raw survivor in fair-mid terms: what latent or fair mid is being estimated, how it updates, when it recenters, and how quote logic uses the gap between spot and fair mid.
-If web access is available, do targeted web searches to widen the idea set before finalizing the batch. Prefer outside concepts that are absent from the exhausted batch, and plan to carry them into the eventual hypothesis records through `novelty_coordinates.external_idea` plus `research_refs`.
+If web access is available, do targeted web searches before finalizing the batch unless the retained evidence already spans the missing layer or topology space. Prefer outside concepts that are absent from the exhausted batch, and plan to carry them into the eventual hypothesis records through `novelty_coordinates.external_idea` plus `research_refs`.
 
 Task:
 1. Describe the incumbent in four layers only:
@@ -76,7 +76,7 @@ Hard constraints:
 - At least 2 hypotheses must introduce a `quote_topology` and
   `novelty_coordinates.external_idea` pair that was absent from the most recent exhausted
   batch.
-- Prefer at least 2 hypotheses whose `novelty_coordinates.external_idea` came from explicit web searches rather than only from relabeling local evidence. If you do not use web search, say why the retained evidence was sufficient.
+- Prefer at least 2 hypotheses whose `novelty_coordinates.external_idea` came from explicit web searches rather than only from relabeling local evidence. If you skip web search, say why the retained evidence already covers the missing fair-mid or topology space.
 - At least 1 hypothesis must change state semantics or quote assembly rather than proposing
   another floor / release / envelope / latch controller on the same additive surface.
 - Use neutral, high-level labels. Prefer `single-surface additive`,
