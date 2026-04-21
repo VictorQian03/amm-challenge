@@ -1,5 +1,7 @@
 """Tests for shared configuration."""
 
+from typing import Any, cast
+
 import pytest
 
 import amm_sim_rs
@@ -7,11 +9,16 @@ import amm_sim_rs
 from amm_competition.competition.config import (
     BASELINE_SETTINGS,
     BASELINE_VARIANCE,
+    CANONICAL_FINAL_CONFIDENCE_SEEDS,
+    CANONICAL_HOLDOUT_SEEDS,
+    CANONICAL_SCREENING_SEEDS,
     baseline_nominal_retail_rate,
     baseline_nominal_retail_size,
     baseline_nominal_sigma,
     build_base_config,
     build_config,
+    resolve_n_workers,
+    validate_seed_blocks,
 )
 
 
@@ -54,6 +61,32 @@ def test_variance_values_present():
     assert BASELINE_VARIANCE.gbm_sigma_min < BASELINE_VARIANCE.gbm_sigma_max
 
 
+def test_validate_seed_blocks_accepts_canonical_blocks():
+    validate_seed_blocks(
+        screening_seeds=CANONICAL_SCREENING_SEEDS,
+        holdout_seeds=CANONICAL_HOLDOUT_SEEDS,
+        final_confidence_seeds=CANONICAL_FINAL_CONFIDENCE_SEEDS,
+    )
+
+
+def test_validate_seed_blocks_rejects_overlap():
+    with pytest.raises(ValueError, match="must not overlap"):
+        validate_seed_blocks(
+            screening_seeds=(1, 2, 3),
+            holdout_seeds=(3, 4, 5),
+            final_confidence_seeds=(6, 7, 8),
+        )
+
+
+def test_resolve_n_workers_validates_env_override():
+    assert resolve_n_workers(env={"N_WORKERS": "3"}) == 3
+    with pytest.raises(ValueError, match="must be an integer"):
+        resolve_n_workers(env={"N_WORKERS": "three"})
+    with pytest.raises(ValueError, match="must be positive"):
+        resolve_n_workers(env={"N_WORKERS": "0"})
+
+
 def test_simulation_config_requires_explicit_args():
+    simulation_config_ctor = cast(Any, amm_sim_rs.SimulationConfig)
     with pytest.raises(TypeError):
-        amm_sim_rs.SimulationConfig()
+        simulation_config_ctor()

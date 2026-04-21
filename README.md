@@ -186,3 +186,19 @@ amm-match validate my_strategy.sol
 ```
 
 Output is your average edge across simulations. The 30 bps normalizer typically scores around 250-350 edge depending on market conditions.
+
+## Thin Hill-Climb Harness
+
+For retained local optimization, start from `contracts/src/StarterStrategy.sol` and use the thin harness instead of ad hoc notebook state.
+
+```bash
+uv run amm-match hill-climb eval --run-id apr21 --stage screen
+uv run amm-match hill-climb status --run-id apr21
+uv run amm-match hill-climb history --run-id apr21
+uv run amm-match hill-climb compare-profiles --stage screen --run-id apr21 --baseline-eval-id screen_0001 --candidate-source contracts/src/StarterStrategy.sol
+```
+
+The harness keeps the eval layer strict and append-only, but it does not impose an idea-generation workflow.
+On a fresh run, the first passing stage eval seeds that stage incumbent, so evaluating `contracts/src/StarterStrategy.sol` is the canonical local baseline seed.
+Use the profile/failure-tag read surfaces to kill exhausted spines early and keep search entropy above simple incumbent-neighbor tweaks.
+See [docs/hill_climb.md](docs/hill_climb.md) for the retained run layout, stage discipline, and search guidance.

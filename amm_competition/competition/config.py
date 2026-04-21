@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 import multiprocessing
 import os
+from typing import Mapping
 
 import amm_sim_rs
 
@@ -47,6 +48,39 @@ BASELINE_VARIANCE = HyperparameterVariance(
     vary_gbm_sigma=True,
 )
 
+CANONICAL_SCREENING_SEEDS: tuple[int, ...] = tuple(range(256))
+CANONICAL_HOLDOUT_SEEDS: tuple[int, ...] = tuple(range(1000, 3000))
+CANONICAL_FINAL_CONFIDENCE_SEEDS: tuple[int, ...] = tuple(range(3000, 5000))
+
+
+def validate_seed_blocks(
+    screening_seeds: tuple[int, ...] = CANONICAL_SCREENING_SEEDS,
+    holdout_seeds: tuple[int, ...] = CANONICAL_HOLDOUT_SEEDS,
+    final_confidence_seeds: tuple[int, ...] = CANONICAL_FINAL_CONFIDENCE_SEEDS,
+) -> None:
+    """Validate canonical seed blocks are explicit, unique, and disjoint."""
+    if not screening_seeds or not holdout_seeds or not final_confidence_seeds:
+        raise ValueError("All canonical seed blocks must be non-empty")
+
+    blocks = {
+        "screening": screening_seeds,
+        "holdout": holdout_seeds,
+        "final_confidence": final_confidence_seeds,
+    }
+    for name, seeds in blocks.items():
+        if len(set(seeds)) != len(seeds):
+            raise ValueError(f"Seed block {name!r} must not contain duplicates")
+
+    if set(screening_seeds).intersection(holdout_seeds):
+        raise ValueError("Screening and holdout seed blocks must not overlap")
+    if set(screening_seeds).intersection(final_confidence_seeds):
+        raise ValueError("Screening and final confidence seed blocks must not overlap")
+    if set(holdout_seeds).intersection(final_confidence_seeds):
+        raise ValueError("Holdout and final confidence seed blocks must not overlap")
+
+
+validate_seed_blocks()
+
 def _midpoint(min_val: float, max_val: float) -> float:
     return (min_val + max_val) / 2
 
@@ -69,9 +103,23 @@ def baseline_nominal_retail_size() -> float:
     )
 
 
-def resolve_n_workers() -> int:
+def _default_n_workers() -> int:
+    return min(8, multiprocessing.cpu_count())
+
+
+def resolve_n_workers(*, env: Mapping[str, str] | None = None) -> int:
     """Resolve worker count from environment or CPU count."""
-    return int(os.environ.get("N_WORKERS", str(min(8, multiprocessing.cpu_count()))))
+    resolved_env = os.environ if env is None else env
+    raw_value = resolved_env.get("N_WORKERS")
+    if raw_value is None:
+        return _default_n_workers()
+    try:
+        n_workers = int(raw_value)
+    except ValueError as exc:
+        raise ValueError(f"N_WORKERS must be an integer, found {raw_value!r}") from exc
+    if n_workers <= 0:
+        raise ValueError(f"N_WORKERS must be positive, found {n_workers}")
+    return n_workers
 
 
 def build_base_config(*, seed: int | None) -> amm_sim_rs.SimulationConfig:

@@ -2,11 +2,9 @@
 
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Optional
+from typing import Mapping, Optional, Protocol, Sequence
 
 import amm_sim_rs
-
-from amm_competition.evm.adapter import EVMStrategyAdapter
 
 
 @dataclass
@@ -48,6 +46,15 @@ class LightweightSimResult:
     arb_volume_y: dict[str, float]
     retail_volume_y: dict[str, float]
     average_fees: dict[str, tuple[float, float]]
+    gbm_sigma: float
+    retail_arrival_rate: float
+    retail_mean_size: float
+    retail_edge: dict[str, float] = field(default_factory=dict)
+    arb_edge: dict[str, float] = field(default_factory=dict)
+    retail_trade_count: dict[str, int] = field(default_factory=dict)
+    arb_trade_count: dict[str, int] = field(default_factory=dict)
+    max_fee_jump: dict[str, float] = field(default_factory=dict)
+    time_weighted_fees: dict[str, tuple[float, float]] = field(default_factory=dict)
 
 
 @dataclass
@@ -81,6 +88,15 @@ class MatchResult:
 SimulationConfig = amm_sim_rs.SimulationConfig
 
 
+class MatchStrategy(Protocol):
+    """Minimal strategy contract required by the Rust match runner."""
+
+    @property
+    def bytecode(self) -> bytes: ...
+
+    def get_name(self) -> str: ...
+
+
 class MatchRunner:
     """Runs matches using Rust simulation engine."""
 
@@ -91,19 +107,42 @@ class MatchRunner:
         config: SimulationConfig,
         n_workers: int,
         variance: HyperparameterVariance,
+        seed_block: Optional[Sequence[int]] = None,
     ):
         self.n_simulations = n_simulations
         self.base_config = config
         self.n_workers = n_workers
         self.variance = variance
+        self.seed_block = self._resolve_seed_block(seed_block)
+
+    def _resolve_seed_block(
+        self, seed_block: Optional[Sequence[int]]
+    ) -> Optional[tuple[int, ...]]:
+        if seed_block is None:
+            return None
+
+        resolved = tuple(int(seed) for seed in seed_block)
+        if len(resolved) != self.n_simulations:
+            raise ValueError(
+                "Explicit seed_block length must match n_simulations "
+                f"({len(resolved)} != {self.n_simulations})"
+            )
+        if len(set(resolved)) != len(resolved):
+            raise ValueError("Explicit seed_block must not contain duplicate seeds")
+        return resolved
 
     def _build_configs(self) -> list[amm_sim_rs.SimulationConfig]:
         """Build simulation configs with optional variance."""
         import numpy as np
 
         configs = []
-        for i in range(self.n_simulations):
-            rng = np.random.default_rng(seed=i)
+        seeds = (
+            self.seed_block
+            if self.seed_block is not None
+            else tuple(range(self.n_simulations))
+        )
+        for seed in seeds:
+            rng = np.random.default_rng(seed=seed)
 
             retail_mean_size = (
                 rng.uniform(self.variance.retail_mean_size_min, self.variance.retail_mean_size_max)
@@ -133,15 +172,15 @@ class MatchRunner:
                 retail_mean_size=retail_mean_size,
                 retail_size_sigma=self.base_config.retail_size_sigma,
                 retail_buy_prob=self.base_config.retail_buy_prob,
-                seed=i,
+                seed=seed,
             )
             configs.append(cfg)
         return configs
 
     def run_match(
         self,
-        strategy_a: EVMStrategyAdapter,
-        strategy_b: EVMStrategyAdapter,
+        strategy_a: MatchStrategy,
+        strategy_b: MatchStrategy,
         store_results: bool = False,
     ) -> MatchResult:
         """Run a complete match between two strategies."""
@@ -153,8 +192,8 @@ class MatchRunner:
 
         # Run simulations in Rust
         batch_result = amm_sim_rs.run_batch(
-            list(strategy_a._bytecode),
-            list(strategy_b._bytecode),
+            list(strategy_a.bytecode),
+            list(strategy_b.bytecode),
             configs,
             self.n_workers,
         )
@@ -168,13 +207,26 @@ class MatchRunner:
         total_edge_a = Decimal("0")
         total_edge_b = Decimal("0")
         simulation_results = []
+        configs_by_seed: dict[int, amm_sim_rs.SimulationConfig] = {}
+        for cfg in configs:
+            if cfg.seed is None:
+                raise RuntimeError("Simulation config is missing a seed")
+            configs_by_seed[int(cfg.seed)] = cfg
 
         for rust_result in batch_result.results:
             # Get PnL values using fixed positional keys from Rust
-            pnl_a = rust_result.pnl.get("submission", 0.0)
-            pnl_b = rust_result.pnl.get("normalizer", 0.0)
-            edge_a = rust_result.edges.get("submission", 0.0)
-            edge_b = rust_result.edges.get("normalizer", 0.0)
+            pnl_a = _required_result_value(
+                rust_result.pnl, "submission", field_name="pnl"
+            )
+            pnl_b = _required_result_value(
+                rust_result.pnl, "normalizer", field_name="pnl"
+            )
+            edge_a = _required_result_value(
+                rust_result.edges, "submission", field_name="edges"
+            )
+            edge_b = _required_result_value(
+                rust_result.edges, "normalizer", field_name="edges"
+            )
 
             total_pnl_a += Decimal(str(pnl_a))
             total_pnl_b += Decimal(str(pnl_b))
@@ -200,20 +252,38 @@ class MatchRunner:
                     )
                     for s in rust_result.steps
                 ]
+                sim_config = configs_by_seed.get(int(rust_result.seed))
+                if sim_config is None:
+                    raise RuntimeError(
+                        f"Missing simulation config for stored result seed {rust_result.seed}"
+                    )
 
                 sim_result = LightweightSimResult(
                     seed=rust_result.seed,
-                    strategies=rust_result.strategies,
+                    strategies=list(rust_result.strategies),
                     pnl={k: Decimal(str(v)) for k, v in rust_result.pnl.items()},
-                    edges={
-                        k: Decimal(str(v)) for k, v in rust_result.edges.items()
-                    },
+                    edges={k: Decimal(str(v)) for k, v in rust_result.edges.items()},
                     initial_fair_price=rust_result.initial_fair_price,
-                    initial_reserves=rust_result.initial_reserves,
+                    initial_reserves=dict(rust_result.initial_reserves),
                     steps=steps,
-                    arb_volume_y=rust_result.arb_volume_y,
-                    retail_volume_y=rust_result.retail_volume_y,
-                    average_fees=rust_result.average_fees,
+                    arb_volume_y=dict(rust_result.arb_volume_y),
+                    retail_volume_y=dict(rust_result.retail_volume_y),
+                    average_fees=dict(rust_result.average_fees),
+                    gbm_sigma=sim_config.gbm_sigma,
+                    retail_arrival_rate=sim_config.retail_arrival_rate,
+                    retail_mean_size=sim_config.retail_mean_size,
+                    retail_edge=_required_float_mapping(rust_result, "retail_edge"),
+                    arb_edge=_required_float_mapping(rust_result, "arb_edge"),
+                    retail_trade_count=_required_int_mapping(
+                        rust_result, "retail_trade_count"
+                    ),
+                    arb_trade_count=_required_int_mapping(
+                        rust_result, "arb_trade_count"
+                    ),
+                    max_fee_jump=_required_float_mapping(rust_result, "max_fee_jump"),
+                    time_weighted_fees=_required_fee_pair_mapping(
+                        rust_result, "time_weighted_fees"
+                    ),
                 )
                 simulation_results.append(sim_result)
 
@@ -229,3 +299,60 @@ class MatchRunner:
             total_edge_b=total_edge_b,
             simulation_results=simulation_results,
         )
+
+
+def _required_result_value(
+    mapping: Mapping[str, object], key: str, *, field_name: str
+) -> float:
+    if key not in mapping:
+        raise RuntimeError(f"Missing required {field_name} entry {key!r}")
+    value = mapping[key]
+    if not isinstance(value, (int, float)):
+        raise RuntimeError(
+            f"Expected numeric {field_name} entry {key!r}, found {type(value).__name__}"
+        )
+    return float(value)
+
+
+def _required_mapping(raw_result: object, field_name: str) -> Mapping[str, object]:
+    try:
+        mapping = getattr(raw_result, field_name)
+    except AttributeError as exc:
+        raise RuntimeError(
+            f"Simulation result is missing required field {field_name!r}"
+        ) from exc
+    if not isinstance(mapping, Mapping):
+        raise RuntimeError(f"Expected mapping field {field_name!r} in simulation result")
+    return mapping
+
+
+def _required_float_mapping(raw_result: object, field_name: str) -> dict[str, float]:
+    mapping = _required_mapping(raw_result, field_name)
+    return {
+        str(key): float(value)
+        for key, value in mapping.items()
+        if isinstance(value, (int, float))
+    }
+
+
+def _required_int_mapping(raw_result: object, field_name: str) -> dict[str, int]:
+    mapping = _required_mapping(raw_result, field_name)
+    return {
+        str(key): int(value)
+        for key, value in mapping.items()
+        if isinstance(value, (int, float))
+    }
+
+
+def _required_fee_pair_mapping(
+    raw_result: object, field_name: str
+) -> dict[str, tuple[float, float]]:
+    mapping = _required_mapping(raw_result, field_name)
+    payload: dict[str, tuple[float, float]] = {}
+    for key, value in mapping.items():
+        if not isinstance(value, tuple) or len(value) != 2:
+            continue
+        if not isinstance(value[0], (int, float)) or not isinstance(value[1], (int, float)):
+            continue
+        payload[str(key)] = (float(value[0]), float(value[1]))
+    return payload

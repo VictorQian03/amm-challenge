@@ -1,6 +1,5 @@
 """Tests for competition framework."""
 
-import pytest
 from decimal import Decimal
 
 import amm_sim_rs
@@ -165,6 +164,58 @@ class TestMatchRunner:
         result = runner.run_match(strategy_a, strategy_b, store_results=True)
 
         assert len(result.simulation_results) == 3
+        first_result = result.simulation_results[0]
+        assert first_result.seed in {0, 1, 2}
+        assert isinstance(first_result.gbm_sigma, float)
+        assert isinstance(first_result.retail_arrival_rate, float)
+        assert isinstance(first_result.retail_mean_size, float)
+        assert "submission" in first_result.retail_edge
+        assert "submission" in first_result.arb_edge
+        assert "submission" in first_result.max_fee_jump
+        assert "submission" in first_result.time_weighted_fees
+
+    def test_explicit_seed_block_preserves_requested_seeds(self, vanilla_bytecode_and_abi):
+        from amm_competition.evm.adapter import EVMStrategyAdapter
+
+        config = amm_sim_rs.SimulationConfig(
+            n_steps=50,
+            initial_price=100.0,
+            initial_x=100.0,
+            initial_y=10000.0,
+            gbm_mu=0.0,
+            gbm_sigma=0.001,
+            gbm_dt=1.0,
+            retail_arrival_rate=5.0,
+            retail_mean_size=2.0,
+            retail_size_sigma=0.7,
+            retail_buy_prob=0.5,
+            seed=None,
+        )
+        variance = HyperparameterVariance(
+            retail_mean_size_min=2.0,
+            retail_mean_size_max=2.0,
+            vary_retail_mean_size=False,
+            retail_arrival_rate_min=5.0,
+            retail_arrival_rate_max=5.0,
+            vary_retail_arrival_rate=False,
+            gbm_sigma_min=0.001,
+            gbm_sigma_max=0.001,
+            vary_gbm_sigma=False,
+        )
+        runner = MatchRunner(
+            n_simulations=3,
+            config=config,
+            n_workers=1,
+            variance=variance,
+            seed_block=(7, 11, 13),
+        )
+
+        bytecode, abi = vanilla_bytecode_and_abi
+        strategy_a = EVMStrategyAdapter(bytecode=bytecode, abi=abi)
+        strategy_b = EVMStrategyAdapter(bytecode=bytecode, abi=abi, name="Vanilla_30bps")
+
+        result = runner.run_match(strategy_a, strategy_b, store_results=True)
+        assert [entry.seed for entry in result.simulation_results] == [7, 11, 13]
 
     def test_same_name_strategies_no_collision(self, vanilla_bytecode_and_abi):
         """Test that strategies with the same getName() don't cause HashMap collision."""

@@ -1,0 +1,22 @@
+# Core simulation and scoring mechanics
+amm_sim_rs/src/amm/**
+amm_sim_rs/src/market/**
+amm_sim_rs/src/simulation/**
+amm_sim_rs/src/evm/strategy.rs
+amm_sim_rs/src/types/config.rs
+amm_sim_rs/src/types/trade_info.rs
+amm_sim_rs/src/types/wad.rs
+
+# Python-side baseline and validation rules
+amm_competition/competition/config.py
+amm_competition/competition/match.py
+amm_competition/competition/eval.py
+amm_competition/evm/baseline.py
+amm_competition/evm/compiler.py
+amm_competition/evm/executor.py
+amm_competition/evm/validator.py
+
+# Solidity-side strategy API and fixed normalizer
+contracts/src/AMMStrategyBase.sol
+contracts/src/IAMMStrategy.sol
+contracts/src/VanillaStrategy.sol

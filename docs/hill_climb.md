@@ -1,0 +1,133 @@
+# Thin Hill-Climb Harness
+
+This harness is intentionally narrow.
+It owns evaluation discipline, retained run ledgers, and anti-regression guardrails.
+It does not own idea generation, batch planning, or hypothesis workflow.
+
+## What It Covers
+
+- Fixed stage presets with canonical seed blocks.
+- Append-only eval ledgers under `artifacts/hill_climb/<run_id>/`.
+- Content-addressed source snapshots so repeated restores do not regenerate duplicate artifacts.
+- Per-stage incumbents and best-raw read surfaces.
+- Protected-mechanics fingerprinting so a retained run does not silently span evaluator changes.
+
+## What It Does Not Cover
+
+- No required hypothesis registry.
+- No batch-diversity contract.
+- No idea-generation queue or structured planning state.
+- No forced refine or pivot workflow.
+
+Agents should use the harness to measure and compare candidates, not to decide how to search.
+
+## Run Layout
+
+Each run lives under `artifacts/hill_climb/<run_id>/`.
+
+- `run.json`: manifest for the retained lane and its protected-surface fingerprint.
+- `results.jsonl`: authoritative append-only eval ledger.
+- `results.tsv`: compact human-readable ledger.
+- `history.jsonl`: derived compact read model.
+- `snapshots/<sha256>.sol`: content-addressed source snapshots.
+- `incumbents/<stage>.json`: current incumbent for each stage.
+
+Cross-run navigation lives at `artifacts/hill_climb/index.json`.
+The newest valid run is marked `active`; older valid runs are `historical`; fingerprint-stale or corrupted runs are `blocked`.
+The run layout is canonical: if `run.json`, `results.jsonl`, or `incumbents/<stage>.json` drift from each other, the harness fails loud instead of silently repairing the lane.
+
+## Commands
+
+Run a retained eval:
+
+```bash
+uv run amm-match hill-climb eval --run-id apr21 --stage screen
+```
+
+On a fresh run, the first passing eval at a stage becomes that stage's incumbent.
+The default eval source is `contracts/src/StarterStrategy.sol`, so `screen_0001` is the canonical way to seed the local incumbent from the current starter strategy.
+
+List runs:
+
+```bash
+uv run amm-match hill-climb runs
+```
+
+Inspect one run:
+
+```bash
+uv run amm-match hill-climb status --run-id apr21
+uv run amm-match hill-climb history --run-id apr21
+uv run amm-match hill-climb show-eval --run-id apr21 --eval-id screen_0004
+```
+
+Restore the current incumbent:
+
+```bash
+uv run amm-match hill-climb pull-best --run-id apr21 --stage screen --destination contracts/src/StarterStrategy.sol
+```
+
+Compare phenotype/profile deltas:
+
+```bash
+uv run amm-match hill-climb compare-profiles \
+  --stage screen \
+  --run-id apr21 \
+  --baseline-eval-id screen_0002 \
+  --candidate-source contracts/src/StarterStrategy.sol
+```
+
+`compare-profiles` with a `--*-source` argument still runs the evaluator.
+If protected competition mechanics are dirty, it blocks for the same reason a retained eval would block.
+
+## Stage Discipline
+
+- `smoke`: quick runtime sanity check.
+- `prescreen`: cheap risky-pivot filter; rejects materially arb-leaky candidates.
+- `screen`: canonical fixed-seed screening stage.
+- `climb`: larger screening block for stronger incumbent replacement.
+- `confirm`: disjoint holdout confirmation.
+- `final`: largest local confidence run.
+
+Replacement rule:
+
+1. Candidate must pass the stage gate.
+2. If there is no incumbent for that stage, the result is `seed`.
+3. Otherwise, it becomes `keep` only if `mean_edge - incumbent_mean_edge` clears the promotion margin.
+
+Promotion margin:
+
+```text
+promotion_margin = max(1e-9, sqrt(candidate_se^2 + incumbent_se^2))
+candidate_se = edge_stddev / sqrt(simulation_count)
+```
+
+This keeps the harness strict on measurement without prescribing what the next search step should be.
+
+## Search Guidance
+
+Use these as search prompts, not as required workflow:
+
+1. Decompose strategy changes across `state estimation`, `risk budget`, `opportunity budget`, and `quote map`.
+2. Keep an explicit explore/exploit split. Do not spend every iteration on local coefficient polish.
+3. When the search feels trapped, use web search or external literature to import missing topologies instead of relabeling the same design.
+4. Use `compare-profiles` plus screening metrics such as `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, and `time_weighted_mean_fee` to judge whether a branch is actually different.
+5. Prefer a fresh `run_id` when the evaluator surface changes or a retained run looks stale or corrupted.
+
+## Entropy Guardrails
+
+Use these to keep long-running search loops from collapsing into the incumbent's neighborhood:
+
+1. Keep at least one live branch in more than one module family: `state estimation`, `risk budget`, `opportunity budget`, and `quote map`.
+2. If two discarded variants land on the same `primary_failure_tag` with similar profile deltas, treat that spine as exhausted and switch families instead of polishing coefficients again.
+3. Maintain three anchors in your reasoning: the incumbent, the best raw non-promoted branch, and one structurally different outsider.
+4. Write `--label` and `--description` in structural language so the history makes family collapse obvious.
+5. Periodically import outside evidence when the loop keeps regenerating the same failure signature; do not let the harness free-run on stale internal ideas alone.
+
+## Anti-Patterns
+
+- Do not hand-edit `results.jsonl`, `results.tsv`, `history.jsonl`, or `.next_eval_index`.
+- Do not continue a retained run after changing protected competition mechanics; start a fresh `run_id`.
+- Do not let the harness dictate idea generation. The harness should constrain evaluation quality, not design creativity.
+- Do not rely on a single topology family once profile comparisons show repeated failure signatures.
+- Do not spend multiple consecutive evals on same-spine fee nudges after repeated identical failure tags.
