@@ -99,13 +99,13 @@ Promotion policy:
 
 ## Read Surfaces
 
-- `uv run amm-match hill-climb status`: quick official-incumbent, best-raw, latest, outcome-gate, and loop-guidance read.
+- `uv run amm-match hill-climb status`: quick official-incumbent, best-raw, latest, outcome-gate, loop-guidance, and queued-hypothesis read. If `state.json` drifts from the active open batch, `status` resolves the true queued hypothesis when it can and emits a warning when it cannot.
 - `uv run amm-match hill-climb history --run-id <id>`: compact per-eval timeline.
 - `uv run amm-match hill-climb show-eval --run-id <id> --eval-id <id>`: one eval with lineage metadata.
 - `uv run amm-match hill-climb set-hypothesis --run-id <id> --hypothesis-id <id> ...`: create or update the first-class hypothesis registry.
 - `uv run amm-match hill-climb show-hypothesis --run-id <id> --hypothesis-id <id>`: one hypothesis with linked evals.
-- `uv run amm-match hill-climb summarize-run --run-id <id>`: incumbent chain, unresolved ideas, notebook-style findings/dead ends, abandoned families, and notable failures.
-- `uv run amm-match hill-climb analyze-run --run-id <id>`: structured frontier bank, screen-stage `portfolio_bank`, failure clusters, intent coverage, family/layer risk scoreboards, notebook-style search memory, portfolio gaps, and recommended next-batch coverage.
+- `uv run amm-match hill-climb summarize-run --run-id <id>`: incumbent chain, unresolved ideas, notebook-style findings/dead ends, abandoned families, notable failures, and a compact screening-signal comparison for official incumbent, best raw, and recommended planning anchors.
+- `uv run amm-match hill-climb analyze-run --run-id <id>`: structured frontier bank, screen-stage `portfolio_bank`, failure clusters, intent coverage, family/layer risk scoreboards, notebook-style search memory, portfolio gaps, recommended next-batch coverage, and the same screening-signal comparison surface for fast anchor triage.
 - `uv run amm-match hill-climb compare-profiles --stage <stage> ...`: stage-aligned phenotype deltas for baseline, candidate, and optional anchor inputs.
 
 Agent-facing contract:
@@ -122,9 +122,9 @@ Agent-facing contract:
 
 ## Stop Policy
 
-- After 3 non-improving iterations on the current line, refine the same idea with a narrower change.
-- After 5 non-improving iterations, pivot to a meaningfully different hypothesis.
+- After 3 non-improving iterations on the current line, the refine threshold is reached. Treat it as a prompt to re-check whether another same-line spend is worthwhile, not as a forced next action.
+- After 5 non-improving iterations, the pivot threshold is reached. Treat it as evidence to review alternatives, not as a mandatory pivot command.
 - If two survivors are near-replays or a full batch stays inside the same quote topology,
-  force the next batch to change decomposition layer before spending more local refinements.
+  surface layer-diversity pressure before spending more local refinements.
 - After 2 failed pivots, pause and re-check the evaluator evidence before widening the search further.
-- Stop when the current stage is exhausted, the next hypothesis is unclear, or the retained artifacts fail validation.
+- Stop when the current stage is exhausted, the next hypothesis is unclear, or the retained artifacts fail validation. When stop guidance is reached (or continuity/fingerprint checks fail), treat the lane as historical and seed a fresh `run_id` instead of continuing the same retained lane.

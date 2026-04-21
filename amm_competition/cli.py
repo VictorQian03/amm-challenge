@@ -76,6 +76,75 @@ def _recommended_anchor_pair(
     return None
 
 
+def _print_next_hypothesis(state: Any) -> None:
+    queued = state.queued_hypothesis
+    resolved_hypothesis_id = queued.resolved_hypothesis_id
+    resolved_hypothesis_note = queued.resolved_hypothesis_note
+    if resolved_hypothesis_id is None:
+        if queued.warning:
+            print("Next Hypothesis: unresolved")
+            print(f"Next Hypothesis Warning: {queued.warning}")
+        else:
+            print("Next Hypothesis: none")
+        return
+    if resolved_hypothesis_note:
+        print(
+            f"Next Hypothesis: {resolved_hypothesis_id} ({resolved_hypothesis_note})"
+        )
+    else:
+        print(f"Next Hypothesis: {resolved_hypothesis_id}")
+    if queued.warning:
+        print(f"Next Hypothesis Warning: {queued.warning}")
+
+
+def _batch_diversity_summary(batch_diversity: dict[str, Any]) -> dict[str, Any]:
+    summary = batch_diversity.get("diversity_summary")
+    if isinstance(summary, dict):
+        return summary
+    reasons: list[str] = []
+    if batch_diversity.get("distinct_primary_layer_count", 0) < 3:
+        reasons.append(
+            f"{batch_diversity.get('distinct_primary_layer_count', 0)} primary layers"
+        )
+    if not batch_diversity.get("has_topology_branch", False):
+        reasons.append("topology branch missing")
+    if batch_diversity.get("repeated_quote_topology_groups"):
+        reasons.append("repeated quote topology groups")
+    if batch_diversity.get("same_spine_failure_groups"):
+        reasons.append("same-spine failure clusters")
+    status = "empty"
+    if batch_diversity.get("open_hypothesis_ids"):
+        status = "ready" if not reasons else "thin"
+    return {"status": status, "reasons": reasons}
+
+
+def _format_metric(value: Any) -> str:
+    if isinstance(value, bool):
+        return "n/a"
+    if isinstance(value, (int, float)):
+        return f"{float(value):.6f}"
+    return "n/a"
+
+
+def _print_screening_signal_comparison(comparison: dict[str, Any]) -> None:
+    print("Screening Signal Comparison:")
+    rows = comparison.get("rows", [])
+    if not rows:
+        print("  none")
+        return
+    metric_fields = comparison.get("metric_fields", [])
+    for row in rows:
+        eval_id = row.get("eval_id") or "unknown"
+        roles = row.get("roles", [])
+        role_text = "/".join(str(role) for role in roles) if roles else "unlabeled"
+        metrics = row.get("metrics", {})
+        metric_text = ", ".join(
+            f"{field}={_format_metric(metrics.get(field))}"
+            for field in metric_fields
+        )
+        print(f"  {eval_id} [{role_text}] {metric_text}")
+
+
 def _json_default(value: object) -> object:
     if isinstance(value, Path):
         return str(value)
@@ -495,14 +564,7 @@ def hill_climb_status_command(args: argparse.Namespace) -> int:
         )
     print(f"Current Target Stage: {state.current_target_stage}")
     print(f"Run Mode: {state.run_mode}")
-    if state.next_hypothesis_id is None:
-        print("Next Hypothesis: none")
-    elif state.next_hypothesis_note:
-        print(
-            f"Next Hypothesis: {state.next_hypothesis_id} ({state.next_hypothesis_note})"
-        )
-    else:
-        print(f"Next Hypothesis: {state.next_hypothesis_id}")
+    _print_next_hypothesis(state)
     if state.outcome_gate is None:
         print("Outcome Gate: none")
     else:
@@ -515,6 +577,10 @@ def hill_climb_status_command(args: argparse.Namespace) -> int:
     )
     print(f"Target-Stage Non-Improving Streak: {state.guidance.non_improving_streak}")
     print(f"Stop-Rule Guidance: {state.guidance.message}")
+    if state.guidance.action == "stop":
+        print(
+            "Fresh-Run Recommendation: seed a fresh run_id instead of continuing this retained lane"
+        )
     return 0
 
 
@@ -609,14 +675,7 @@ def hill_climb_set_state_command(args: argparse.Namespace) -> int:
     print(f"Run: {state.run_id}")
     print(f"Current Target Stage: {state.current_target_stage}")
     print(f"Run Mode: {state.run_mode}")
-    if state.next_hypothesis_id is None:
-        print("Next Hypothesis: none")
-    elif state.next_hypothesis_note:
-        print(
-            f"Next Hypothesis: {state.next_hypothesis_id} ({state.next_hypothesis_note})"
-        )
-    else:
-        print(f"Next Hypothesis: {state.next_hypothesis_id}")
+    _print_next_hypothesis(state)
     if state.outcome_gate is None:
         print("Outcome Gate: none")
     else:
@@ -934,6 +993,7 @@ def hill_climb_summarize_run_command(args: argparse.Namespace) -> int:
         print("Recommended Anchor Eval IDs: none")
     else:
         print("Recommended Anchor Eval IDs: " + ", ".join(anchor_pair))
+    _print_screening_signal_comparison(summary.get("screening_signal_comparison", {}))
     print("Decomposition Gaps: " + (", ".join(summary["decomposition_gaps"]) or "none"))
     batch_diversity = summary["batch_diversity"]
     print(
@@ -943,6 +1003,16 @@ def hill_climb_summarize_run_command(args: argparse.Namespace) -> int:
             "topology branch present"
             if batch_diversity["has_topology_branch"]
             else "topology branch missing"
+        )
+    )
+    diversity_summary = _batch_diversity_summary(batch_diversity)
+    print(
+        "Batch Diversity Summary: "
+        f"{diversity_summary['status']}"
+        + (
+            ""
+            if not diversity_summary["reasons"]
+            else f" ({', '.join(diversity_summary['reasons'])})"
         )
     )
     print("Portfolio Gaps: " + (", ".join(summary["portfolio_gaps"]) or "none"))
@@ -1019,6 +1089,16 @@ def hill_climb_analyze_run_command(args: argparse.Namespace) -> int:
             else "topology branch missing"
         )
     )
+    diversity_summary = _batch_diversity_summary(batch_diversity)
+    print(
+        "Batch Diversity Summary: "
+        f"{diversity_summary['status']}"
+        + (
+            ""
+            if not diversity_summary["reasons"]
+            else f" ({', '.join(diversity_summary['reasons'])})"
+        )
+    )
     for issue in batch_diversity["issues"]:
         print(f"  Issue: {issue}")
     print("Portfolio Gaps: " + (", ".join(payload["portfolio_gaps"]) or "none"))
@@ -1081,6 +1161,7 @@ def hill_climb_analyze_run_command(args: argparse.Namespace) -> int:
         print("Recommended Anchor Eval IDs: none")
     else:
         print("Recommended Anchor Eval IDs: " + ", ".join(anchor_pair))
+    _print_screening_signal_comparison(payload.get("screening_signal_comparison", {}))
     print("Recommended Next Batch:")
     for entry in payload["recommended_next_batch"]:
         covered = "covered" if entry["covered"] else "missing"

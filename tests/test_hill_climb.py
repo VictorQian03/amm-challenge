@@ -710,7 +710,38 @@ def test_cross_run_index_marks_stop_guidance_lane_historical_even_with_stale_nex
 
     assert run_entry["run_id"] == "mar26"
     assert run_entry["status"] == "historical"
-    assert "stop now (8 consecutive non-improving screen evaluations; threshold 8)" in (
+    assert (
+        "stop threshold reached (8 consecutive non-improving screen evaluations; threshold 8; "
+        "seed a fresh run_id instead of continuing this retained lane)"
+    ) in run_entry["notes"]
+
+
+def test_cross_run_index_marks_fingerprint_stale_lane_historical(tmp_path):
+    repo_root, strategy_path, protected_path = _build_protected_repo(tmp_path)
+    harness = HillClimbHarness(
+        artifact_root=repo_root / "artifacts",
+        n_workers=1,
+        strategy_loader=cast(Any, _FixedStrategyLoader()),
+        baseline_loader=lambda: object(),
+        stage_runner_factory=_SequentialRunnerFactory(
+            [_make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0])]
+        ),
+        protected_surface_checker=ProtectedSurfaceChecker(repo_root=repo_root),
+    )
+    harness.evaluate(run_id="mar26", stage="screen", source_path=strategy_path)
+    protected_path.write_text("BASELINE = 3\n")
+    harness._write_cross_run_index()
+
+    index_payload = json.loads((repo_root / "index.json").read_text())
+    run_entry = index_payload["hill_climb_runs"][0]
+
+    assert run_entry["run_id"] == "mar26"
+    assert run_entry["status"] == "historical"
+    assert any(
+        "pinned to a different protected competition mechanics surface" in note
+        for note in run_entry["notes"]
+    )
+    assert "retained lane is fingerprint-stale; seed a fresh run_id before continuing" in (
         run_entry["notes"]
     )
 
@@ -1266,7 +1297,60 @@ def test_set_state_updates_loop_metadata_and_status_reports_guidance(
         in output
     )
     assert "Target-Stage Non-Improving Streak: 5" in output
-    assert "Stop-Rule Guidance: pivot now" in output
+    assert "Stop-Rule Guidance: pivot threshold reached" in output
+
+
+def test_status_resolves_unique_open_hypothesis_when_state_pointer_is_stale(
+    tmp_path, capsys, monkeypatch
+):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// baseline")
+
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[_make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0])],
+    )
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    monkeypatch.setattr(
+        "amm_competition.hill_climb.harness.ProtectedSurfaceChecker.discover",
+        lambda: _NoopProtectedSurfaceChecker(),
+    )
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="stale-next",
+        title="Stale next",
+        rationale="Old pointer that should no longer drive status output.",
+        expected_effect="None",
+        mutation_family="stale_next",
+        status="discard",
+        **_structural_hypothesis_kwargs(),
+    )
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="real-next",
+        title="Real next",
+        rationale="Only open hypothesis in the active batch.",
+        expected_effect="Use the active registry entry.",
+        mutation_family="real_next",
+        status="queued",
+        **_structural_hypothesis_kwargs(batch_id="batch-001"),
+    )
+    harness.update_run_state(
+        run_id="mar26",
+        next_hypothesis_id="stale-next",
+        next_hypothesis_id_set=True,
+    )
+
+    status_args = argparse.Namespace(
+        run_id="mar26",
+        artifact_root=str(tmp_path / "artifacts"),
+        stage="screen",
+    )
+    assert hill_climb_status_command(status_args) == 0
+    output = capsys.readouterr().out
+    assert "Next Hypothesis: real-next (Real next)" in output
+    assert "Next Hypothesis Warning:" in output
+    assert "resolved the queued hypothesis from the active registry batch as real-next" in output
 
 
 def test_status_surfaces_best_raw_separately_from_official_incumbent(
@@ -1682,6 +1766,11 @@ def test_hill_climb_history_and_lookup_commands_surface_agent_facing_read_models
     assert "Screen-Stage Official Incumbent: screen_0002 6.000000" in summarize_output
     assert "Screen-Stage Planning Bank:" in summarize_output
     assert "Recommended Anchor Eval IDs: screen_0002" in summarize_output
+    assert "Screening Signal Comparison:" in summarize_output
+    assert (
+        "screen_0002 [official_incumbent/best_raw/recommended_anchor] mean_edge=6.000000"
+        in summarize_output
+    )
     assert (
         "Decomposition Gaps: state, risk_budget, opportunity_budget, quote_map"
         in summarize_output
@@ -1689,6 +1778,7 @@ def test_hill_climb_history_and_lookup_commands_surface_agent_facing_read_models
     assert (
         "Batch Diversity: 0 primary layers, topology branch missing" in summarize_output
     )
+    assert "Batch Diversity Summary: empty" in summarize_output
 
 
 def test_analyze_run_and_compare_profiles_commands_surface_frontier_and_profile_deltas(
@@ -1727,11 +1817,17 @@ def test_analyze_run_and_compare_profiles_commands_surface_frontier_and_profile_
     assert (
         "Batch Diversity: 0 primary layers, topology branch missing" in analyze_output
     )
+    assert "Batch Diversity Summary: empty" in analyze_output
     assert "Best Raw Frontier:" in analyze_output
     assert "screen_0002 screen 6.000000" in analyze_output
     assert "Screen-Stage Official Incumbent: screen_0002 6.000000" in analyze_output
     assert "Screen-Stage Planning Bank:" in analyze_output
     assert "Recommended Anchor Eval IDs: screen_0002" in analyze_output
+    assert "Screening Signal Comparison:" in analyze_output
+    assert (
+        "screen_0002 [official_incumbent/best_raw/recommended_anchor] mean_edge=6.000000"
+        in analyze_output
+    )
     assert (
         "Portfolio Gaps: anti_arb, weak_slice, fee_discipline, structural_pivot"
         in analyze_output
@@ -2106,6 +2202,16 @@ def test_analyze_run_portfolio_bank_suppresses_clones_and_retains_distinct_speci
         "screen_0002",
         "screen_0004",
     ]
+    row_by_eval_id = {
+        row["eval_id"]: row for row in payload["screening_signal_comparison"]["rows"]
+    }
+    assert {"screen_0002", "screen_0004"}.issubset(row_by_eval_id)
+    assert any(
+        "official_incumbent" in row["roles"] for row in row_by_eval_id.values()
+    )
+    assert "best_raw" in row_by_eval_id["screen_0002"]["roles"]
+    assert "recommended_anchor" in row_by_eval_id["screen_0002"]["roles"]
+    assert row_by_eval_id["screen_0004"]["roles"] == ["recommended_anchor"]
 
 
 def test_analyze_run_treats_three_layer_open_batch_as_contract_complete(tmp_path):
@@ -2166,6 +2272,13 @@ def test_analyze_run_treats_three_layer_open_batch_as_contract_complete(tmp_path
     assert payload["decomposition_gaps"] == ["opportunity_budget"]
     assert payload["batch_diversity"]["distinct_primary_layer_count"] == 3
     assert payload["batch_diversity"]["has_topology_branch"] is True
+    assert payload["batch_diversity"]["diversity_summary"] == {
+        "status": "ready",
+        "has_meaningful_diversity": True,
+        "reasons": [],
+        "repeated_quote_topology_group_count": 0,
+        "same_spine_failure_group_count": 0,
+    }
     assert payload["structural_recommendations"] == [
         {
             "kind": "batch_contract",
@@ -2255,6 +2368,13 @@ def test_analyze_run_scopes_diversity_to_latest_batch(tmp_path):
     assert payload["decomposition_gaps"] == ["state", "opportunity_budget", "quote_map"]
     assert payload["batch_diversity"]["distinct_primary_layer_count"] == 1
     assert payload["batch_diversity"]["has_topology_branch"] is False
+    assert payload["batch_diversity"]["diversity_summary"] == {
+        "status": "thin",
+        "has_meaningful_diversity": False,
+        "reasons": ["1 primary layers", "topology branch missing"],
+        "repeated_quote_topology_group_count": 0,
+        "same_spine_failure_group_count": 0,
+    }
     assert payload["structural_recommendations"] == [
         {
             "kind": "decomposition_gap",
@@ -2268,8 +2388,8 @@ def test_analyze_run_scopes_diversity_to_latest_batch(tmp_path):
             "kind": "topology_branch",
             "covered": False,
             "reason": (
-                "Reserve at least one branch that changes how the quote is assembled, "
-                "not just how incumbent terms are tuned."
+                "Keep at least one branch that changes how the quote is assembled, "
+                "not only how incumbent terms are tuned."
             ),
         },
     ]
@@ -2371,7 +2491,7 @@ def test_analyze_run_keeps_same_spine_failure_signal_beyond_last_five_results(tm
         "covered": False,
         "reason": (
             "Recent survivors or failures show same-spine replay pressure; "
-            "switch primary layer before another coefficient retune."
+            "treat another same-spine spend as low leverage unless new evidence justifies it."
         ),
     }
 

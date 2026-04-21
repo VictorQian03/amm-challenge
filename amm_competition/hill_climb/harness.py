@@ -86,6 +86,12 @@ PROFILE_FIELDS = (
     "quote_selectivity_ratio",
     "max_fee_jump",
 )
+SCREENING_SIGNAL_FIELDS = (
+    "mean_edge",
+    "arb_loss_to_retail_gain",
+    "quote_selectivity_ratio",
+    "time_weighted_mean_fee",
+)
 SLICE_PROFILE_FIELDS = (
     "low_decile_mean_edge",
     "median_decile_mean_edge",
@@ -183,6 +189,18 @@ class OutcomeGateStatus:
 
 
 @dataclass(frozen=True)
+class QueuedHypothesisStatus:
+    """Resolved queued-hypothesis view for status surfaces and fail-fast lineage."""
+
+    active_batch_id: str | None
+    active_open_hypothesis_ids: list[str]
+    source: str
+    resolved_hypothesis_id: str | None
+    resolved_hypothesis_note: str | None
+    warning: str | None
+
+
+@dataclass(frozen=True)
 class RunStateStatus:
     """Validated persisted loop state plus derived operator guidance."""
 
@@ -198,6 +216,7 @@ class RunStateStatus:
     updated_at: str
     outcome_gate: OutcomeGateStatus | None
     guidance: LoopGuidance
+    queued_hypothesis: QueuedHypothesisStatus
 
 
 @dataclass(frozen=True)
@@ -539,7 +558,8 @@ class HillClimbHarness:
         )
         results = self._read_results(run_dir)
         state = self._load_state_payload(run_dir, require_current=True)
-        return self._run_state_status_from_payload(state, results)
+        hypotheses = self._load_hypotheses(run_dir)
+        return self._run_state_status_from_payload(state, results, hypotheses)
 
     def update_run_state(
         self,
@@ -584,7 +604,12 @@ class HillClimbHarness:
             self._validate_state(run_dir, updated_state, results)
             self._write_state(run_dir, updated_state)
             self._sync_derived_views(run_dir)
-        return self._run_state_status_from_payload(updated_state, results)
+        hypotheses = self._load_hypotheses(run_dir)
+        return self._run_state_status_from_payload(
+            updated_state,
+            results,
+            hypotheses,
+        )
 
     def upsert_hypothesis(
         self,
@@ -902,7 +927,9 @@ class HillClimbHarness:
             allow_protected_surface_drift=allow_protected_surface_drift,
         )
         state = self._run_state_status_from_payload(
-            context["state"], context["results"]
+            context["state"],
+            context["results"],
+            context["hypotheses"],
         )
         history = self._build_history(context["results"])
         hypotheses = sorted(
@@ -939,6 +966,7 @@ class HillClimbHarness:
             "incumbent_chain": promoted,
             "frontier_bank": analysis["frontier_bank"],
             "portfolio_bank": analysis["portfolio_bank"],
+            "screening_signal_comparison": analysis["screening_signal_comparison"],
             "failure_clusters": analysis["failure_clusters"],
             "intent_coverage": analysis["intent_coverage"],
             "decomposition_coverage": analysis["decomposition_coverage"],
@@ -1091,12 +1119,23 @@ class HillClimbHarness:
             layer_scoreboard=layer_scoreboard,
             hypotheses=hypotheses,
         )
+        recommended_next_batch = self._recommended_next_batch(
+            frontier_bank=frontier_bank,
+            portfolio_bank=portfolio_bank,
+            failure_clusters=failure_clusters,
+            intent_coverage=intent_coverage,
+        )
         return {
             "artifact_version": ANALYSIS_VERSION,
             "run_id": run_dir.name,
             "warnings": warnings,
             "frontier_bank": frontier_bank,
             "portfolio_bank": portfolio_bank,
+            "screening_signal_comparison": self._build_screening_signal_comparison(
+                results=results,
+                frontier_bank=frontier_bank,
+                recommended_next_batch=recommended_next_batch,
+            ),
             "failure_clusters": failure_clusters,
             "recent_failures": [
                 summary
@@ -1116,12 +1155,7 @@ class HillClimbHarness:
                 batch_diversity=batch_diversity,
             ),
             "portfolio_gaps": self._portfolio_gaps(intent_coverage),
-            "recommended_next_batch": self._recommended_next_batch(
-                frontier_bank=frontier_bank,
-                portfolio_bank=portfolio_bank,
-                failure_clusters=failure_clusters,
-                intent_coverage=intent_coverage,
-            ),
+            "recommended_next_batch": recommended_next_batch,
         }
 
     def _summaries_by_hypothesis(
@@ -1612,6 +1646,85 @@ class HillClimbHarness:
         )
         return active_batch_id, selection_mode, active_payloads
 
+    def _resolve_queued_hypothesis_status(
+        self,
+        state: dict[str, Any],
+        hypotheses: dict[str, dict[str, Any]],
+    ) -> QueuedHypothesisStatus:
+        active_batch_id, _selection_mode, active_open_payloads = (
+            self._select_active_open_batch(hypotheses)
+        )
+        active_payload_by_id = {
+            payload["hypothesis_id"]: payload for payload in active_open_payloads
+        }
+        active_open_hypothesis_ids = _sorted_unique(list(active_payload_by_id))
+        state_hypothesis_id = state.get("next_hypothesis_id")
+        state_hypothesis_note = state.get("next_hypothesis_note")
+
+        if state_hypothesis_id in active_payload_by_id:
+            resolved_note = state_hypothesis_note
+            if not resolved_note:
+                resolved_note = active_payload_by_id[state_hypothesis_id].get("title")
+            return QueuedHypothesisStatus(
+                active_batch_id=active_batch_id,
+                active_open_hypothesis_ids=active_open_hypothesis_ids,
+                source="state",
+                resolved_hypothesis_id=state_hypothesis_id,
+                resolved_hypothesis_note=resolved_note,
+                warning=None,
+            )
+
+        if not active_open_hypothesis_ids:
+            warning = None
+            if isinstance(state_hypothesis_id, str):
+                warning = (
+                    "Run state still points at "
+                    f"{state_hypothesis_id}, but the active batch has no open hypotheses."
+                )
+            return QueuedHypothesisStatus(
+                active_batch_id=active_batch_id,
+                active_open_hypothesis_ids=[],
+                source="none",
+                resolved_hypothesis_id=None,
+                resolved_hypothesis_note=None,
+                warning=warning,
+            )
+
+        if len(active_open_hypothesis_ids) == 1:
+            resolved_hypothesis_id = active_open_hypothesis_ids[0]
+            resolved_note = active_payload_by_id[resolved_hypothesis_id].get("title")
+            warning = None
+            if isinstance(state_hypothesis_id, str):
+                warning = (
+                    f"Run state points at stale next_hypothesis_id {state_hypothesis_id}; "
+                    f"resolved the queued hypothesis from the active registry batch as {resolved_hypothesis_id}."
+                )
+            return QueuedHypothesisStatus(
+                active_batch_id=active_batch_id,
+                active_open_hypothesis_ids=active_open_hypothesis_ids,
+                source="registry",
+                resolved_hypothesis_id=resolved_hypothesis_id,
+                resolved_hypothesis_note=resolved_note,
+                warning=warning,
+            )
+
+        stale_state_prefix = ""
+        if isinstance(state_hypothesis_id, str):
+            stale_state_prefix = (
+                f"Run state points at stale next_hypothesis_id {state_hypothesis_id}. "
+            )
+        return QueuedHypothesisStatus(
+            active_batch_id=active_batch_id,
+            active_open_hypothesis_ids=active_open_hypothesis_ids,
+            source="ambiguous",
+            resolved_hypothesis_id=None,
+            resolved_hypothesis_note=None,
+            warning=(
+                f"{stale_state_prefix}Active batch has multiple open hypotheses "
+                f"({', '.join(active_open_hypothesis_ids)}); set next_hypothesis_id explicitly."
+            ),
+        )
+
     def _build_decomposition_coverage(
         self,
         hypotheses: dict[str, dict[str, Any]],
@@ -1848,16 +1961,39 @@ class HillClimbHarness:
             issues.append("Open batch stays inside a single phenotype family")
         if near_replay_survivor_ids:
             issues.append(
-                "Recent surviving branches are near-replays; pivot layers before another retune"
+                "Recent surviving branches are near-replays; another same-line spend is probably low leverage"
             )
         if same_spine_failure_groups:
             issues.append(
-                "Recent failures cluster inside the same spine; pivot layers instead of replaying the spine"
+                "Recent failures cluster inside the same spine; another replay on that spine is probably low leverage"
             )
         if same_phenotype_failure_groups:
             issues.append(
-                "Recent failures cluster inside the same phenotype family; widen quote assembly before another replay"
+                "Recent failures cluster inside the same phenotype family; quote-assembly breadth is still narrow"
             )
+        repeated_quote_topology_count = len(repeated_quote_topology_groups)
+        same_spine_failure_group_count = len(same_spine_failure_groups)
+        diversity_summary_reasons: list[str] = []
+        if open_payloads and len(open_primary_layers) < 3:
+            diversity_summary_reasons.append(
+                f"{len(open_primary_layers)} primary layers"
+            )
+        if open_payloads and not topology_branch_ids:
+            diversity_summary_reasons.append("topology branch missing")
+        if repeated_quote_topology_count:
+            diversity_summary_reasons.append(
+                f"{repeated_quote_topology_count} repeated quote topology groups"
+            )
+        if same_spine_failure_group_count:
+            diversity_summary_reasons.append(
+                f"{same_spine_failure_group_count} same-spine failure clusters"
+            )
+        has_meaningful_diversity = bool(open_payloads) and not diversity_summary_reasons
+        diversity_status = "empty"
+        if open_payloads:
+            diversity_status = "ready" if has_meaningful_diversity else "thin"
+            if repeated_quote_topology_count or same_spine_failure_group_count:
+                diversity_status = "collapsed"
         return {
             "batch_id": batch_id,
             "selection_mode": selection_mode,
@@ -1880,6 +2016,13 @@ class HillClimbHarness:
                 or same_spine_failure_groups
                 or same_phenotype_failure_groups
             ),
+            "diversity_summary": {
+                "status": diversity_status,
+                "has_meaningful_diversity": has_meaningful_diversity,
+                "reasons": diversity_summary_reasons,
+                "repeated_quote_topology_group_count": repeated_quote_topology_count,
+                "same_spine_failure_group_count": same_spine_failure_group_count,
+            },
             "issues": issues,
         }
 
@@ -1897,7 +2040,7 @@ class HillClimbHarness:
                     "covered": False,
                     "reason": (
                         "Recent survivors or failures show same-spine replay pressure; "
-                        "switch primary layer before another coefficient retune."
+                        "treat another same-spine spend as low leverage unless new evidence justifies it."
                     ),
                 }
             )
@@ -1924,8 +2067,8 @@ class HillClimbHarness:
                     "kind": "topology_branch",
                     "covered": False,
                     "reason": (
-                        "Reserve at least one branch that changes how the quote is assembled, "
-                        "not just how incumbent terms are tuned."
+                        "Keep at least one branch that changes how the quote is assembled, "
+                        "not only how incumbent terms are tuned."
                     ),
                 }
             )
@@ -2848,6 +2991,100 @@ class HillClimbHarness:
             ),
         }
 
+    def _recommended_anchor_eval_ids(
+        self, recommended_next_batch: list[dict[str, Any]]
+    ) -> list[str]:
+        anchor_eval_ids: list[str] = []
+        for entry in recommended_next_batch:
+            raw_anchor_ids = entry.get("anchor_eval_ids")
+            if isinstance(raw_anchor_ids, list):
+                for raw_anchor_id in raw_anchor_ids:
+                    if isinstance(raw_anchor_id, str):
+                        anchor_eval_ids.append(raw_anchor_id)
+            raw_anchor_id = entry.get("anchor_eval_id")
+            if isinstance(raw_anchor_id, str):
+                anchor_eval_ids.append(raw_anchor_id)
+        return _sorted_unique(anchor_eval_ids)
+
+    def _build_screening_signal_comparison(
+        self,
+        *,
+        results: list[dict[str, Any]],
+        frontier_bank: dict[str, Any],
+        recommended_next_batch: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        rows_by_eval_id: dict[str, dict[str, Any]] = {}
+        ordered_eval_ids: list[str] = []
+        summaries_by_eval_id = {
+            summary["eval_id"]: summary
+            for summary in results
+            if isinstance(summary.get("eval_id"), str)
+        }
+
+        def _add_eval_row(eval_id: str, *, role: str) -> None:
+            summary = summaries_by_eval_id.get(eval_id)
+            if summary is None:
+                return
+            row = rows_by_eval_id.get(eval_id)
+            if row is None:
+                derived = summary.get("derived_analysis", {})
+                profile = (
+                    derived.get("profile", {}) if isinstance(derived, dict) else {}
+                )
+                if not isinstance(profile, dict):
+                    profile = {}
+                row = {
+                    "eval_id": eval_id,
+                    "roles": [],
+                    "stage": summary.get("stage"),
+                    "status": summary.get("status"),
+                    "label": summary.get("label"),
+                    "hypothesis_id": summary.get("hypothesis_id"),
+                    "metrics": {
+                        field: _safe_float(profile.get(field))
+                        for field in SCREENING_SIGNAL_FIELDS
+                    },
+                }
+                rows_by_eval_id[eval_id] = row
+                ordered_eval_ids.append(eval_id)
+            roles = row.get("roles")
+            if not isinstance(roles, list):
+                roles = []
+                row["roles"] = roles
+            if role not in roles:
+                roles.append(role)
+
+        official_incumbent = None
+        for entry in frontier_bank.get("incumbents", []):
+            if entry.get("stage") == "screen":
+                official_incumbent = entry
+        if isinstance(official_incumbent, dict):
+            official_eval_id = official_incumbent.get("eval_id")
+            if isinstance(official_eval_id, str):
+                _add_eval_row(official_eval_id, role="official_incumbent")
+
+        best_raw = next(
+            (
+                entry
+                for entry in frontier_bank.get("best_raw", [])
+                if entry.get("stage") == "screen"
+            ),
+            None,
+        )
+        if isinstance(best_raw, dict):
+            best_raw_eval_id = best_raw.get("eval_id")
+            if isinstance(best_raw_eval_id, str):
+                _add_eval_row(best_raw_eval_id, role="best_raw")
+
+        for anchor_eval_id in self._recommended_anchor_eval_ids(recommended_next_batch):
+            _add_eval_row(anchor_eval_id, role="recommended_anchor")
+
+        return {
+            "stage": "screen",
+            "metric_fields": list(SCREENING_SIGNAL_FIELDS),
+            "rows": [rows_by_eval_id[eval_id] for eval_id in ordered_eval_ids],
+        }
+
     def _resolve_profile_input(
         self,
         *,
@@ -3032,7 +3269,22 @@ class HillClimbHarness:
             results = self._read_results(run_dir)
             state = self._load_state_payload(run_dir, require_current=True)
             hypotheses = self._load_hypotheses(run_dir)
-            effective_hypothesis_id = hypothesis_id or state.get("next_hypothesis_id")
+            queued_hypothesis = self._resolve_queued_hypothesis_status(
+                state,
+                hypotheses,
+            )
+            effective_hypothesis_id = (
+                hypothesis_id or queued_hypothesis.resolved_hypothesis_id
+            )
+            if (
+                hypothesis_id is None
+                and queued_hypothesis.warning is not None
+                and queued_hypothesis.resolved_hypothesis_id is None
+            ):
+                raise HillClimbHarnessError(
+                    f"Run '{run_dir.name}' cannot infer the next hypothesis. "
+                    f"{queued_hypothesis.warning}"
+                )
             if (
                 effective_hypothesis_id is not None
                 and effective_hypothesis_id not in hypotheses
@@ -3295,19 +3547,25 @@ class HillClimbHarness:
                 if not manifest_path.exists():
                     continue
                 try:
+                    validation_warnings = self._validate_current_run(
+                        run_dir,
+                        allow_protected_surface_drift=True,
+                    )
                     manifest = _json_load(manifest_path)
                     results = self._read_results(run_dir)
                     state = self._load_state_payload(run_dir, require_current=False)
-                    run_state_status = self._run_state_status_from_payload(
-                        state, results
-                    )
                     hypotheses = self._load_hypotheses(run_dir)
+                    run_state_status = self._run_state_status_from_payload(
+                        state,
+                        results,
+                        hypotheses,
+                    )
                     history = self._build_history(results)
                     analysis = self._build_run_analysis(
                         run_dir=run_dir,
                         results=results,
                         hypotheses=hypotheses,
-                        warnings=[],
+                        warnings=validation_warnings,
                     )
                     best_mean_edges = {
                         stage: float(summary["mean_edge"])
@@ -3336,15 +3594,31 @@ class HillClimbHarness:
                     if closed_by_stop_guidance:
                         status = "historical"
                         notes.append(run_state_status.guidance.message)
-                    next_hypothesis_id = state.get("next_hypothesis_id")
+                    same_spine_failure_group_count = (
+                        analysis["batch_diversity"]
+                        .get("diversity_summary", {})
+                        .get("same_spine_failure_group_count", 0)
+                    )
+                    if (
+                        closed_by_stop_guidance
+                        and isinstance(same_spine_failure_group_count, int)
+                        and same_spine_failure_group_count > 0
+                    ):
+                        notes.append(
+                            "same retained spine hit repeated stop pressure; seed a fresh run_id before continuing this lane"
+                        )
+                    queued_hypothesis = run_state_status.queued_hypothesis
+                    next_hypothesis_id = queued_hypothesis.resolved_hypothesis_id
                     if next_hypothesis_id is not None and not closed_by_stop_guidance:
-                        note = state.get("next_hypothesis_note")
+                        note = queued_hypothesis.resolved_hypothesis_note
                         if note:
                             notes.append(
                                 f"next hypothesis {next_hypothesis_id}: {note}"
                             )
                         else:
                             notes.append(f"next hypothesis {next_hypothesis_id}")
+                    elif queued_hypothesis.warning and not closed_by_stop_guidance:
+                        notes.append(queued_hypothesis.warning)
                     open_hypothesis_ids = analysis["batch_diversity"][
                         "open_hypothesis_ids"
                     ]
@@ -3367,6 +3641,13 @@ class HillClimbHarness:
                         notes.append(
                             "batch closed with no queued next hypothesis; seed a fresh run_id for the next branch"
                         )
+                    if validation_warnings:
+                        notes.extend(validation_warnings)
+                        if status in {"active", "goal-passed"}:
+                            status = "historical"
+                            notes.append(
+                                "retained lane is fingerprint-stale; seed a fresh run_id before continuing"
+                            )
                     entries.append(
                         {
                             "run_id": manifest["run_id"],
@@ -4517,6 +4798,7 @@ class HillClimbHarness:
         self,
         state: dict[str, Any],
         results: list[dict[str, Any]],
+        hypotheses: dict[str, dict[str, Any]],
     ) -> RunStateStatus:
         guidance = self._build_loop_guidance(state, results)
         return RunStateStatus(
@@ -4532,6 +4814,10 @@ class HillClimbHarness:
             updated_at=state["updated_at"],
             outcome_gate=self._build_outcome_gate_status(state, results),
             guidance=guidance,
+            queued_hypothesis=self._resolve_queued_hypothesis_status(
+                state,
+                hypotheses,
+            ),
         )
 
     def _build_outcome_gate_status(
@@ -4596,9 +4882,10 @@ class HillClimbHarness:
                 non_improving_streak=streak,
                 action="stop",
                 message=(
-                    "stop now "
+                    "stop threshold reached "
                     f"({streak} consecutive non-improving {target_stage} evaluations; "
-                    f"threshold {stop_rules['stop_after_non_improving_iterations']})"
+                    f"threshold {stop_rules['stop_after_non_improving_iterations']}; "
+                    "seed a fresh run_id instead of continuing this retained lane)"
                 ),
             )
         if streak >= stop_rules["pivot_after_non_improving_iterations"]:
@@ -4606,9 +4893,10 @@ class HillClimbHarness:
                 non_improving_streak=streak,
                 action="pivot",
                 message=(
-                    "pivot now "
+                    "pivot threshold reached "
                     f"({streak} consecutive non-improving {target_stage} evaluations; "
-                    f"threshold {stop_rules['pivot_after_non_improving_iterations']})"
+                    f"threshold {stop_rules['pivot_after_non_improving_iterations']}; "
+                    "review alternatives rather than forcing another same-line spend)"
                 ),
             )
         if streak >= stop_rules["refine_after_non_improving_iterations"]:
@@ -4616,9 +4904,10 @@ class HillClimbHarness:
                 non_improving_streak=streak,
                 action="refine",
                 message=(
-                    "refine now "
+                    "refine threshold reached "
                     f"({streak} consecutive non-improving {target_stage} evaluations; "
-                    f"threshold {stop_rules['refine_after_non_improving_iterations']})"
+                    f"threshold {stop_rules['refine_after_non_improving_iterations']}; "
+                    "another same-line refinement is optional, not required)"
                 ),
             )
         return LoopGuidance(
