@@ -8,7 +8,7 @@ Start here:
 
 Current state:
 
-- active retained `screen` lane: none; seed a fresh `run_id` before the next mutation
+- active retained `screen` lane: `apr21-screen480-0901`
 - latest historical read surface on the current protected-surface fingerprint: `apr18-screen480-1132`
 - stale `apr16-screen480-1758` retained-lane artifacts were pruned after the run was abandoned
 
@@ -47,7 +47,7 @@ Current state:
 ## 2026-04-17
 
 - `artifacts/hill_climb/apr17-screen480-0834/`: retained historical `screen` lane on the current protected-surface fingerprint; baseline `473.616393`, strongest raw branch `screen_0004 @ 483.890738`, and the batch closed with no queued next hypothesis after the family was exhausted
-- `docs/plans/completed/apr17-screen480-0834.md`: retained narrative for the closed `apr17-screen480-0834` batch after its successor lane became active
+- `docs/plans/completed/apr17-screen480-0834.md`: canonical retained narrative for the closed `apr17-screen480-0834` lane, with the old active-path stub preserved only as a redirect target for historical metadata
 - `artifacts/hill_climb/apr17-screen480-0928/`: retained historical `screen` lane; baseline `473.616393`, strongest raw branch `screen_0009 @ 485.703883`, and the lane is closed after the stop-rule threshold was hit
 - `docs/plans/completed/apr17-screen480-0928.md`: canonical retained narrative for the closed `apr17-screen480-0928` lane, with the old active-path stub preserved only as a redirect target for historical metadata
 
@@ -56,9 +56,16 @@ Current state:
 - `artifacts/hill_climb/apr18-screen480-1132/`: latest retained historical `screen` lane on the current protected-surface fingerprint; official incumbent stayed at `473.616393`, best raw branch reached `screen_0008 @ 485.923771`, and the harness stopped the lane after 8 consecutive non-improving screen evals
 - `docs/plans/completed/apr18-screen480-1132.md`: canonical retained narrative for the closed `apr18-screen480-1132` lane, with the old active-path stub preserved only as a redirect target for historical metadata
 
+## 2026-04-21
+
+- `artifacts/hill_climb/apr21-screen480-0901/`: active retained `screen` lane on the current protected-surface fingerprint; baseline `473.616393`, breakout gate is pending at `480.0`, and batch `apr21-screen480-0901-batch1` queues `depth-normalized-imbalance-router` plus `fill-value-admission-budget`
+- `docs/plans/active/apr21-screen480-0901.md`: canonical active plan note for the fresh retained lane
+- `artifacts/hill_climb_quarantine/apr21-screen480-0858-stale-next-eval-index/`: quarantined stale pre-seed lane retained by the harness instead of being resumed
+
 Per-run contract:
 
 - keep only `run.json`, `state.json`, `results.jsonl`, `results.tsv`, `history.jsonl`, `hypotheses/`, `incumbents/`, `snapshots/`, and derived `notebook/` surfaces
 - keep the machine-readable cross-run catalog at `artifacts/index.json`
+- keep canonical closed-lane narratives in `docs/plans/completed/`; only retain `docs/plans/active/` redirect stubs when older ledgers still reference those historical paths
 - do not recreate per-evaluation `evaluations/` trees
 - do not retain old probe, compare, quarantine, or superseded baseline runs once the active lane is updated

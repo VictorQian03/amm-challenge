@@ -1,0 +1,55 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr21-screen480-0901-batch1",
+  "created_at": "2026-04-21T16:06:42+00:00",
+  "eval_ids": [],
+  "expected_effect": "Recover calm-slice edge by letting benign queue imbalance accelerate fair-mid recentering while preserving the anti-arb posture of the apr18 raw survivors.",
+  "expected_failure_mode": "arb_leak_regression",
+  "expected_failure_signature": "If queue imbalance over-steers the fair mid, the branch cheapens too quickly after toxic continuation and reopens arb leakage.",
+  "expected_win_condition": "Lift low-volatility and low-retail slices above the apr18 anchors while keeping the anti-arb improvement that made screen_0008 a raw survivor.",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.105,
+    "time_weighted_mean_fee": 0.0048
+  },
+  "hidden_coupling_removed": "Fair-mid recentering should not wait on the same continuation memory that arms toxic-side protection.",
+  "hypothesis_id": "queue-imbalance-fair-mid",
+  "is_topology_branch": false,
+  "layer_held_fixed": "quote_map",
+  "mutation_family": "queue_imbalance_fair_mid",
+  "nearest_prior_failures": [
+    "flow-alpha-fair-mid",
+    "continuation-veto-fair-mid"
+  ],
+  "nearest_prior_successes": [
+    "continuation-veto-fair-mid"
+  ],
+  "novelty_coordinates": {
+    "anchor_eval_ids": [
+      "screen_0008",
+      "screen_0006"
+    ],
+    "classification": "novel",
+    "external_idea": "microprice_queue_imbalance",
+    "intent": "local_refine"
+  },
+  "parent_hypothesis_id": null,
+  "primary_layer_changed": "state",
+  "quote_topology": "queue-imbalance fair-mid recentering",
+  "rationale": "Use the screen_0008 and screen_0006 anchors as context, but replace the binary continuation veto with a fair-mid that recenters from persistent queue imbalance so calm release can appear sooner without reopening the broad cheap mode from the earlier state branches.",
+  "research_refs": [
+    "docs/plans/active/apr21-screen480-0901.md",
+    "https://ssrn.com/abstract=2970694"
+  ],
+  "seed_eval_id": null,
+  "status": "planned",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "low_retail_mean_edge": 418.0,
+    "low_volatility_mean_edge": 467.0,
+    "mean_edge": 486.5
+  },
+  "title": "Queue imbalance fair mid",
+  "updated_at": "2026-04-21T16:06:42+00:00",
+  "why_not_coefficient_retune": "This swaps the state estimator from a continuation veto into a queue-imbalance fair-mid recentering rule instead of retuning an existing release threshold."
+}

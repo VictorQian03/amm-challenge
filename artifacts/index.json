@@ -1,6 +1,6 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-21T05:59:57+00:00",
+  "generated_at": "2026-04-21T16:07:28+00:00",
   "hill_climb_runs": [
     {
       "active_stage": "screen",
@@ -65,7 +65,8 @@
       },
       "notes": [
         "pending (screen incumbent 473.616393 is below target 480.000000)",
-        "batch closed with no queued next hypothesis; seed a fresh run_id for the next branch"
+        "batch closed with no queued next hypothesis; seed a fresh run_id for the next branch",
+        "Run 'apr11-screen480-0948' is pinned to a different protected competition mechanics surface.\nRecorded fingerprint: a5b59e6eda76205e09336d87327567265965566cbfa4f87ba9786046d4306d3a\nCurrent fingerprint: f61ebc1306bdf41c2fb0c06f6e5aeaee037862d5e062446559a201a79a53d52b\nStart a fresh run_id and baseline for this evaluator version before continuing."
       ],
       "portfolio_gaps": [
         "anti_arb",
@@ -326,9 +327,9 @@
         ]
       },
       "notes": [
-        "superseded by latest retained history apr18-screen480-1132",
         "pending (screen incumbent 473.616393 is below target 480.000000)",
-        "next hypothesis structural-pivot-two-mode-controller: Pause and re-check read surfaces before any wider structural retry: prescreen_0009 cut time-weighted fees to about 16.6 bps but failed with mean_edge 286.876, arb_loss_to_retail_gain 0.488874, low_retail_mean_edge 255.060, and max_fee_jump 0.008691."
+        "Run state still points at structural-pivot-two-mode-controller, but the active batch has no open hypotheses.",
+        "batch closed with no queued next hypothesis; seed a fresh run_id for the next branch"
       ],
       "portfolio_gaps": [
         "anti_arb",
@@ -339,7 +340,7 @@
       "research_artifact_paths": [
         "artifacts/research/amm_branch_portfolio_apr12-screen480-1130",
         "artifacts/research/amm_branch_portfolio_apr12-screen480-1130/memo.md",
-        "docs/plans/active/apr12-screen480-1130.md",
+        "docs/plans/completed/apr12-screen480-1130.md",
         "https://arxiv.org/abs/2011.02351",
         "https://arxiv.org/abs/2508.08152",
         "https://papers.ssrn.com/sol3/Delivery.cfm/SSRN_ID4236377_code5235387.pdf?abstractid=4105954&mirid=1",
@@ -611,7 +612,7 @@
       "research_artifact_paths": [
         "artifacts/research/amm_seed_refresh_apr13-screen480-0907",
         "artifacts/research/amm_seed_refresh_apr13-screen480-0907/memo.md",
-        "docs/plans/active/apr13-screen480-0907.md"
+        "docs/plans/completed/apr13-screen480-0907.md"
       ],
       "run_id": "apr13-screen480-0907",
       "status": "historical"
@@ -915,7 +916,8 @@
       },
       "notes": [
         "pending (screen incumbent 473.616393 is below target 480.000000)",
-        "stop now (8 consecutive non-improving screen evaluations; threshold 8)",
+        "stop threshold reached (8 consecutive non-improving screen evaluations; threshold 8; seed a fresh run_id instead of continuing this retained lane)",
+        "same retained spine hit repeated stop pressure; seed a fresh run_id before continuing this lane",
         "batch closed with no queued next hypothesis; seed a fresh run_id for the next branch"
       ],
       "portfolio_gaps": [
@@ -927,7 +929,7 @@
       "research_artifact_paths": [
         "artifacts/research/amm_dynamic_fee_apr10-screen480-0931/memo.md",
         "artifacts/research/amm_seed_refresh_apr13-screen480-0907/memo.md",
-        "docs/plans/active/apr17-screen480-0834.md"
+        "docs/plans/completed/apr17-screen480-0834.md"
       ],
       "run_id": "apr17-screen480-0834",
       "status": "historical"
@@ -1234,7 +1236,7 @@
       },
       "notes": [
         "pending (screen incumbent 473.616393 is below target 480.000000)",
-        "stop now (8 consecutive non-improving screen evaluations; threshold 8)",
+        "stop threshold reached (8 consecutive non-improving screen evaluations; threshold 8; seed a fresh run_id instead of continuing this retained lane)",
         "batch closed with no queued next hypothesis; seed a fresh run_id for the next branch"
       ],
       "portfolio_gaps": [
@@ -1245,7 +1247,7 @@
       ],
       "research_artifact_paths": [
         "artifacts/research/amm_seed_refresh_apr13-screen480-0907/memo.md",
-        "docs/plans/active/apr17-screen480-0928.md"
+        "docs/plans/completed/apr17-screen480-0928.md"
       ],
       "run_id": "apr17-screen480-0928",
       "status": "historical"
@@ -1547,7 +1549,7 @@
       },
       "notes": [
         "pending (screen incumbent 473.616393 is below target 480.000000)",
-        "stop now (8 consecutive non-improving screen evaluations; threshold 8)",
+        "stop threshold reached (8 consecutive non-improving screen evaluations; threshold 8; seed a fresh run_id instead of continuing this retained lane)",
         "batch closed with no queued next hypothesis; seed a fresh run_id for the next branch"
       ],
       "portfolio_gaps": [
@@ -1558,13 +1560,220 @@
       ],
       "research_artifact_paths": [
         "docs/hill_climb_loop.md",
-        "docs/plans/active/apr18-screen480-1132.md",
+        "docs/plans/completed/apr18-screen480-1132.md",
         "https://arxiv.org/abs/2508.20225",
         "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2504061",
         "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3991930"
       ],
       "run_id": "apr18-screen480-1132",
       "status": "historical"
+    },
+    {
+      "active_stage": "screen",
+      "best_eval_ids": {
+        "screen": "screen_0001"
+      },
+      "best_mean_edges": {
+        "screen": 473.61639344802524
+      },
+      "created_at": "2026-04-21T16:03:27+00:00",
+      "failure_clusters": {},
+      "frontier_bank": {
+        "best_anti_arb": {
+          "eval_id": "screen_0001",
+          "failure_tags": [],
+          "hypothesis_id": null,
+          "label": "baseline-latent-toxic-v1",
+          "mean_edge": 473.61639344802524,
+          "profile": {
+            "arb_edge": -66.77135092827479,
+            "arb_loss_to_retail_gain": 0.12356192682596893,
+            "high_decile_mean_edge": 622.0080798306832,
+            "low_decile_mean_edge": 361.497702023848,
+            "low_retail_mean_edge": 405.47245008814957,
+            "low_volatility_mean_edge": 451.7047749173429,
+            "max_fee_jump": 0.05697810742895679,
+            "mean_edge": 473.61639344802524,
+            "median_decile_mean_edge": 446.61686784788895,
+            "quote_selectivity_ratio": 29.083060147918708,
+            "retail_edge": 540.3877443763,
+            "time_weighted_ask_fee": 0.004259354004241511,
+            "time_weighted_bid_fee": 0.00423782106588683,
+            "time_weighted_mean_fee": 0.00424858753506417
+          },
+          "stage": "screen",
+          "status": "seed"
+        },
+        "best_fee_discipline": {
+          "eval_id": "screen_0001",
+          "failure_tags": [],
+          "hypothesis_id": null,
+          "label": "baseline-latent-toxic-v1",
+          "mean_edge": 473.61639344802524,
+          "profile": {
+            "arb_edge": -66.77135092827479,
+            "arb_loss_to_retail_gain": 0.12356192682596893,
+            "high_decile_mean_edge": 622.0080798306832,
+            "low_decile_mean_edge": 361.497702023848,
+            "low_retail_mean_edge": 405.47245008814957,
+            "low_volatility_mean_edge": 451.7047749173429,
+            "max_fee_jump": 0.05697810742895679,
+            "mean_edge": 473.61639344802524,
+            "median_decile_mean_edge": 446.61686784788895,
+            "quote_selectivity_ratio": 29.083060147918708,
+            "retail_edge": 540.3877443763,
+            "time_weighted_ask_fee": 0.004259354004241511,
+            "time_weighted_bid_fee": 0.00423782106588683,
+            "time_weighted_mean_fee": 0.00424858753506417
+          },
+          "stage": "screen",
+          "status": "seed"
+        },
+        "best_low_retail": {
+          "eval_id": "screen_0001",
+          "failure_tags": [],
+          "hypothesis_id": null,
+          "label": "baseline-latent-toxic-v1",
+          "mean_edge": 473.61639344802524,
+          "profile": {
+            "arb_edge": -66.77135092827479,
+            "arb_loss_to_retail_gain": 0.12356192682596893,
+            "high_decile_mean_edge": 622.0080798306832,
+            "low_decile_mean_edge": 361.497702023848,
+            "low_retail_mean_edge": 405.47245008814957,
+            "low_volatility_mean_edge": 451.7047749173429,
+            "max_fee_jump": 0.05697810742895679,
+            "mean_edge": 473.61639344802524,
+            "median_decile_mean_edge": 446.61686784788895,
+            "quote_selectivity_ratio": 29.083060147918708,
+            "retail_edge": 540.3877443763,
+            "time_weighted_ask_fee": 0.004259354004241511,
+            "time_weighted_bid_fee": 0.00423782106588683,
+            "time_weighted_mean_fee": 0.00424858753506417
+          },
+          "stage": "screen",
+          "status": "seed"
+        },
+        "best_low_volatility": {
+          "eval_id": "screen_0001",
+          "failure_tags": [],
+          "hypothesis_id": null,
+          "label": "baseline-latent-toxic-v1",
+          "mean_edge": 473.61639344802524,
+          "profile": {
+            "arb_edge": -66.77135092827479,
+            "arb_loss_to_retail_gain": 0.12356192682596893,
+            "high_decile_mean_edge": 622.0080798306832,
+            "low_decile_mean_edge": 361.497702023848,
+            "low_retail_mean_edge": 405.47245008814957,
+            "low_volatility_mean_edge": 451.7047749173429,
+            "max_fee_jump": 0.05697810742895679,
+            "mean_edge": 473.61639344802524,
+            "median_decile_mean_edge": 446.61686784788895,
+            "quote_selectivity_ratio": 29.083060147918708,
+            "retail_edge": 540.3877443763,
+            "time_weighted_ask_fee": 0.004259354004241511,
+            "time_weighted_bid_fee": 0.00423782106588683,
+            "time_weighted_mean_fee": 0.00424858753506417
+          },
+          "stage": "screen",
+          "status": "seed"
+        },
+        "best_quote_selectivity": {
+          "eval_id": "screen_0001",
+          "failure_tags": [],
+          "hypothesis_id": null,
+          "label": "baseline-latent-toxic-v1",
+          "mean_edge": 473.61639344802524,
+          "profile": {
+            "arb_edge": -66.77135092827479,
+            "arb_loss_to_retail_gain": 0.12356192682596893,
+            "high_decile_mean_edge": 622.0080798306832,
+            "low_decile_mean_edge": 361.497702023848,
+            "low_retail_mean_edge": 405.47245008814957,
+            "low_volatility_mean_edge": 451.7047749173429,
+            "max_fee_jump": 0.05697810742895679,
+            "mean_edge": 473.61639344802524,
+            "median_decile_mean_edge": 446.61686784788895,
+            "quote_selectivity_ratio": 29.083060147918708,
+            "retail_edge": 540.3877443763,
+            "time_weighted_ask_fee": 0.004259354004241511,
+            "time_weighted_bid_fee": 0.00423782106588683,
+            "time_weighted_mean_fee": 0.00424858753506417
+          },
+          "stage": "screen",
+          "status": "seed"
+        },
+        "best_raw": [
+          {
+            "eval_id": "screen_0001",
+            "failure_tags": [],
+            "hypothesis_id": null,
+            "label": "baseline-latent-toxic-v1",
+            "mean_edge": 473.61639344802524,
+            "profile": {
+              "arb_edge": -66.77135092827479,
+              "arb_loss_to_retail_gain": 0.12356192682596893,
+              "high_decile_mean_edge": 622.0080798306832,
+              "low_decile_mean_edge": 361.497702023848,
+              "low_retail_mean_edge": 405.47245008814957,
+              "low_volatility_mean_edge": 451.7047749173429,
+              "max_fee_jump": 0.05697810742895679,
+              "mean_edge": 473.61639344802524,
+              "median_decile_mean_edge": 446.61686784788895,
+              "quote_selectivity_ratio": 29.083060147918708,
+              "retail_edge": 540.3877443763,
+              "time_weighted_ask_fee": 0.004259354004241511,
+              "time_weighted_bid_fee": 0.00423782106588683,
+              "time_weighted_mean_fee": 0.00424858753506417
+            },
+            "stage": "screen",
+            "status": "seed"
+          }
+        ],
+        "incumbents": [
+          {
+            "eval_id": "screen_0001",
+            "failure_tags": [],
+            "hypothesis_id": null,
+            "label": "baseline-latent-toxic-v1",
+            "mean_edge": 473.61639344802524,
+            "profile": {
+              "arb_edge": -66.77135092827479,
+              "arb_loss_to_retail_gain": 0.12356192682596893,
+              "high_decile_mean_edge": 622.0080798306832,
+              "low_decile_mean_edge": 361.497702023848,
+              "low_retail_mean_edge": 405.47245008814957,
+              "low_volatility_mean_edge": 451.7047749173429,
+              "max_fee_jump": 0.05697810742895679,
+              "mean_edge": 473.61639344802524,
+              "median_decile_mean_edge": 446.61686784788895,
+              "quote_selectivity_ratio": 29.083060147918708,
+              "retail_edge": 540.3877443763,
+              "time_weighted_ask_fee": 0.004259354004241511,
+              "time_weighted_bid_fee": 0.00423782106588683,
+              "time_weighted_mean_fee": 0.00424858753506417
+            },
+            "stage": "screen",
+            "status": "seed"
+          }
+        ]
+      },
+      "notes": [
+        "pending (screen incumbent 473.616393 is below target 480.000000)",
+        "next hypothesis depth-normalized-imbalance-router: Start with the quote-map topology pivot before spending the value-screened opportunity branch."
+      ],
+      "portfolio_gaps": [],
+      "research_artifact_paths": [
+        "docs/plans/active/apr21-screen480-0901.md",
+        "docs/plans/completed/apr18-screen480-1132.md",
+        "https://arxiv.org/abs/1806.05849",
+        "https://smallake.kr/wp-content/uploads/2016/05/SSRN-id1712822.pdf",
+        "https://ssrn.com/abstract=2970694",
+        "https://ssrn.com/abstract=3991930"
+      ],
+      "run_id": "apr21-screen480-0901",
+      "status": "active"
     }
   ]
 }

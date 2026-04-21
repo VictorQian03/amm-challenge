@@ -392,7 +392,7 @@ class HillClimbHarness:
                     source_sha256=source_sha256,
                 )
             raise
-        normalized_research_refs = self._normalize_string_list(research_refs)
+        normalized_research_refs = self._normalize_reference_list(research_refs)
         summary_base = self._evaluation_summary_base(
             run_id=normalized_run_id,
             eval_id=eval_id,
@@ -694,7 +694,7 @@ class HillClimbHarness:
                     "parent_hypothesis_id": parent_hypothesis_id,
                     "seed_eval_id": seed_eval_id,
                     "eval_ids": [],
-                    "research_refs": self._normalize_string_list(research_refs),
+                    "research_refs": self._normalize_reference_list(research_refs),
                     "target_metrics": self._normalize_float_mapping(
                         target_metrics,
                         field_name="target_metrics",
@@ -769,7 +769,7 @@ class HillClimbHarness:
                 if seed_eval_id is not None:
                     payload["seed_eval_id"] = seed_eval_id
                 if research_refs is not None:
-                    payload["research_refs"] = self._normalize_string_list(
+                    payload["research_refs"] = self._normalize_reference_list(
                         research_refs
                     )
                 if target_metrics is not None:
@@ -2667,6 +2667,78 @@ class HillClimbHarness:
                 normalized.append(text)
         return normalized
 
+    def _workspace_root(self) -> Path:
+        artifact_root = self.artifact_root.resolve()
+        if (
+            artifact_root.name == "hill_climb"
+            and artifact_root.parent.name == "artifacts"
+        ):
+            return artifact_root.parent.parent
+        return artifact_root.parent
+
+    def _is_url_reference(self, value: str) -> bool:
+        return bool(re.match(r"^[a-z][a-z0-9+.-]*://", value, re.IGNORECASE))
+
+    def _is_historical_redirect_plan(self, path: Path) -> bool:
+        try:
+            with path.open() as handle:
+                return handle.readline().startswith("# Historical Redirect:")
+        except OSError:
+            return False
+
+    def _canonicalize_reference(self, value: str) -> str:
+        if self._is_url_reference(value):
+            return value
+        reference_path = Path(value)
+        if reference_path.is_absolute():
+            return str(reference_path)
+        if reference_path.parts[:3] == ("docs", "plans", "active"):
+            completed_relpath = (
+                Path("docs") / "plans" / "completed" / Path(*reference_path.parts[3:])
+            )
+            workspace_root = self._workspace_root()
+            active_path = workspace_root / reference_path
+            completed_path = workspace_root / completed_relpath
+            if completed_path.exists() and (
+                not active_path.exists()
+                or self._is_historical_redirect_plan(active_path)
+            ):
+                return completed_relpath.as_posix()
+        return reference_path.as_posix()
+
+    def _validate_reference_exists(self, value: str) -> None:
+        if self._is_url_reference(value):
+            return
+        reference_path = Path(value)
+        resolved_path = (
+            reference_path
+            if reference_path.is_absolute()
+            else self._workspace_root() / reference_path
+        )
+        if not resolved_path.exists():
+            raise HillClimbHarnessError(
+                f"Unknown research reference {value!r}; expected an existing repo-local path or URL"
+            )
+
+    def _normalize_reference_list(self, values: list[str] | None) -> list[str]:
+        if values is None:
+            return []
+        normalized: list[str] = []
+        seen: set[str] = set()
+        for value in values:
+            if not isinstance(value, str):
+                raise HillClimbHarnessError("Expected a list of strings")
+            text = value.strip()
+            if not text:
+                continue
+            canonical = self._canonicalize_reference(text)
+            self._validate_reference_exists(canonical)
+            if canonical in seen:
+                continue
+            seen.add(canonical)
+            normalized.append(canonical)
+        return normalized
+
     def _normalize_float_mapping(
         self,
         values: dict[str, float] | None,
@@ -3524,11 +3596,11 @@ class HillClimbHarness:
         for summary in self._read_results(run_dir):
             for ref in summary.get("research_refs", []):
                 if isinstance(ref, str) and ref.strip():
-                    collected.add(ref)
+                    collected.add(self._canonicalize_reference(ref))
         for payload in self._load_hypotheses(run_dir).values():
             for ref in payload.get("research_refs", []):
                 if isinstance(ref, str) and ref.strip():
-                    collected.add(ref)
+                    collected.add(self._canonicalize_reference(ref))
         research_root = self.artifact_root.parent / "research"
         if research_root.exists():
             for path in sorted(research_root.iterdir()):
@@ -4153,6 +4225,7 @@ class HillClimbHarness:
             "created_at",
             "history_path",
             "hypotheses_dir",
+            "protected_surface_fingerprint",
             "results_jsonl",
             "results_tsv",
             "run_id",
@@ -4326,6 +4399,10 @@ class HillClimbHarness:
             ):
                 raise HillClimbHarnessError(
                     f"Run '{run_dir.name}' has eval {eval_id!r} with invalid research_refs"
+                )
+            for reference in research_refs:
+                self._validate_reference_exists(
+                    self._canonicalize_reference(reference)
                 )
             source_sha256 = summary.get("source_sha256")
             if isinstance(source_sha256, str):
@@ -4518,6 +4595,8 @@ class HillClimbHarness:
             raise HillClimbHarnessError(
                 f"Run '{run_dir.name}' hypothesis {payload['hypothesis_id']!r} has invalid research_refs"
             )
+        for reference in payload["research_refs"]:
+            self._validate_reference_exists(self._canonicalize_reference(reference))
         if not isinstance(payload["target_metrics"], dict) or any(
             not isinstance(key, str)
             or key not in EXPERIMENT_METRIC_FIELDS

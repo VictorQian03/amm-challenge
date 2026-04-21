@@ -1,0 +1,23 @@
+{
+  "artifact_version": "hill_climb.state.v2",
+  "baseline_eval_id": "screen_0001",
+  "current_target_stage": "screen",
+  "incumbent_eval_ids": {
+    "screen": "screen_0001"
+  },
+  "last_completed_iteration": 1,
+  "next_hypothesis_id": "depth-normalized-imbalance-router",
+  "next_hypothesis_note": "Start with the quote-map topology pivot before spending the value-screened opportunity branch.",
+  "outcome_gate": {
+    "minimum_mean_edge": 480.0,
+    "stage": "screen"
+  },
+  "run_id": "apr21-screen480-0901",
+  "run_mode": "foreground",
+  "stop_rules": {
+    "pivot_after_non_improving_iterations": 5,
+    "refine_after_non_improving_iterations": 3,
+    "stop_after_non_improving_iterations": 8
+  },
+  "updated_at": "2026-04-21T16:04:16+00:00"
+}

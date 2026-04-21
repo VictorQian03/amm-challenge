@@ -1,0 +1,56 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr21-screen480-0901-batch1",
+  "created_at": "2026-04-21T16:07:28+00:00",
+  "eval_ids": [],
+  "expected_effect": "Reduce overpayment in toxic continuation by conditioning protection on queue-ranked inventory stress instead of a blanket continuation shell.",
+  "expected_failure_mode": "over_spiky_fee_surface",
+  "expected_failure_signature": "If queue-rank gating still fires on transient continuation noise, time_weighted_mean_fee stays elevated, retail edge lags, and the branch replays queue-aware-stress-shell without enough mean-edge lift.",
+  "expected_win_condition": "Retain or improve the anchor arb-loss improvement while lowering fee drag enough to lift mean edge into a promotable above-480 screen result.",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.11,
+    "time_weighted_mean_fee": 0.00485
+  },
+  "hidden_coupling_removed": "Inventory stress and continuation duration should not be treated as the same trigger for protection spend.",
+  "hypothesis_id": "queue-rank-protection-budget",
+  "is_topology_branch": false,
+  "layer_held_fixed": "state",
+  "mutation_family": "queue_rank_protection_budget",
+  "nearest_prior_failures": [
+    "queue-aware-stress-shell",
+    "drawdown-budget-shell"
+  ],
+  "nearest_prior_successes": [
+    "screen_0008",
+    "screen_0006"
+  ],
+  "novelty_coordinates": {
+    "anchor_eval_ids": [
+      "screen_0008",
+      "screen_0006"
+    ],
+    "classification": "novel",
+    "external_idea": "queue_position_inventory_risk",
+    "intent": "anti_arb"
+  },
+  "parent_hypothesis_id": null,
+  "primary_layer_changed": "risk_budget",
+  "quote_topology": "inventory-ranked protection budget",
+  "rationale": "Use the apr18 shell and raw-survivor readouts as context, but spend one-sided protection only when inventory pressure and adverse-selection risk align strongly enough to resemble a back-of-queue state instead of paying a blanket continuation shell.",
+  "research_refs": [
+    "docs/plans/active/apr21-screen480-0901.md",
+    "https://ssrn.com/abstract=3991930"
+  ],
+  "seed_eval_id": null,
+  "status": "planned",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "arb_loss_to_retail_gain": 0.1,
+    "mean_edge": 486.0,
+    "quote_selectivity_ratio": 24.0
+  },
+  "title": "Queue rank protection budget",
+  "updated_at": "2026-04-21T16:07:28+00:00",
+  "why_not_coefficient_retune": "This changes when protection is eligible to spend based on a queue-ranked risk state instead of scaling the continuation shell coefficients."
+}

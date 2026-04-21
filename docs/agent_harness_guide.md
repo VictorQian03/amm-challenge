@@ -60,6 +60,7 @@ Interpretation:
 - `artifacts/index.json` is the machine-readable cross-run catalog. Use it first for agent automation.
 - `artifacts/INDEX.md` is the human narrative for which lane is current, which lanes are historical, and what research artifacts go with them.
 - `docs/hill_climb_loop.md` defines the retained-run schema and the read/write contract.
+- Closed-lane narratives live under `docs/plans/completed/`; `docs/plans/active/` should only hold the truly active plan note plus stable historical redirect targets referenced by older ledgers.
 
 ## Retained Run Read Order
 

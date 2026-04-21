@@ -1,0 +1,2 @@
+eval_id	stage	status	mean_edge	incumbent_mean_edge	delta_vs_incumbent	strategy_name	label	description	snapshot_path
+screen_0001	screen	seed	473.616393			LatentStateQuoteEngine	baseline-latent-toxic-v1	Fresh screen seed on current protected-surface fingerprint.	artifacts/hill_climb/apr21-screen480-0858/snapshots/ad6e03710c508578d0f8b64ac74a262503163569c2ad16c91e1a25677eda3af1.sol

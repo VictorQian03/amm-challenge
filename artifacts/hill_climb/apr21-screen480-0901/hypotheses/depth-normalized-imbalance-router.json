@@ -1,0 +1,56 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr21-screen480-0901-batch1",
+  "created_at": "2026-04-21T16:03:57+00:00",
+  "eval_ids": [],
+  "expected_effect": "Preserve the raw anti-arb improvement of the best apr18 anchors while letting neutral or replenishing flow see cheaper quotes only when imbalance scaled by local depth says the calm path is genuinely safe.",
+  "expected_failure_mode": "arb_leak_regression",
+  "expected_failure_signature": "If imbalance normalization is too noisy or permissive, quote_selectivity collapses, arb_loss_to_retail_gain drifts back toward the baseline, and the branch replays cheap-mode adverse selection.",
+  "expected_win_condition": "Clear the promotion margin by matching the apr18 raw anchors on arb discipline while reducing unnecessary neutral-path fee spend enough to lift official screen incumbent performance above 480.",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.105,
+    "time_weighted_mean_fee": 0.00475
+  },
+  "hidden_coupling_removed": "Quote relief should not inherit the same blended path that advertises or subsidizes inventory and continuation protection; the router should decide from imbalance and depth whether neutral quoting is safe at all.",
+  "hypothesis_id": "depth-normalized-imbalance-router",
+  "is_topology_branch": true,
+  "layer_held_fixed": "state",
+  "mutation_family": "depth_normalized_imbalance_router",
+  "nearest_prior_failures": [
+    "inventory-price-reading-router",
+    "regime-switchboard-router"
+  ],
+  "nearest_prior_successes": [
+    "continuation-veto-fair-mid",
+    "passive-refill-auction"
+  ],
+  "novelty_coordinates": {
+    "anchor_eval_ids": [
+      "screen_0008",
+      "screen_0006"
+    ],
+    "classification": "novel",
+    "external_idea": "depth_normalized_order_flow_imbalance",
+    "intent": "structural_pivot"
+  },
+  "parent_hypothesis_id": null,
+  "primary_layer_changed": "quote_map",
+  "quote_topology": "imbalance-ranked quote ladder",
+  "rationale": "Use the screen_0008 fair-mid anchor and the screen_0006 raw refill evidence as context, but route quoting from depth-normalized order flow imbalance so adverse-selection protection and benign recenter relief are no longer blended through the same continuous surface.",
+  "research_refs": [
+    "docs/plans/completed/apr18-screen480-1132.md",
+    "https://smallake.kr/wp-content/uploads/2016/05/SSRN-id1712822.pdf"
+  ],
+  "seed_eval_id": null,
+  "status": "queued",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "arb_loss_to_retail_gain": 0.1,
+    "mean_edge": 487.0,
+    "quote_selectivity_ratio": 20.5
+  },
+  "title": "Depth-normalized imbalance router",
+  "updated_at": "2026-04-21T16:03:57+00:00",
+  "why_not_coefficient_retune": "This replaces the blended replay/router family with a new depth-normalized lane-selection contract instead of reweighting the same quote channels."
+}

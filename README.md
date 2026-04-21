@@ -225,13 +225,13 @@ This repo now uses a formal hill-climbing harness inspired by single-file autore
 Stage presets:
 
 - `smoke`: 8 sims
-- `prescreen`: 12 sims with extra arb-leak / fee-jump guardrails for risky pivots
+- `prescreen`: 12 sims with an `arb_loss_to_retail_gain` viability gate for risky pivots; `max_fee_jump` remains diagnostic, not a hard blocker
 - `screen`: 32 sims
 - `climb`: 128 sims
 - `confirm`: 512 sims
 - `final`: 1000 sims
 
-Artifacts are written to `artifacts/hill_climb/<run_id>/` with a versioned `run.json`, resumable `state.json`, append-only results, shared content-addressed source snapshots under `snapshots/`, and stage incumbents. Keep one active run under `artifacts/hill_climb/` and one smoke sanity run under `artifacts/hill_climb_smoke/`; delete probe, compare, and superseded baseline runs after their conclusions are folded back into the active lane. Legacy `evaluations/` trees, stale manifests, duplicate eval IDs, and obsolete continuity files are unsupported in active runs and should not be retained there.
+Artifacts are written to `artifacts/hill_climb/<run_id>/` with a versioned `run.json`, resumable `state.json`, append-only results, shared content-addressed source snapshots under `snapshots/`, and stage incumbents. Keep one active run under `artifacts/hill_climb/` and one smoke sanity run under `artifacts/hill_climb_smoke/`; delete probe, compare, and superseded baseline runs after their conclusions are folded back into the active lane. Closed-lane narratives belong in `docs/plans/completed/`; `docs/plans/active/` should only hold the live note plus minimal historical redirects when old ledgers still reference them. Legacy `evaluations/` trees, stale manifests, duplicate eval IDs, and obsolete continuity files are unsupported in active runs and should not be retained there.
 
 Decision rule:
 

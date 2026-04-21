@@ -1,0 +1,363 @@
+{
+  "artifact_version": "hill_climb.analysis.v2",
+  "batch_diversity": {
+    "batch_id": null,
+    "distinct_primary_layer_count": 0,
+    "diversity_summary": {
+      "has_meaningful_diversity": false,
+      "reasons": [],
+      "repeated_quote_topology_group_count": 0,
+      "same_spine_failure_group_count": 0,
+      "status": "empty"
+    },
+    "force_layer_pivot": false,
+    "has_topology_branch": false,
+    "issues": [],
+    "near_replay_survivor_ids": [],
+    "open_hypothesis_ids": [],
+    "open_primary_layers": [],
+    "phenotype_family_groups": {},
+    "quote_topology_groups": {},
+    "repeated_phenotype_family_groups": {},
+    "repeated_quote_topology_groups": {},
+    "same_phenotype_failure_groups": {},
+    "same_spine_failure_groups": {},
+    "selection_mode": "none",
+    "topology_branch_hypothesis_ids": []
+  },
+  "decomposition_coverage": {
+    "opportunity_budget": {
+      "all_hypothesis_ids": [],
+      "open_hypothesis_ids": []
+    },
+    "quote_map": {
+      "all_hypothesis_ids": [],
+      "open_hypothesis_ids": []
+    },
+    "risk_budget": {
+      "all_hypothesis_ids": [],
+      "open_hypothesis_ids": []
+    },
+    "state": {
+      "all_hypothesis_ids": [],
+      "open_hypothesis_ids": []
+    },
+    "unclassified": {
+      "all_hypothesis_ids": [],
+      "open_hypothesis_ids": []
+    }
+  },
+  "decomposition_gaps": [
+    "state",
+    "risk_budget",
+    "opportunity_budget",
+    "quote_map"
+  ],
+  "failure_clusters": {},
+  "family_scoreboard": {},
+  "frontier_bank": {
+    "best_anti_arb": {
+      "eval_id": "screen_0001",
+      "failure_tags": [],
+      "hypothesis_id": null,
+      "label": "baseline-latent-toxic-v1",
+      "mean_edge": 473.61639344802524,
+      "profile": {
+        "arb_edge": -66.77135092827479,
+        "arb_loss_to_retail_gain": 0.12356192682596893,
+        "high_decile_mean_edge": 622.0080798306832,
+        "low_decile_mean_edge": 361.497702023848,
+        "low_retail_mean_edge": 405.47245008814957,
+        "low_volatility_mean_edge": 451.7047749173429,
+        "max_fee_jump": 0.05697810742895679,
+        "mean_edge": 473.61639344802524,
+        "median_decile_mean_edge": 446.61686784788895,
+        "quote_selectivity_ratio": 29.083060147918708,
+        "retail_edge": 540.3877443763,
+        "time_weighted_ask_fee": 0.004259354004241511,
+        "time_weighted_bid_fee": 0.00423782106588683,
+        "time_weighted_mean_fee": 0.00424858753506417
+      },
+      "stage": "screen",
+      "status": "seed"
+    },
+    "best_fee_discipline": {
+      "eval_id": "screen_0001",
+      "failure_tags": [],
+      "hypothesis_id": null,
+      "label": "baseline-latent-toxic-v1",
+      "mean_edge": 473.61639344802524,
+      "profile": {
+        "arb_edge": -66.77135092827479,
+        "arb_loss_to_retail_gain": 0.12356192682596893,
+        "high_decile_mean_edge": 622.0080798306832,
+        "low_decile_mean_edge": 361.497702023848,
+        "low_retail_mean_edge": 405.47245008814957,
+        "low_volatility_mean_edge": 451.7047749173429,
+        "max_fee_jump": 0.05697810742895679,
+        "mean_edge": 473.61639344802524,
+        "median_decile_mean_edge": 446.61686784788895,
+        "quote_selectivity_ratio": 29.083060147918708,
+        "retail_edge": 540.3877443763,
+        "time_weighted_ask_fee": 0.004259354004241511,
+        "time_weighted_bid_fee": 0.00423782106588683,
+        "time_weighted_mean_fee": 0.00424858753506417
+      },
+      "stage": "screen",
+      "status": "seed"
+    },
+    "best_low_retail": {
+      "eval_id": "screen_0001",
+      "failure_tags": [],
+      "hypothesis_id": null,
+      "label": "baseline-latent-toxic-v1",
+      "mean_edge": 473.61639344802524,
+      "profile": {
+        "arb_edge": -66.77135092827479,
+        "arb_loss_to_retail_gain": 0.12356192682596893,
+        "high_decile_mean_edge": 622.0080798306832,
+        "low_decile_mean_edge": 361.497702023848,
+        "low_retail_mean_edge": 405.47245008814957,
+        "low_volatility_mean_edge": 451.7047749173429,
+        "max_fee_jump": 0.05697810742895679,
+        "mean_edge": 473.61639344802524,
+        "median_decile_mean_edge": 446.61686784788895,
+        "quote_selectivity_ratio": 29.083060147918708,
+        "retail_edge": 540.3877443763,
+        "time_weighted_ask_fee": 0.004259354004241511,
+        "time_weighted_bid_fee": 0.00423782106588683,
+        "time_weighted_mean_fee": 0.00424858753506417
+      },
+      "stage": "screen",
+      "status": "seed"
+    },
+    "best_low_volatility": {
+      "eval_id": "screen_0001",
+      "failure_tags": [],
+      "hypothesis_id": null,
+      "label": "baseline-latent-toxic-v1",
+      "mean_edge": 473.61639344802524,
+      "profile": {
+        "arb_edge": -66.77135092827479,
+        "arb_loss_to_retail_gain": 0.12356192682596893,
+        "high_decile_mean_edge": 622.0080798306832,
+        "low_decile_mean_edge": 361.497702023848,
+        "low_retail_mean_edge": 405.47245008814957,
+        "low_volatility_mean_edge": 451.7047749173429,
+        "max_fee_jump": 0.05697810742895679,
+        "mean_edge": 473.61639344802524,
+        "median_decile_mean_edge": 446.61686784788895,
+        "quote_selectivity_ratio": 29.083060147918708,
+        "retail_edge": 540.3877443763,
+        "time_weighted_ask_fee": 0.004259354004241511,
+        "time_weighted_bid_fee": 0.00423782106588683,
+        "time_weighted_mean_fee": 0.00424858753506417
+      },
+      "stage": "screen",
+      "status": "seed"
+    },
+    "best_quote_selectivity": {
+      "eval_id": "screen_0001",
+      "failure_tags": [],
+      "hypothesis_id": null,
+      "label": "baseline-latent-toxic-v1",
+      "mean_edge": 473.61639344802524,
+      "profile": {
+        "arb_edge": -66.77135092827479,
+        "arb_loss_to_retail_gain": 0.12356192682596893,
+        "high_decile_mean_edge": 622.0080798306832,
+        "low_decile_mean_edge": 361.497702023848,
+        "low_retail_mean_edge": 405.47245008814957,
+        "low_volatility_mean_edge": 451.7047749173429,
+        "max_fee_jump": 0.05697810742895679,
+        "mean_edge": 473.61639344802524,
+        "median_decile_mean_edge": 446.61686784788895,
+        "quote_selectivity_ratio": 29.083060147918708,
+        "retail_edge": 540.3877443763,
+        "time_weighted_ask_fee": 0.004259354004241511,
+        "time_weighted_bid_fee": 0.00423782106588683,
+        "time_weighted_mean_fee": 0.00424858753506417
+      },
+      "stage": "screen",
+      "status": "seed"
+    },
+    "best_raw": [
+      {
+        "eval_id": "screen_0001",
+        "failure_tags": [],
+        "hypothesis_id": null,
+        "label": "baseline-latent-toxic-v1",
+        "mean_edge": 473.61639344802524,
+        "profile": {
+          "arb_edge": -66.77135092827479,
+          "arb_loss_to_retail_gain": 0.12356192682596893,
+          "high_decile_mean_edge": 622.0080798306832,
+          "low_decile_mean_edge": 361.497702023848,
+          "low_retail_mean_edge": 405.47245008814957,
+          "low_volatility_mean_edge": 451.7047749173429,
+          "max_fee_jump": 0.05697810742895679,
+          "mean_edge": 473.61639344802524,
+          "median_decile_mean_edge": 446.61686784788895,
+          "quote_selectivity_ratio": 29.083060147918708,
+          "retail_edge": 540.3877443763,
+          "time_weighted_ask_fee": 0.004259354004241511,
+          "time_weighted_bid_fee": 0.00423782106588683,
+          "time_weighted_mean_fee": 0.00424858753506417
+        },
+        "stage": "screen",
+        "status": "seed"
+      }
+    ],
+    "incumbents": [
+      {
+        "eval_id": "screen_0001",
+        "failure_tags": [],
+        "hypothesis_id": null,
+        "label": "baseline-latent-toxic-v1",
+        "mean_edge": 473.61639344802524,
+        "profile": {
+          "arb_edge": -66.77135092827479,
+          "arb_loss_to_retail_gain": 0.12356192682596893,
+          "high_decile_mean_edge": 622.0080798306832,
+          "low_decile_mean_edge": 361.497702023848,
+          "low_retail_mean_edge": 405.47245008814957,
+          "low_volatility_mean_edge": 451.7047749173429,
+          "max_fee_jump": 0.05697810742895679,
+          "mean_edge": 473.61639344802524,
+          "median_decile_mean_edge": 446.61686784788895,
+          "quote_selectivity_ratio": 29.083060147918708,
+          "retail_edge": 540.3877443763,
+          "time_weighted_ask_fee": 0.004259354004241511,
+          "time_weighted_bid_fee": 0.00423782106588683,
+          "time_weighted_mean_fee": 0.00424858753506417
+        },
+        "stage": "screen",
+        "status": "seed"
+      }
+    ]
+  },
+  "generated_at": "2026-04-21T16:03:33+00:00",
+  "intent_coverage": {
+    "anti_arb": {
+      "all_hypothesis_ids": [],
+      "open_hypothesis_ids": []
+    },
+    "fee_discipline": {
+      "all_hypothesis_ids": [],
+      "open_hypothesis_ids": []
+    },
+    "local_refine": {
+      "all_hypothesis_ids": [],
+      "open_hypothesis_ids": []
+    },
+    "structural_pivot": {
+      "all_hypothesis_ids": [],
+      "open_hypothesis_ids": []
+    },
+    "weak_slice": {
+      "all_hypothesis_ids": [],
+      "open_hypothesis_ids": []
+    }
+  },
+  "layer_scoreboard": {},
+  "phenotype_coverage": {},
+  "portfolio_bank": [],
+  "portfolio_gaps": [
+    "anti_arb",
+    "weak_slice",
+    "fee_discipline",
+    "structural_pivot"
+  ],
+  "recent_failures": [],
+  "recommended_next_batch": [
+    {
+      "anchor_eval_id": "screen_0001",
+      "anchor_eval_ids": [
+        "screen_0001"
+      ],
+      "covered": false,
+      "intent": "local_refine",
+      "reason": "Exploit the strongest raw survivor screen_0001 before widening again."
+    },
+    {
+      "covered": false,
+      "intent": "anti_arb",
+      "reason": "Keep one branch explicitly aimed at arb-loss improvement so cheaper calm quoting is not selected blindly."
+    },
+    {
+      "covered": false,
+      "intent": "weak_slice",
+      "reason": "Keep one branch focused on weak low-retail, low-volatility, or tail slices instead of only overall mean_edge."
+    },
+    {
+      "covered": false,
+      "intent": "fee_discipline",
+      "reason": "Keep one branch with explicit quote-selectivity and fee-discipline guardrails so structural pivots fail fast."
+    },
+    {
+      "covered": false,
+      "intent": "structural_pivot",
+      "reason": "Reserve one orthogonal pivot so the batch does not collapse into semantically different versions of the same phenotype."
+    }
+  ],
+  "research_notebook": {
+    "artifact_version": "hill_climb.notebook.v1",
+    "dead_ends": [],
+    "findings": [],
+    "search_surface_risk": {
+      "external_research": {
+        "external_ideas": [],
+        "hypotheses_missing_external_idea": [],
+        "hypotheses_missing_research_refs": []
+      },
+      "fair_mid_state_estimation": {
+        "attempt_count": 0,
+        "fragility": 0.0,
+        "hypothesis_ids": [],
+        "open_hypothesis_ids": [],
+        "risk_label": "unproven",
+        "survivor_count": 0
+      },
+      "mutation_families": [],
+      "primary_layers": []
+    }
+  },
+  "run_id": "apr21-screen480-0858",
+  "screening_signal_comparison": {
+    "metric_fields": [
+      "mean_edge",
+      "arb_loss_to_retail_gain",
+      "quote_selectivity_ratio",
+      "time_weighted_mean_fee"
+    ],
+    "rows": [
+      {
+        "eval_id": "screen_0001",
+        "hypothesis_id": null,
+        "label": "baseline-latent-toxic-v1",
+        "metrics": {
+          "arb_loss_to_retail_gain": 0.12356192682596893,
+          "mean_edge": 473.61639344802524,
+          "quote_selectivity_ratio": 29.083060147918708,
+          "time_weighted_mean_fee": 0.00424858753506417
+        },
+        "roles": [
+          "official_incumbent",
+          "best_raw",
+          "recommended_anchor"
+        ],
+        "stage": "screen",
+        "status": "seed"
+      }
+    ],
+    "stage": "screen"
+  },
+  "structural_recommendations": [
+    {
+      "covered": true,
+      "kind": "batch_contract",
+      "reason": "Open hypotheses satisfy the minimum layer and topology diversity contract."
+    }
+  ],
+  "warnings": []
+}

@@ -232,7 +232,17 @@ def _build_test_harness(
     *,
     strategy_loader=None,
     match_results: list[MatchResult] | None = None,
+    seed_reference_files: bool = True,
 ) -> HillClimbHarness:
+    if seed_reference_files:
+        for relpath in (
+            "docs/plans/active/apr01-screen420-2134.md",
+            "artifacts/research/run-a/memo.md",
+            "artifacts/research/winner/memo.md",
+        ):
+            path = tmp_path / relpath
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(f"{relpath}\n")
     return HillClimbHarness(
         artifact_root=tmp_path / "artifacts",
         n_workers=1,
@@ -1638,6 +1648,71 @@ def test_get_run_state_rejects_missing_outcome_gate_field(tmp_path):
         HillClimbHarnessError, match="state is missing required fields: outcome_gate"
     ):
         harness.get_run_state(run_id="mar26")
+
+
+def test_get_run_state_rejects_missing_protected_surface_fingerprint(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(tmp_path)
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    manifest_path = tmp_path / "artifacts" / "mar26" / "run.json"
+    manifest = _load_json(manifest_path)
+    del manifest["protected_surface_fingerprint"]
+    manifest_path.write_text(json.dumps(manifest))
+
+    with pytest.raises(
+        HillClimbHarnessError,
+        match="manifest is missing required fields: protected_surface_fingerprint",
+    ):
+        harness.get_run_state(run_id="mar26")
+
+
+def test_research_refs_canonicalize_historical_active_plan_paths(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+    completed_plan = tmp_path / "docs" / "plans" / "completed" / "apr01-screen420-2134.md"
+    completed_plan.parent.mkdir(parents=True, exist_ok=True)
+    completed_plan.write_text("# completed\n")
+
+    harness = _build_test_harness(tmp_path, seed_reference_files=False)
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+    harness.upsert_hypothesis(
+        run_id="mar26",
+        hypothesis_id="historical-plan-ref",
+        title="Historical plan ref",
+        rationale="Canonicalize closed-lane plan refs",
+        expected_effect="Keep discovery pointed at one canonical narrative",
+        mutation_family="validation",
+        research_refs=["docs/plans/active/apr01-screen420-2134.md"],
+        **_structural_hypothesis_kwargs(),
+    )
+
+    payload = harness.get_hypothesis(
+        run_id="mar26", hypothesis_id="historical-plan-ref"
+    )
+    assert payload["research_refs"] == ["docs/plans/completed/apr01-screen420-2134.md"]
+
+
+def test_research_refs_reject_missing_repo_local_paths(tmp_path):
+    source_path = tmp_path / "Strategy.sol"
+    source_path.write_text("// candidate")
+
+    harness = _build_test_harness(tmp_path, seed_reference_files=False)
+    harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    with pytest.raises(HillClimbHarnessError, match="Unknown research reference"):
+        harness.upsert_hypothesis(
+            run_id="mar26",
+            hypothesis_id="missing-ref",
+            title="Missing ref",
+            rationale="Exercise missing path validation",
+            expected_effect="Fail fast on broken repo-local evidence links",
+            mutation_family="validation",
+            research_refs=["docs/plans/active/missing.md"],
+            **_structural_hypothesis_kwargs(),
+        )
 
 
 def test_get_run_state_rejects_out_of_order_stop_rules(tmp_path):

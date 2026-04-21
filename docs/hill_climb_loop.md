@@ -48,14 +48,15 @@ Each run lives under `artifacts/hill_climb/<run_id>/`.
 
 - `run.json`
   - Authoritative manifest metadata.
-  - Required fields: `artifact_version`, `run_id`, `created_at`, `active_strategy_path`, `snapshot_dir`, `snapshot_layout`, `results_jsonl`, `results_tsv`, `history_path`, `hypotheses_dir`, `state_path`, `continuity_counter`.
+  - Required fields: `artifact_version`, `run_id`, `created_at`, `active_strategy_path`, `snapshot_dir`, `snapshot_layout`, `results_jsonl`, `results_tsv`, `history_path`, `hypotheses_dir`, `state_path`, `continuity_counter`, `protected_surface_fingerprint`.
 - `state.json`
   - Authoritative resumable run state.
-  - Required fields: `artifact_version`, `run_id`, `run_mode`, `current_target_stage`, `baseline_eval_id`, `incumbent_eval_ids`, `last_completed_iteration`, `stop_rules`, `next_hypothesis_id`, `next_hypothesis_note`, `updated_at`.
-  - Optional field: `outcome_gate` with `{stage, minimum_mean_edge}` for explicit breakout thresholds.
+  - Required fields: `artifact_version`, `run_id`, `run_mode`, `current_target_stage`, `baseline_eval_id`, `incumbent_eval_ids`, `last_completed_iteration`, `stop_rules`, `next_hypothesis_id`, `next_hypothesis_note`, `outcome_gate`, `updated_at`.
+  - `outcome_gate` is nullable; when present it uses `{stage, minimum_mean_edge}` for explicit breakout thresholds.
 - `results.jsonl`
   - Append-only full evaluation ledger.
   - Each eval now records lineage metadata: `hypothesis_id`, `parent_eval_id`, `parent_source_sha256`, `change_summary`, `research_refs`, and optional `replay_reason`.
+  - Repo-local `research_refs` must resolve to existing files; closed-lane plan refs should point at `docs/plans/completed/` unless an older ledger still needs a stable redirect target under `docs/plans/active/`.
 - `results.tsv`
   - Append-only compact experiment ledger.
 - `history.jsonl`

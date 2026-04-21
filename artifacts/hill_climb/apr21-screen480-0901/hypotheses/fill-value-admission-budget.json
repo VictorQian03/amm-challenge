@@ -1,0 +1,55 @@
+{
+  "actual_failure_mode": null,
+  "artifact_version": "hill_climb.hypothesis.v1",
+  "batch_id": "apr21-screen480-0901-batch1",
+  "created_at": "2026-04-21T16:04:12+00:00",
+  "eval_ids": [],
+  "expected_effect": "Keep the near-breakout raw edge of the apr18 anchors while spending opportunity budget only in windows that look dominated by uninformed flow rather than by fast price-jump risk.",
+  "expected_failure_mode": "overpriced_calm_flow",
+  "expected_failure_signature": "If the admission test is too strict, low-retail and low-volatility slices stay flat while anti-arb metrics improve only trivially and the branch simply replays overpriced calm flow.",
+  "expected_win_condition": "Lift the weak calm slices of screen_0006 without reopening cheap-mode leakage, so the official screen incumbent clears both the promotion margin and the 480 breakout gate.",
+  "hard_guardrails": {
+    "arb_loss_to_retail_gain": 0.105,
+    "time_weighted_mean_fee": 0.00475
+  },
+  "hidden_coupling_removed": "Passive refill should not be funded by the same calm-memory signal that recenters fair mid; release budget only when the expected value of passive fills remains positive after accounting for jump hazard and stale quote risk.",
+  "hypothesis_id": "fill-value-admission-budget",
+  "is_topology_branch": false,
+  "layer_held_fixed": "quote_map",
+  "mutation_family": "fill_value_admission_budget",
+  "nearest_prior_failures": [
+    "passive-refill-auction",
+    "queue-aware-stress-shell"
+  ],
+  "nearest_prior_successes": [
+    "continuation-veto-fair-mid"
+  ],
+  "novelty_coordinates": {
+    "anchor_eval_ids": [
+      "screen_0006",
+      "screen_0008"
+    ],
+    "classification": "novel",
+    "external_idea": "latency_screened_fill_value",
+    "intent": "fee_discipline"
+  },
+  "parent_hypothesis_id": null,
+  "primary_layer_changed": "opportunity_budget",
+  "quote_topology": "value-screened refill corridor",
+  "rationale": "Use the screen_0006 passive-refill anchor and the screen_0008 anti-arb anchor as context, but let safe-side refill spend only when expected passive fill value stays positive after a jump-risk and latency screen, instead of opening from calm confirmations alone.",
+  "research_refs": [
+    "docs/plans/completed/apr18-screen480-1132.md",
+    "https://arxiv.org/abs/1806.05849"
+  ],
+  "seed_eval_id": null,
+  "status": "queued",
+  "synthesis_eligible": true,
+  "target_metrics": {
+    "low_retail_mean_edge": 418.0,
+    "low_volatility_mean_edge": 466.5,
+    "mean_edge": 486.5
+  },
+  "title": "Fill-value admission budget",
+  "updated_at": "2026-04-21T16:04:12+00:00",
+  "why_not_coefficient_retune": "This changes the admission rule for opportunity spend from calm-state accumulation to positive expected fill value under latency risk, rather than narrowing the same refill window."
+}
