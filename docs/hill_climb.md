@@ -53,6 +53,8 @@ uv run amm-match hill-climb probe --stage screen contracts/src/StarterStrategy.s
 ```
 
 Use `probe` for branch scouting and rerun only the chosen branch into the canonical retained lane with `hill-climb eval`.
+The thin harness does not have an `analyze-run` command, queued-hypothesis surface, or built-in batch-diversity report.
+If a round includes several scratch probes, keep the synthesis in an active plan note under `docs/plans/active/` and store probe sources/results outside the retained lane, for example under `artifacts/scratch_probes/<run_id>/`.
 
 List runs:
 
@@ -127,6 +129,7 @@ Use these as search prompts, not as required workflow:
 3. When the search feels trapped, use web search or external literature to import missing topologies instead of relabeling the same design.
 4. Use `compare-profiles` plus screening metrics such as `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, and `time_weighted_mean_fee` to judge whether a branch is actually different.
 5. Prefer a fresh `run_id` when the evaluator surface changes or a retained run looks stale or corrupted.
+6. Keep memo-grade probe-batch summaries outside the retained lane. `status`, `history`, and `show-eval` only summarize retained evals, not every scratch candidate you explored.
 
 ## Entropy Guardrails
 

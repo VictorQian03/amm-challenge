@@ -581,3 +581,25 @@ def test_compare_profiles_command_requires_run_id_for_eval_ids(capsys):
     assert hill_climb_compare_profiles_command(args) == 1
     output = capsys.readouterr().out
     assert "--run-id is required" in output
+
+
+def test_stable_hill_climb_docs_do_not_reference_removed_queue_surfaces():
+    stale_patterns = (
+        "hill-climb analyze-run",
+        "hill-climb set-hypothesis",
+        "hill-climb set-state",
+        "hill-climb show-hypothesis",
+    )
+
+    for relpath in ("docs/hill_climb.md", "README.md"):
+        text = Path(relpath).read_text()
+        for pattern in stale_patterns:
+            assert pattern not in text
+
+    readme_text = Path("README.md").read_text()
+    assert "queued-hypothesis" not in readme_text
+    assert "hypothesis registry" not in readme_text
+
+    docs_text = Path("docs/hill_climb.md").read_text()
+    assert "docs/plans/active/" in docs_text
+    assert "artifacts/scratch_probes/<run_id>/" in docs_text

@@ -202,5 +202,6 @@ uv run amm-match hill-climb compare-profiles --stage screen --run-id apr21 --bas
 The harness keeps the eval layer strict and append-only, but it does not impose an idea-generation workflow.
 On a fresh run, the first passing stage eval seeds that stage incumbent, so evaluating `contracts/src/StarterStrategy.sol` is the canonical local baseline seed.
 Use `hill-climb probe` for worker-local branch scouting so worktree exploration does not create extra retained artifact directories.
+Probe-heavy rounds still need a memo surface: `status`, `history`, and `show-eval` summarize retained evals only, so keep scratch-batch synthesis in `docs/plans/active/` and store probe artifacts outside the retained lane.
 Use the profile/failure-tag read surfaces to kill exhausted spines early and keep search entropy above simple incumbent-neighbor tweaks.
 See [docs/hill_climb.md](docs/hill_climb.md) for the retained run layout, stage discipline, and search guidance.
