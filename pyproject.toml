@@ -10,6 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 dependencies = [
+    "amm_sim_rs",
     "numpy>=1.24.0",
     "py-solc-x>=2.0.0",
     "pyrevm>=0.3.0",
@@ -24,3 +25,6 @@ amm-match = "amm_competition.cli:main"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["amm_competition*"]
+
+[tool.uv.sources]
+amm_sim_rs = { path = "amm_sim_rs" }

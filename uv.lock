@@ -11,6 +11,7 @@ name = "amm-challenge"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "amm-sim-rs" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "py-solc-x" },
@@ -24,12 +25,18 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "amm-sim-rs", directory = "amm_sim_rs" },
     { name = "numpy", specifier = ">=1.24.0" },
     { name = "py-solc-x", specifier = ">=2.0.0" },
     { name = "pyrevm", specifier = ">=0.3.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
 ]
 provides-extras = ["dev"]
+
+[[package]]
+name = "amm-sim-rs"
+version = "0.1.0"
+source = { directory = "amm_sim_rs" }
 
 [[package]]
 name = "certifi"
