@@ -124,22 +124,25 @@ This keeps the harness strict on measurement without prescribing what the next s
 
 Use these as search prompts, not as required workflow:
 
-1. Decompose strategy changes across `state estimation`, `risk budget`, `opportunity budget`, and `quote map`.
-2. Keep an explicit explore/exploit split. Do not spend every iteration on local coefficient polish.
-3. When the search feels trapped, use web search or external literature to import missing topologies instead of relabeling the same design.
-4. Use `compare-profiles` plus screening metrics such as `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, and `time_weighted_mean_fee` to judge whether a branch is actually different.
-5. Prefer a fresh `run_id` when the evaluator surface changes or a retained run looks stale or corrupted.
-6. Keep memo-grade probe-batch summaries outside the retained lane. `status`, `history`, and `show-eval` only summarize retained evals, not every scratch candidate you explored.
+1. Use the six-layer scaffold `observation shaping -> latent state -> hazard/calm classifier -> shared spread -> side-specific protection -> safe-side recapture/opportunity`.
+2. Hold the scaffold fixed, mutate one interface at a time, and favor explicit interface separation with a factorized causal representation instead of a coupled pipeline rewrite.
+3. Keep an explicit explore/exploit split. Do not spend every iteration on local coefficient polish.
+4. Judge novelty in outcome-space, not code-space. Branch diversity is about expected movement in `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, and floor slices, not about mechanism names.
+5. Use `compare-profiles` and retained history to sort branches into failure basins such as `over_open_leak`, `over_tighten_clamp`, `frontier_neighbor`, and `crossover_regression`. Retire exhausted basins instead of relabeling the same spine.
+6. Treat `max_fee_jump` as a neutral diagnostic. It is often informative and sometimes higher in better branches, so do not use it as a blanket smoothing target.
+7. When the search feels trapped, use web search or external literature to import missing topologies instead of relabeling the same design.
+8. Prefer a fresh `run_id` when the evaluator surface changes or a retained run looks stale or corrupted.
+9. Keep memo-grade probe-batch summaries outside the retained lane. `status`, `history`, and `show-eval` only summarize retained evals, not every scratch candidate you explored.
 
 ## Entropy Guardrails
 
 Use these to keep long-running search loops from collapsing into the incumbent's neighborhood:
 
-1. Keep at least one live branch in more than one module family: `state estimation`, `risk budget`, `opportunity budget`, and `quote map`.
-2. If two discarded variants land on the same `primary_failure_tag` with similar profile deltas, treat that spine as exhausted and switch families instead of polishing coefficients again.
+1. Keep at least one live branch away from the incumbent on more than one interface in the six-layer scaffold, not just within one local neighborhood.
+2. If two discarded variants land in the same `primary_failure_tag` basin with similar profile deltas, treat that basin as exhausted and switch interfaces instead of polishing coefficients again.
 3. Maintain three anchors in your reasoning: the incumbent, the best raw non-promoted branch, and one structurally different outsider.
-4. Write `--label` and `--description` in structural language so the history makes family collapse obvious.
-5. Periodically import outside evidence when the loop keeps regenerating the same failure signature; do not let the harness free-run on stale internal ideas alone.
+4. Write `--label` and `--description` in structural language that makes the touched interface and expected outcome-space basin obvious.
+5. Periodically import outside evidence when the loop keeps regenerating the same failure basin; do not let the harness free-run on stale internal ideas alone.
 
 ## Anti-Patterns
 

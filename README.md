@@ -203,5 +203,6 @@ The harness keeps the eval layer strict and append-only, but it does not impose 
 On a fresh run, the first passing stage eval seeds that stage incumbent, so evaluating `contracts/src/StarterStrategy.sol` is the canonical local baseline seed.
 Use `hill-climb probe` for worker-local branch scouting so worktree exploration does not create extra retained artifact directories.
 Probe-heavy rounds still need a memo surface: `status`, `history`, and `show-eval` summarize retained evals only, so keep scratch-batch synthesis in `docs/plans/active/` and store probe artifacts outside the retained lane.
-Use the profile/failure-tag read surfaces to kill exhausted spines early and keep search entropy above simple incumbent-neighbor tweaks.
+Use the six-layer search scaffold (`observation shaping -> latent state -> hazard/calm classifier -> shared spread -> side-specific protection -> safe-side recapture/opportunity`), mutate one interface at a time, and judge novelty by expected movement in outcome-space metrics rather than mechanism names.
+Use the profile/failure-tag read surfaces to retire exhausted basins such as `over_open_leak`, `over_tighten_clamp`, `frontier_neighbor`, and `crossover_regression`. Treat `max_fee_jump` as a diagnostic, not an automatic anti-pattern.
 See [docs/hill_climb.md](docs/hill_climb.md) for the retained run layout, stage discipline, and search guidance.

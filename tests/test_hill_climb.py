@@ -603,3 +603,76 @@ def test_stable_hill_climb_docs_do_not_reference_removed_queue_surfaces():
     docs_text = Path("docs/hill_climb.md").read_text()
     assert "docs/plans/active/" in docs_text
     assert "artifacts/scratch_probes/<run_id>/" in docs_text
+    assert "observation shaping" in docs_text
+    assert "latent state" in docs_text
+    assert "hazard/calm classifier" in docs_text
+    assert "shared spread" in docs_text
+    assert "side-specific protection" in docs_text
+    assert "safe-side recapture/opportunity" in docs_text
+    assert "mechanism names" in docs_text
+    assert "over_open_leak" in docs_text
+    assert "over_tighten_clamp" in docs_text
+    assert "frontier_neighbor" in docs_text
+    assert "crossover_regression" in docs_text
+    assert "neutral diagnostic" in docs_text
+    assert "state estimation" not in docs_text
+    assert "risk budget" not in docs_text
+    assert "opportunity budget" not in docs_text
+    assert "quote map" not in docs_text
+
+    assert "observation shaping" in readme_text
+    assert "latent state" in readme_text
+    assert "hazard/calm classifier" in readme_text
+    assert "shared spread" in readme_text
+    assert "side-specific protection" in readme_text
+    assert "safe-side recapture/opportunity" in readme_text
+    assert "mechanism names" in readme_text
+    assert "over_open_leak" in readme_text
+    assert "max_fee_jump" in readme_text
+
+
+def test_failure_signature_uses_guidance_basins_and_keeps_max_fee_jump_neutral(tmp_path):
+    harness = _build_test_harness(tmp_path)
+
+    leak_signature = harness._build_failure_signature(
+        deltas={
+            "arb_edge": -20.0,
+            "arb_loss_to_retail_gain": 0.05,
+            "max_fee_jump": 0.03,
+        },
+        overall_delta=-2.0,
+    )
+    assert leak_signature["primary_tag"] == "over_open_leak"
+    assert leak_signature["tags"] == ["over_open_leak"]
+
+    clamp_signature = harness._build_failure_signature(
+        deltas={
+            "mean_edge": -4.0,
+            "time_weighted_mean_fee": 0.0012,
+            "low_retail_mean_edge": -8.0,
+            "low_decile_mean_edge": -12.0,
+            "high_decile_mean_edge": 0.0,
+        },
+        overall_delta=-4.0,
+    )
+    assert clamp_signature["primary_tag"] == "crossover_regression"
+    assert clamp_signature["tags"] == [
+        "crossover_regression",
+        "over_tighten_clamp",
+    ]
+
+    neighbor_signature = harness._build_failure_signature(
+        deltas={
+            "mean_edge": -0.5,
+            "arb_loss_to_retail_gain": 0.005,
+            "quote_selectivity_ratio": 1.0,
+            "time_weighted_mean_fee": 0.0002,
+            "low_retail_mean_edge": -0.5,
+            "low_volatility_mean_edge": -0.5,
+            "low_decile_mean_edge": 1.0,
+            "max_fee_jump": 0.05,
+        },
+        overall_delta=-0.5,
+    )
+    assert neighbor_signature["primary_tag"] == "frontier_neighbor"
+    assert neighbor_signature["tags"] == ["frontier_neighbor"]

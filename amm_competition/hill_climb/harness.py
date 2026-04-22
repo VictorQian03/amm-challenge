@@ -78,10 +78,6 @@ def _delta(current: float | None, baseline: float | None) -> float | None:
     return current - baseline
 
 
-def _sorted_unique(values: list[str]) -> list[str]:
-    return sorted({value for value in values if value})
-
-
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="microseconds")
 
@@ -1384,39 +1380,31 @@ class HillClimbHarness:
         if (arb_edge_delta is not None and arb_edge_delta < -10.0) or (
             arb_loss_ratio_delta is not None and arb_loss_ratio_delta > 0.03
         ):
-            tags.append("arb_leak_regression")
-            notes.append("arb leakage worsened materially vs incumbent")
+            tags.append("over_open_leak")
+            notes.append("candidate reopened too much safe-side flow and worsened arb leakage")
         low_slice_delta = deltas.get("low_retail_mean_edge")
-        fee_delta = deltas.get("time_weighted_bid_fee")
-        if (
-            low_slice_delta is not None
-            and low_slice_delta < -5.0
-            and fee_delta is not None
-            and fee_delta > 0.0005
-        ):
-            tags.append("overpriced_calm_flow")
-            notes.append("calm-flow slice regressed while average fees moved up")
-        max_fee_jump_delta = deltas.get("max_fee_jump")
-        meaningful_upside = any(
-            (delta := deltas.get(metric)) is not None and delta > threshold
-            for metric, threshold in (
-                ("mean_edge", 5.0),
-                ("low_retail_mean_edge", 10.0),
-                ("low_volatility_mean_edge", 10.0),
-                ("low_decile_mean_edge", 10.0),
-                ("arb_edge", 10.0),
-            )
-        )
-        if (
-            max_fee_jump_delta is not None
-            and max_fee_jump_delta > 0.01
-            and not meaningful_upside
-        ):
-            tags.append("quote_motion_regression")
-            notes.append(
-                "quote motion became more abrupt without enough offsetting edge or slice gain"
-            )
+        low_volatility_delta = deltas.get("low_volatility_mean_edge")
         low_decile_delta = deltas.get("low_decile_mean_edge")
+        mean_fee_delta = deltas.get("time_weighted_mean_fee")
+        if (
+            (
+                low_slice_delta is not None
+                and low_slice_delta < -5.0
+            )
+            or (
+                low_volatility_delta is not None
+                and low_volatility_delta < -5.0
+            )
+            or (
+                low_decile_delta is not None
+                and low_decile_delta < -10.0
+            )
+        ) and (
+            mean_fee_delta is not None
+            and mean_fee_delta > 0.0005
+        ):
+            tags.append("over_tighten_clamp")
+            notes.append("calm or protected floor slices regressed while average fees tightened")
         high_decile_delta = deltas.get("high_decile_mean_edge")
         if (
             low_decile_delta is not None
@@ -1424,24 +1412,49 @@ class HillClimbHarness:
             and high_decile_delta is not None
             and high_decile_delta <= 0.0
         ):
-            tags.append("tail_protection_loss")
+            tags.append("crossover_regression")
             notes.append(
-                "weak tail slices regressed without compensating strong-slice gain"
+                "cross-interface change regressed the protected floor without compensating upside"
             )
+        meaningful_outcome_motion = any(
+            (delta := deltas.get(metric)) is not None and abs(delta) > threshold
+            for metric, threshold in (
+                ("arb_loss_to_retail_gain", 0.02),
+                ("quote_selectivity_ratio", 3.0),
+                ("time_weighted_mean_fee", 0.001),
+                ("low_retail_mean_edge", 5.0),
+                ("low_volatility_mean_edge", 5.0),
+                ("low_decile_mean_edge", 7.5),
+            )
+        )
         if overall_delta is not None and overall_delta <= 0.0:
             if any(
                 (delta := deltas.get(field)) is not None and delta > 0.0
                 for field in ("low_retail_mean_edge", "low_volatility_mean_edge")
             ):
-                tags.append("weak_slice_improvement_without_overall_gain")
+                tags.append("crossover_regression")
                 notes.append(
-                    "some weak slices improved but not enough to move overall edge"
+                    "some slices improved, but the crossover regressed elsewhere and failed overall"
                 )
-        primary_tag = tags[0] if tags else None
+            elif not meaningful_outcome_motion:
+                tags.append("frontier_neighbor")
+                notes.append(
+                    "candidate stayed too close to the incumbent outcome basin to improve overall edge"
+                )
+        ordered_tags = []
+        for candidate in (
+            "crossover_regression",
+            "over_open_leak",
+            "over_tighten_clamp",
+            "frontier_neighbor",
+        ):
+            if candidate in tags:
+                ordered_tags.append(candidate)
+        primary_tag = ordered_tags[0] if ordered_tags else None
         if primary_tag is None and overall_delta is not None and overall_delta > 0.0:
             primary_tag = "improving_variant"
         return {
-            "tags": _sorted_unique(tags),
+            "tags": ordered_tags,
             "primary_tag": primary_tag,
             "notes": notes,
         }
