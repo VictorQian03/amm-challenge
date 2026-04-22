@@ -7,9 +7,9 @@ It does not own idea generation, batch planning, or hypothesis workflow.
 ## What It Covers
 
 - Fixed stage presets with canonical seed blocks.
-- Append-only eval ledgers under `artifacts/hill_climb/<run_id>/`.
+- Consolidated retained ledgers under `artifacts/hill_climb/<run_id>/`.
 - Content-addressed source snapshots so repeated restores do not regenerate duplicate artifacts.
-- Per-stage incumbents and best-raw read surfaces.
+- Derived incumbent, best-raw, and history read surfaces without per-run duplicate files.
 - Protected-mechanics fingerprinting so a retained run does not silently span evaluator changes.
 
 ## What It Does Not Cover
@@ -25,16 +25,15 @@ Agents should use the harness to measure and compare candidates, not to decide h
 
 Each run lives under `artifacts/hill_climb/<run_id>/`.
 
-- `run.json`: manifest for the retained lane and its protected-surface fingerprint.
+- `run.json`: minimal manifest for the retained lane, protected-surface fingerprint, and eval/snapshot counts.
 - `results.jsonl`: authoritative append-only eval ledger.
-- `results.tsv`: compact human-readable ledger.
-- `history.jsonl`: derived compact read model.
 - `snapshots/<sha256>.sol`: content-addressed source snapshots.
-- `incumbents/<stage>.json`: current incumbent for each stage.
 
 Cross-run navigation lives at `artifacts/hill_climb/index.json`.
 The newest valid run is marked `active`; older valid runs are `historical`; fingerprint-stale or corrupted runs are `blocked`.
-The run layout is canonical: if `run.json`, `results.jsonl`, or `incumbents/<stage>.json` drift from each other, the harness fails loud instead of silently repairing the lane.
+The run layout is canonical: retained lanes may keep only `run.json`, `results.jsonl`, and referenced snapshots.
+`status`, `history`, incumbents, and best-raw views are rebuilt from `results.jsonl` instead of being persisted as extra files.
+Legacy per-run files such as `results.tsv`, `history.jsonl`, `incumbents/`, or `.next_eval_index` are treated as invalid retained state.
 
 ## Commands
 
@@ -46,6 +45,14 @@ uv run amm-match hill-climb eval --run-id apr21 --stage screen
 
 On a fresh run, the first passing eval at a stage becomes that stage's incumbent.
 The default eval source is `contracts/src/StarterStrategy.sol`, so `screen_0001` is the canonical way to seed the local incumbent from the current starter strategy.
+
+Run a scratch probe in a worker worktree without creating retained artifacts:
+
+```bash
+uv run amm-match hill-climb probe --stage screen contracts/src/StarterStrategy.sol
+```
+
+Use `probe` for branch scouting and rerun only the chosen branch into the canonical retained lane with `hill-climb eval`.
 
 List runs:
 
@@ -79,6 +86,13 @@ uv run amm-match hill-climb compare-profiles \
 
 `compare-profiles` with a `--*-source` argument still runs the evaluator.
 If protected competition mechanics are dirty, it blocks for the same reason a retained eval would block.
+
+## Persistence Guardrails
+
+1. `artifacts/hill_climb/<run_id>/` is for canonical retained lanes only.
+2. Worker-local exploration belongs in worktrees via `hill-climb probe`, not as extra retained `run_id`s.
+3. Only selected branches should be rerun into the canonical retained lane with `hill-climb eval`.
+4. Retained lanes stay compact on purpose: no per-run TSV mirror, no persisted history mirror, no persisted incumbent mirror, and no worker scratch directories under the retained root.
 
 ## Stage Discipline
 
@@ -126,7 +140,8 @@ Use these to keep long-running search loops from collapsing into the incumbent's
 
 ## Anti-Patterns
 
-- Do not hand-edit `results.jsonl`, `results.tsv`, `history.jsonl`, or `.next_eval_index`.
+- Do not hand-edit `results.jsonl` or `run.json`.
+- Do not persist worker-local evals under `artifacts/hill_climb/`; use `hill-climb probe` and consolidate only the chosen branch.
 - Do not continue a retained run after changing protected competition mechanics; start a fresh `run_id`.
 - Do not let the harness dictate idea generation. The harness should constrain evaluation quality, not design creativity.
 - Do not rely on a single topology family once profile comparisons show repeated failure signatures.

@@ -28,27 +28,22 @@ from amm_competition.hill_climb.stages import (
 
 DEFAULT_ARTIFACT_ROOT = Path("artifacts/hill_climb")
 DEFAULT_STRATEGY_PATH = Path("contracts/src/StarterStrategy.sol")
-RUN_MANIFEST_VERSION = "hill_climb.run.v1"
+RUN_MANIFEST_VERSION = "hill_climb.run.v2"
 RUN_RESULT_VERSION = "hill_climb.eval.v1"
 RUN_HISTORY_VERSION = "hill_climb.history.v1"
 CROSS_RUN_INDEX_VERSION = "hill_climb.index.v1"
 SNAPSHOT_LAYOUT_VERSION = "content_addressed.v1"
-NEXT_EVAL_INDEX_FILENAME = ".next_eval_index"
+RETAINED_LAYOUT_VERSION = "consolidated.v1"
 INCUMBENT_EPSILON = 1e-9
 RUN_STATUSES = frozenset({"seed", "keep", "discard", "invalid"})
-RESULTS_HEADER = (
-    "eval_id\tstage\tstatus\tmean_edge\tincumbent_mean_edge\tdelta_vs_incumbent\t"
-    "strategy_name\tlabel\tdescription\tsnapshot_path\n"
-)
-CANONICAL_RUN_LAYOUT = {
-    "results_jsonl": "results.jsonl",
-    "results_tsv": "results.tsv",
-    "history_path": "history.jsonl",
-    "snapshot_dir": "snapshots",
-    "incumbents_dir": "incumbents",
-    "continuity_counter": NEXT_EVAL_INDEX_FILENAME,
-}
 SHA256_HEX_RE = re.compile(r"^[0-9a-f]{64}$")
+WORKER_RUN_ID_RE = re.compile(r"(?:^|-)w\d+(?:-|$)")
+LEGACY_RETAINED_SURFACES = (
+    "results.tsv",
+    "history.jsonl",
+    "incumbents",
+    ".next_eval_index",
+)
 PROFILE_FIELDS = (
     "mean_edge",
     "retail_edge",
@@ -118,17 +113,6 @@ def _json_load(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise HillClimbHarnessError(f"Expected JSON object in {path}")
     return payload
-
-
-def _tsv_field(value: str | None) -> str:
-    if value is None:
-        return ""
-    return value.replace("\t", " ").replace("\n", " ").strip()
-
-
-def _tsv_float(value: Any) -> str:
-    converted = _safe_float(value)
-    return "" if converted is None else f"{converted:.6f}"
 
 
 class _RunLock:
@@ -233,6 +217,7 @@ class HillClimbHarness:
         self._protected_surface().ensure_runtime_eval_allowed()
 
         normalized_run_id = _slug(run_id, fallback="run")
+        self._assert_retained_run_id_allowed(normalized_run_id)
         stage_config = resolve_hill_climb_stage(stage)
         source_path = Path(source_path)
         if not source_path.exists():
@@ -253,7 +238,7 @@ class HillClimbHarness:
                 replay_reason=replay_reason,
             )
             self._store_snapshot(run_dir, source_text, source_sha256)
-            eval_id = self._reserve_evaluation_id(run_dir=run_dir, stage=stage_config.name)
+            eval_id = self._next_evaluation_id(results, stage=stage_config.name)
             incumbent_before = self._read_incumbent(
                 run_dir,
                 stage_config.name,
@@ -273,18 +258,10 @@ class HillClimbHarness:
             )
 
             try:
-                strategy = self._strategy_loader(source_text)
-                result = self._stage_runner_factory(
-                    stage_config.name, self.n_workers
-                ).run_match(
-                    strategy,
-                    self._baseline_loader(),
-                    store_results=True,
+                strategy, scorecard, gate = self._run_stage_evaluation(
+                    stage_config=stage_config,
+                    source_text=source_text,
                 )
-                scorecard = compute_scorecard(result)
-                scorecard["run_metadata"]["stage"] = stage_config.name
-                scorecard["run_metadata"]["seed_block"] = list(stage_config.seed_block)
-                gate = self._build_gate(scorecard=scorecard, stage_config=stage_config)
                 mean_edge = float(scorecard["overall"]["mean_edge"])
                 selection = self._resolve_status(
                     mean_edge,
@@ -331,8 +308,6 @@ class HillClimbHarness:
                     "derived_analysis": self._build_invalid_analysis(str(exc)),
                 }
                 self._append_result(run_dir, summary)
-                if summary["status"] in {"seed", "keep"}:
-                    self._write_incumbent(run_dir, stage_config.name, summary)
                 self._sync_derived_views(
                     run_dir=run_dir,
                     manifest=manifest,
@@ -343,8 +318,6 @@ class HillClimbHarness:
                 ) from exc
 
             self._append_result(run_dir, summary)
-            if summary["status"] in {"seed", "keep"}:
-                self._write_incumbent(run_dir, stage_config.name, summary)
             self._sync_derived_views(
                 run_dir=run_dir,
                 manifest=manifest,
@@ -380,6 +353,8 @@ class HillClimbHarness:
             "run_id": context["manifest"]["run_id"],
             "created_at": context["manifest"]["created_at"],
             "updated_at": context["manifest"]["updated_at"],
+            "eval_count": context["manifest"]["eval_count"],
+            "snapshot_count": context["manifest"]["snapshot_count"],
             "warnings": context["warnings"],
             "latest": self._compact_summary(context["results"][-1]) if context["results"] else None,
             "stages": {
@@ -589,23 +564,11 @@ class HillClimbHarness:
     def _results_path(self, run_dir: Path) -> Path:
         return run_dir / "results.jsonl"
 
-    def _results_tsv_path(self, run_dir: Path) -> Path:
-        return run_dir / "results.tsv"
-
-    def _history_path(self, run_dir: Path) -> Path:
-        return run_dir / "history.jsonl"
-
     def _snapshot_dir(self, run_dir: Path) -> Path:
         return run_dir / "snapshots"
 
     def _snapshot_path(self, run_dir: Path, source_sha256: str) -> Path:
         return self._snapshot_dir(run_dir) / f"{source_sha256}.sol"
-
-    def _incumbent_dir(self, run_dir: Path) -> Path:
-        return run_dir / "incumbents"
-
-    def _incumbent_path(self, run_dir: Path, stage: str) -> Path:
-        return self._incumbent_dir(run_dir) / f"{stage}.json"
 
     def _load_or_create_manifest(self, run_dir: Path, *, run_id: str) -> dict[str, Any]:
         manifest_path = self._manifest_path(run_dir)
@@ -613,29 +576,23 @@ class HillClimbHarness:
             return self._load_manifest(run_dir, run_id=run_id, warnings=[])
 
         self._snapshot_dir(run_dir).mkdir(parents=True, exist_ok=True)
-        self._incumbent_dir(run_dir).mkdir(parents=True, exist_ok=True)
         self._results_path(run_dir).write_text("")
-        self._results_tsv_path(run_dir).write_text(RESULTS_HEADER)
-        self._history_path(run_dir).write_text("")
-        (run_dir / NEXT_EVAL_INDEX_FILENAME).write_text("1\n")
+        created_at = _utc_now()
 
         manifest = {
             "artifact_version": RUN_MANIFEST_VERSION,
             "run_id": run_id,
-            "created_at": _utc_now(),
-            "updated_at": _utc_now(),
-            "results_jsonl": self._results_path(run_dir).name,
-            "results_tsv": self._results_tsv_path(run_dir).name,
-            "history_path": self._history_path(run_dir).name,
-            "snapshot_dir": self._snapshot_dir(run_dir).name,
-            "incumbents_dir": self._incumbent_dir(run_dir).name,
+            "created_at": created_at,
+            "updated_at": created_at,
             "snapshot_layout": SNAPSHOT_LAYOUT_VERSION,
-            "continuity_counter": NEXT_EVAL_INDEX_FILENAME,
+            "persistence_policy": RETAINED_LAYOUT_VERSION,
             "protected_surface_fingerprint": self._protected_surface()
             .current_fingerprint()
             .to_payload(),
             "latest_eval_id": None,
             "latest_stage": None,
+            "eval_count": 0,
+            "snapshot_count": 0,
         }
         manifest_path.write_text(_json_dump(manifest))
         return manifest
@@ -654,20 +611,20 @@ class HillClimbHarness:
             "run_id",
             "created_at",
             "updated_at",
-            "results_jsonl",
-            "results_tsv",
-            "history_path",
-            "snapshot_dir",
-            "incumbents_dir",
             "snapshot_layout",
-            "continuity_counter",
+            "persistence_policy",
             "protected_surface_fingerprint",
+            "latest_eval_id",
+            "latest_stage",
+            "eval_count",
+            "snapshot_count",
         }
         missing = sorted(field for field in required_fields if field not in manifest)
         if missing:
             raise HillClimbHarnessError(
                 f"Run '{run_id}' manifest is missing required fields: {', '.join(missing)}"
             )
+        self._assert_retained_run_id_allowed(run_id)
         if manifest["run_id"] != run_id:
             raise HillClimbHarnessError(
                 f"Run directory {run_dir.name!r} contains mismatched manifest run_id {manifest['run_id']!r}"
@@ -682,16 +639,21 @@ class HillClimbHarness:
                 f"Run '{run_id}' manifest has unsupported snapshot_layout "
                 f"{manifest['snapshot_layout']!r}; expected {SNAPSHOT_LAYOUT_VERSION!r}"
             )
+        if manifest["persistence_policy"] != RETAINED_LAYOUT_VERSION:
+            raise HillClimbHarnessError(
+                f"Run '{run_id}' manifest has unsupported persistence_policy "
+                f"{manifest['persistence_policy']!r}; expected {RETAINED_LAYOUT_VERSION!r}"
+            )
         for field in ("created_at", "updated_at"):
             if not isinstance(manifest[field], str) or not manifest[field]:
                 raise HillClimbHarnessError(
                     f"Run '{run_id}' manifest field {field!r} must be a non-empty string"
                 )
-        for field, expected in CANONICAL_RUN_LAYOUT.items():
-            if manifest.get(field) != expected:
+        for field in ("eval_count", "snapshot_count"):
+            value = manifest.get(field)
+            if not isinstance(value, int) or value < 0:
                 raise HillClimbHarnessError(
-                    f"Run '{run_id}' manifest field {field!r} must stay {expected!r}; "
-                    f"found {manifest.get(field)!r}"
+                    f"Run '{run_id}' manifest field {field!r} must be a non-negative integer"
                 )
         self._validate_run_layout(run_dir)
         try:
@@ -709,26 +671,17 @@ class HillClimbHarness:
         issues: list[str] = []
         if not self._results_path(run_dir).is_file():
             issues.append("missing results.jsonl")
-        if not self._results_tsv_path(run_dir).is_file():
-            issues.append("missing results.tsv")
-        if not self._history_path(run_dir).is_file():
-            issues.append("missing history.jsonl")
         if not self._snapshot_dir(run_dir).is_dir():
             issues.append("missing snapshots/")
-        if not self._incumbent_dir(run_dir).is_dir():
-            issues.append("missing incumbents/")
-        if not (run_dir / NEXT_EVAL_INDEX_FILENAME).is_file():
-            issues.append(f"missing {NEXT_EVAL_INDEX_FILENAME}")
-        if self._incumbent_dir(run_dir).is_dir():
-            extra_incumbents = sorted(
-                path.name
-                for path in self._incumbent_dir(run_dir).iterdir()
-                if path.is_file() and path.stem not in HILL_CLIMB_STAGES
+        legacy_surfaces = []
+        for name in LEGACY_RETAINED_SURFACES:
+            legacy_path = run_dir / name
+            if legacy_path.exists():
+                legacy_surfaces.append(f"{name}/" if legacy_path.is_dir() else name)
+        if legacy_surfaces:
+            issues.append(
+                "unexpected legacy retained artifacts: " + ", ".join(sorted(legacy_surfaces))
             )
-            if extra_incumbents:
-                issues.append(
-                    "unexpected incumbent files: " + ", ".join(extra_incumbents)
-                )
         if issues:
             raise HillClimbHarnessError(
                 self._corrupted_run_message(run_dir, "; ".join(issues))
@@ -761,20 +714,28 @@ class HillClimbHarness:
         manifest: dict[str, Any],
     ) -> None:
         seen_eval_ids: set[str] = set()
-        for summary in results:
+        expected_snapshots: set[str] = set()
+        for index, summary in enumerate(results, start=1):
             eval_id = self._validate_result_summary(
                 run_dir,
                 summary,
                 seen_eval_ids=seen_eval_ids,
             )
             seen_eval_ids.add(eval_id)
-        next_eval_index = self._next_eval_index(run_dir)
-        expected_index = len(results) + 1
-        if next_eval_index != expected_index:
+            expected_eval_id = f"{summary['stage']}_{index:04d}"
+            if eval_id != expected_eval_id:
+                raise HillClimbHarnessError(
+                    self._corrupted_run_message(
+                        run_dir,
+                        f"results.jsonl entry {eval_id} breaks retained eval ordering; expected {expected_eval_id}",
+                    )
+                )
+            expected_snapshots.add(summary["snapshot_relpath"].removeprefix("snapshots/"))
+        if manifest.get("eval_count") != len(results):
             raise HillClimbHarnessError(
                 self._corrupted_run_message(
                     run_dir,
-                    f"{NEXT_EVAL_INDEX_FILENAME} expected {expected_index} but found {next_eval_index}",
+                    "manifest eval_count does not match results.jsonl",
                 )
             )
         latest = results[-1] if results else None
@@ -794,8 +755,26 @@ class HillClimbHarness:
                     "manifest latest_stage does not match results.jsonl",
                 )
             )
-        for stage in HILL_CLIMB_STAGES:
-            self._read_incumbent(run_dir, stage, results)
+        actual_snapshots = {
+            path.name
+            for path in self._snapshot_dir(run_dir).iterdir()
+            if path.is_file()
+        }
+        unexpected_snapshots = sorted(actual_snapshots - expected_snapshots)
+        if unexpected_snapshots:
+            raise HillClimbHarnessError(
+                self._corrupted_run_message(
+                    run_dir,
+                    "snapshots/ contains unreferenced files: " + ", ".join(unexpected_snapshots),
+                )
+            )
+        if manifest.get("snapshot_count") != len(expected_snapshots):
+            raise HillClimbHarnessError(
+                self._corrupted_run_message(
+                    run_dir,
+                    "manifest snapshot_count does not match retained snapshots",
+                )
+            )
 
     def _validate_result_summary(
         self,
@@ -958,27 +937,8 @@ class HillClimbHarness:
                 )
         return eval_id
 
-    def _next_eval_index(self, run_dir: Path) -> int:
-        path = run_dir / NEXT_EVAL_INDEX_FILENAME
-        try:
-            raw_value = path.read_text().strip()
-        except OSError as exc:
-            raise HillClimbHarnessError(f"Unable to read {path}") from exc
-        try:
-            value = int(raw_value)
-        except ValueError as exc:
-            raise HillClimbHarnessError(f"Invalid integer in {path}: {raw_value!r}") from exc
-        if value <= 0:
-            raise HillClimbHarnessError(f"Expected positive integer in {path}, found {value}")
-        return value
-
-    def _write_next_eval_index(self, run_dir: Path, next_index: int) -> None:
-        (run_dir / NEXT_EVAL_INDEX_FILENAME).write_text(f"{next_index}\n")
-
-    def _reserve_evaluation_id(self, *, run_dir: Path, stage: str) -> str:
-        eval_index = self._next_eval_index(run_dir)
-        self._write_next_eval_index(run_dir, eval_index + 1)
-        return f"{stage}_{eval_index:04d}"
+    def _next_evaluation_id(self, results: list[dict[str, Any]], *, stage: str) -> str:
+        return f"{stage}_{len(results) + 1:04d}"
 
     def _write_snapshot_file(self, snapshot_path: Path, source_text: str) -> None:
         if not snapshot_path.exists():
@@ -1003,46 +963,8 @@ class HillClimbHarness:
         stage: str,
         results: list[dict[str, Any]],
     ) -> dict[str, Any] | None:
-        incumbent_path = self._incumbent_path(run_dir, stage)
-        if not incumbent_path.exists():
-            expected = self._expected_incumbent(results, stage=stage)
-            if expected is None:
-                return None
-            raise HillClimbHarnessError(
-                self._corrupted_run_message(
-                    run_dir,
-                    f"missing incumbent file for stage {stage!r}; expected {expected['eval_id']}",
-                )
-            )
-        try:
-            incumbent = _json_load(incumbent_path)
-        except HillClimbHarnessError as exc:
-            raise HillClimbHarnessError(
-                self._corrupted_run_message(
-                    run_dir,
-                    f"invalid incumbent file for stage {stage!r}: {exc}",
-                )
-            ) from exc
-        expected = self._expected_incumbent(results, stage=stage)
-        if expected is None:
-            raise HillClimbHarnessError(
-                self._corrupted_run_message(
-                    run_dir,
-                    f"unexpected incumbent file for stage {stage!r}",
-                )
-            )
-        if incumbent != expected:
-            raise HillClimbHarnessError(
-                self._corrupted_run_message(
-                    run_dir,
-                    f"incumbent file for stage {stage!r} does not match authoritative "
-                    f"results.jsonl entry {expected['eval_id']}",
-                )
-            )
-        return incumbent
-
-    def _write_incumbent(self, run_dir: Path, stage: str, summary: dict[str, Any]) -> None:
-        self._incumbent_path(run_dir, stage).write_text(_json_dump(summary))
+        del run_dir
+        return self._expected_incumbent(results, stage=stage)
 
     def _read_latest(
         self, results: list[dict[str, Any]], *, stage: str | None = None
@@ -1123,22 +1045,6 @@ class HillClimbHarness:
     def _append_result(self, run_dir: Path, summary: dict[str, Any]) -> None:
         with self._results_path(run_dir).open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(summary, sort_keys=True) + "\n")
-        with self._results_tsv_path(run_dir).open("a", encoding="utf-8") as handle:
-            handle.write(self._results_row(summary))
-
-    def _results_row(self, summary: dict[str, Any]) -> str:
-        return (
-            f"{summary['eval_id']}\t"
-            f"{summary['stage']}\t"
-            f"{summary['status']}\t"
-            f"{_tsv_float(summary.get('mean_edge'))}\t"
-            f"{_tsv_float(summary.get('incumbent_before_mean_edge'))}\t"
-            f"{_tsv_float(summary.get('delta_vs_incumbent'))}\t"
-            f"{_tsv_field(summary.get('strategy_name'))}\t"
-            f"{_tsv_field(summary.get('label'))}\t"
-            f"{_tsv_field(summary.get('description'))}\t"
-            f"{_tsv_field(summary.get('snapshot_relpath'))}\n"
-        )
 
     def _sync_derived_views(
         self,
@@ -1147,17 +1053,13 @@ class HillClimbHarness:
         manifest: dict[str, Any],
         results: list[dict[str, Any]],
     ) -> None:
-        history = self._build_history(results)
-        history_path = run_dir / str(manifest["history_path"])
-        with history_path.open("w", encoding="utf-8") as handle:
-            for row in history:
-                handle.write(json.dumps(row, sort_keys=True) + "\n")
-
         manifest = dict(manifest)
         manifest["updated_at"] = _utc_now()
         latest = results[-1] if results else None
         manifest["latest_eval_id"] = None if latest is None else latest["eval_id"]
         manifest["latest_stage"] = None if latest is None else latest["stage"]
+        manifest["eval_count"] = len(results)
+        manifest["snapshot_count"] = len({summary["source_sha256"] for summary in results})
         self._manifest_path(run_dir).write_text(_json_dump(manifest))
         self._write_cross_run_index()
 
@@ -1205,7 +1107,7 @@ class HillClimbHarness:
                 results = self._read_results(run_dir, manifest=manifest)
                 latest = results[-1] if results else None
                 best_by_stage = {
-                    stage: self._compact_summary(best)
+                    stage: self._index_stage_summary(best)
                     for stage in HILL_CLIMB_STAGES
                     if (best := self._best_stage_raw(results, stage=stage)) is not None
                 }
@@ -1219,6 +1121,8 @@ class HillClimbHarness:
                     "created_at": manifest["created_at"],
                     "updated_at": manifest["updated_at"],
                     "artifact_dir": run_dir.as_posix(),
+                    "eval_count": manifest["eval_count"],
+                    "snapshot_count": manifest["snapshot_count"],
                     "latest_eval_id": None if latest is None else latest["eval_id"],
                     "latest_stage": None if latest is None else latest["stage"],
                     "latest_status": None if latest is None else latest["status"],
@@ -1236,6 +1140,8 @@ class HillClimbHarness:
                         "created_at": None,
                         "updated_at": None,
                         "artifact_dir": run_dir.as_posix(),
+                        "eval_count": None,
+                        "snapshot_count": None,
                         "latest_eval_id": None,
                         "latest_stage": None,
                         "latest_status": None,
@@ -1270,6 +1176,20 @@ class HillClimbHarness:
         }
         (self.artifact_root / "index.json").write_text(_json_dump(payload))
         return payload
+
+    def _index_stage_summary(self, summary: dict[str, Any]) -> dict[str, Any]:
+        derived = summary.get("derived_analysis", {})
+        failure = (
+            derived.get("failure_signature", {}) if isinstance(derived, dict) else {}
+        )
+        return {
+            "eval_id": summary["eval_id"],
+            "status": summary["status"],
+            "mean_edge": summary.get("mean_edge"),
+            "label": summary.get("label"),
+            "strategy_name": summary.get("strategy_name"),
+            "failure_tags": list(failure.get("tags", [])),
+        }
 
     def _resolve_status(
         self,
@@ -1609,7 +1529,59 @@ class HillClimbHarness:
         self._protected_surface().ensure_runtime_eval_allowed()
         stage_config = resolve_hill_climb_stage(stage)
         source = Path(source_path)
-        strategy = self._strategy_loader(self._read_source(source))
+        source_text = self._read_source(source)
+        _strategy, scorecard, _gate = self._run_stage_evaluation(
+            stage_config=stage_config,
+            source_text=source_text,
+        )
+        return {
+            "mean_edge": float(scorecard["overall"]["mean_edge"]),
+            "scorecard": scorecard,
+            "profile": self._extract_profile(scorecard),
+        }
+
+    def probe_source(self, *, stage: str, source_path: Path | str) -> dict[str, Any]:
+        """Evaluate a source without creating retained artifacts."""
+        self._protected_surface().ensure_runtime_eval_allowed()
+        stage_config = resolve_hill_climb_stage(stage)
+        source = Path(source_path)
+        if not source.exists():
+            raise HillClimbHarnessError(f"Strategy file not found: {source}")
+        source_text = self._read_source(source)
+        source_sha256 = _sha256(source_text)
+        try:
+            strategy, scorecard, gate = self._run_stage_evaluation(
+                stage_config=stage_config,
+                source_text=source_text,
+            )
+        except Exception as exc:
+            raise HillClimbHarnessError(f"Probe failed for {source}: {exc}") from exc
+        return {
+            "mode": "probe",
+            "stage": stage_config.name,
+            "source_path": source.as_posix(),
+            "source_sha256": source_sha256,
+            "strategy_name": strategy.get_name(),
+            "mean_edge": float(scorecard["overall"]["mean_edge"]),
+            "gate": gate,
+            "selection": {
+                "promotion_margin": None,
+                "rationale": "probe only; not recorded in the retained lane",
+            },
+            "scorecard": scorecard,
+            "derived_analysis": self._build_derived_analysis(
+                scorecard=scorecard,
+                incumbent_before=None,
+            ),
+        }
+
+    def _run_stage_evaluation(
+        self,
+        *,
+        stage_config: Any,
+        source_text: str,
+    ) -> tuple[EVMStrategyAdapter, dict[str, Any], dict[str, Any]]:
+        strategy = self._strategy_loader(source_text)
         result = self._stage_runner_factory(stage_config.name, self.n_workers).run_match(
             strategy,
             self._baseline_loader(),
@@ -1618,18 +1590,24 @@ class HillClimbHarness:
         scorecard = compute_scorecard(result)
         scorecard["run_metadata"]["stage"] = stage_config.name
         scorecard["run_metadata"]["seed_block"] = list(stage_config.seed_block)
-        return {
-            "mean_edge": float(scorecard["overall"]["mean_edge"]),
-            "scorecard": scorecard,
-            "profile": self._extract_profile(scorecard),
-        }
+        gate = self._build_gate(scorecard=scorecard, stage_config=stage_config)
+        return strategy, scorecard, gate
 
     def _corrupted_run_message(self, run_dir: Path, problem: str) -> str:
         return (
             f"Run '{run_dir.name}' is corrupted: {problem}. "
-            "Do not hand-edit results.jsonl, results.tsv, or .next_eval_index; "
-            "start a fresh run_id instead."
+            "Retained lanes may only keep run.json, results.jsonl, and referenced snapshots; "
+            "worker-local exploration should use hill-climb probe and only selected branches "
+            "should be rerun into a canonical run_id."
         )
+
+    def _assert_retained_run_id_allowed(self, run_id: str) -> None:
+        if WORKER_RUN_ID_RE.search(run_id):
+            raise HillClimbHarnessError(
+                f"Worker-style run_id {run_id!r} is scratch-only and cannot live under "
+                f"{self.artifact_root}. Use `amm-match hill-climb probe --stage ...` in the "
+                "worktree, then rerun only the chosen branch into the canonical retained run."
+            )
 
     def _protected_surface(self) -> Any:
         if self._protected_surface_checker is None:

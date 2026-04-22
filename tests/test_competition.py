@@ -171,8 +171,37 @@ class TestMatchRunner:
         assert isinstance(first_result.retail_mean_size, float)
         assert "submission" in first_result.retail_edge
         assert "submission" in first_result.arb_edge
+        assert "submission" in first_result.retail_trade_count
+        assert "submission" in first_result.arb_trade_count
         assert "submission" in first_result.max_fee_jump
         assert "submission" in first_result.time_weighted_fees
+
+    def test_rust_run_single_exposes_scorecard_fields(self, vanilla_bytecode_and_abi):
+        config = amm_sim_rs.SimulationConfig(
+            n_steps=5,
+            initial_price=100.0,
+            initial_x=100.0,
+            initial_y=10000.0,
+            gbm_mu=0.0,
+            gbm_sigma=0.001,
+            gbm_dt=1.0,
+            retail_arrival_rate=5.0,
+            retail_mean_size=2.0,
+            retail_size_sigma=0.7,
+            retail_buy_prob=0.5,
+            seed=42,
+        )
+
+        bytecode, _abi = vanilla_bytecode_and_abi
+        run_single = getattr(amm_sim_rs, "run_single")
+        result = run_single(list(bytecode), list(bytecode), config)
+
+        assert "submission" in result.retail_edge
+        assert "submission" in result.arb_edge
+        assert "submission" in result.retail_trade_count
+        assert "submission" in result.arb_trade_count
+        assert "submission" in result.max_fee_jump
+        assert "submission" in result.time_weighted_fees
 
     def test_explicit_seed_block_preserves_requested_seeds(self, vanilla_bytecode_and_abi):
         from amm_competition.evm.adapter import EVMStrategyAdapter

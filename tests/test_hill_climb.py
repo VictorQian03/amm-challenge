@@ -11,6 +11,7 @@ import pytest
 
 from amm_competition.cli import (
     hill_climb_compare_profiles_command,
+    hill_climb_probe_command,
     hill_climb_status_command,
 )
 from amm_competition.competition.match import LightweightSimResult, MatchResult
@@ -266,9 +267,15 @@ def test_evaluate_records_seed_keep_and_discard(tmp_path):
     run_dir = tmp_path / "artifacts" / "hill_climb" / "mar26"
     results = [json.loads(line) for line in (run_dir / "results.jsonl").read_text().splitlines()]
     assert [entry["status"] for entry in results] == ["seed", "keep", "discard"]
-    assert (run_dir / "results.tsv").read_text().startswith("eval_id\tstage\tstatus")
-    incumbent = json.loads((run_dir / "incumbents" / "screen.json").read_text())
-    assert incumbent["eval_id"] == second["eval_id"]
+    manifest = json.loads((run_dir / "run.json").read_text())
+    assert manifest["artifact_version"] == "hill_climb.run.v2"
+    assert manifest["eval_count"] == 3
+    assert manifest["snapshot_count"] == 3
+    assert not (run_dir / "results.tsv").exists()
+    assert not (run_dir / "history.jsonl").exists()
+    assert not (run_dir / "incumbents").exists()
+    status = harness.get_run_status(run_id="mar26")
+    assert status["stages"]["screen"]["incumbent"]["eval_id"] == second["eval_id"]
     index_payload = json.loads(
         (tmp_path / "artifacts" / "hill_climb" / "index.json").read_text()
     )
@@ -322,6 +329,32 @@ def test_evaluate_allows_same_stage_duplicate_source_with_replay_reason(tmp_path
         replay_reason="confirm deterministic behavior",
     )
     assert replay["replay_reason"] == "confirm deterministic behavior"
+
+
+def test_evaluate_rejects_worker_style_run_id_in_retained_root(tmp_path):
+    harness = _build_test_harness(tmp_path)
+    source_path = tmp_path / "StarterStrategy.sol"
+    source_path.write_text("// worker\n")
+
+    with pytest.raises(HillClimbHarnessError, match="scratch-only"):
+        harness.evaluate(
+            run_id="apr21-screen490-1431-w1-tailfloor",
+            stage="screen",
+            source_path=source_path,
+        )
+
+
+def test_probe_source_returns_gate_without_persisting_run_artifacts(tmp_path):
+    harness = _build_test_harness(tmp_path)
+    source_path = tmp_path / "StarterStrategy.sol"
+    source_path.write_text("// probe\n")
+
+    payload = harness.probe_source(stage="screen", source_path=source_path)
+
+    assert payload["mode"] == "probe"
+    assert payload["stage"] == "screen"
+    assert payload["selection"]["rationale"] == "probe only; not recorded in the retained lane"
+    assert not (tmp_path / "artifacts" / "hill_climb").exists()
 
 
 def test_status_history_show_eval_and_pull_best(tmp_path):
@@ -384,17 +417,17 @@ def test_status_rejects_manifest_layout_drift(tmp_path):
     run_dir = tmp_path / "artifacts" / "hill_climb" / "mar26"
     manifest_path = run_dir / "run.json"
     manifest = json.loads(manifest_path.read_text())
-    manifest["results_jsonl"] = "renamed.jsonl"
+    manifest["eval_count"] = 99
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
 
     with pytest.raises(
         HillClimbHarnessError,
-        match="manifest field 'results_jsonl' must stay 'results.jsonl'",
+        match="manifest eval_count does not match results.jsonl",
     ):
         harness.get_run_status(run_id="mar26")
 
 
-def test_status_rejects_incumbent_drift_from_results(tmp_path):
+def test_status_rejects_legacy_retained_surfaces(tmp_path):
     harness = _build_test_harness(
         tmp_path,
         match_results=[
@@ -409,14 +442,11 @@ def test_status_rejects_incumbent_drift_from_results(tmp_path):
     harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
 
     run_dir = tmp_path / "artifacts" / "hill_climb" / "mar26"
-    incumbent_path = run_dir / "incumbents" / "screen.json"
-    incumbent = json.loads(incumbent_path.read_text())
-    incumbent["mean_edge"] = 999.0
-    incumbent_path.write_text(json.dumps(incumbent, indent=2, sort_keys=True) + "\n")
+    (run_dir / "results.tsv").write_text("legacy\n")
 
     with pytest.raises(
         HillClimbHarnessError,
-        match="incumbent file for stage 'screen' does not match authoritative results.jsonl entry",
+        match="unexpected legacy retained artifacts",
     ):
         harness.get_run_status(run_id="mar26")
 
@@ -508,8 +538,30 @@ def test_status_command_renders_text_for_thin_surface(tmp_path, capsys, monkeypa
     assert hill_climb_status_command(args) == 0
     output = capsys.readouterr().out
     assert "Run ID: mar26" in output
+    assert "Evals: 1" in output
     assert "screen:" in output
     assert "Incumbent:" in output
+
+
+def test_probe_command_renders_without_persisting_artifacts(tmp_path, capsys, monkeypatch):
+    harness = _build_test_harness(
+        tmp_path,
+        match_results=[_make_match_result(mean_edges=[5.0, 5.0, 5.0, 5.0])],
+    )
+    source_path = tmp_path / "StarterStrategy.sol"
+    source_path.write_text("// probe\n")
+
+    args = argparse.Namespace(
+        stage="screen",
+        strategy=str(source_path),
+        json=False,
+    )
+    monkeypatch.setattr("amm_competition.cli.HillClimbHarness", lambda: harness)
+    assert hill_climb_probe_command(args) == 0
+    output = capsys.readouterr().out
+    assert "Mode: probe" in output
+    assert "Selection: probe only; not recorded in the retained lane" in output
+    assert not (tmp_path / "artifacts" / "hill_climb").exists()
 
 
 def test_compare_profiles_command_requires_run_id_for_eval_ids(capsys):

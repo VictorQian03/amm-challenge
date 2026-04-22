@@ -323,6 +323,37 @@ def hill_climb_eval_command(args: argparse.Namespace) -> int:
         return 1
 
 
+def hill_climb_probe_command(args: argparse.Namespace) -> int:
+    """Evaluate a candidate without persisting retained artifacts."""
+    try:
+        payload = HillClimbHarness().probe_source(
+            stage=args.stage,
+            source_path=args.strategy,
+        )
+        if args.json:
+            _print_json(payload)
+            return 0
+
+        print("Mode: probe")
+        print(f"Stage: {payload['stage']}")
+        if payload.get("strategy_name") is not None:
+            print(f"Strategy: {payload['strategy_name']}")
+        print(f"Mean Edge: {_format_metric(payload.get('mean_edge'))}")
+        gate = payload.get("gate", {})
+        print(f"Gate Passed: {bool(gate.get('passed'))}")
+        failures = gate.get("failures", [])
+        if failures:
+            print("Gate Failures:")
+            for failure in failures:
+                print(f"  - {failure}")
+        selection = payload.get("selection", {})
+        print(f"Selection: {selection.get('rationale')}")
+        return 0
+    except (HillClimbHarnessError, RuntimeError) as exc:
+        print(exc)
+        return 1
+
+
 def hill_climb_runs_command(args: argparse.Namespace) -> int:
     """List retained hill-climb runs."""
     try:
@@ -364,6 +395,8 @@ def hill_climb_status_command(args: argparse.Namespace) -> int:
         print(f"Run ID: {payload['run_id']}")
         print(f"Created At: {payload['created_at']}")
         print(f"Updated At: {payload['updated_at']}")
+        print(f"Evals: {payload['eval_count']}")
+        print(f"Snapshots: {payload['snapshot_count']}")
         for warning in payload.get("warnings", []):
             print(f"Warning: {warning}")
         latest = payload.get("latest")
@@ -683,6 +716,27 @@ Examples:
     )
     _add_json_argument(hill_climb_eval_parser)
     hill_climb_eval_parser.set_defaults(func=hill_climb_eval_command)
+
+    hill_climb_probe_parser = hill_climb_subparsers.add_parser(
+        "probe",
+        help="Evaluate a strategy without writing retained run artifacts",
+    )
+    hill_climb_probe_parser.add_argument(
+        "strategy",
+        nargs="?",
+        default=str(DEFAULT_STRATEGY_PATH),
+        help=(
+            "Path to Solidity strategy file (.sol); defaults to "
+            "contracts/src/StarterStrategy.sol"
+        ),
+    )
+    hill_climb_probe_parser.add_argument(
+        "--stage",
+        required=True,
+        choices=sorted(HILL_CLIMB_STAGES),
+    )
+    _add_json_argument(hill_climb_probe_parser)
+    hill_climb_probe_parser.set_defaults(func=hill_climb_probe_command)
 
     hill_climb_runs_parser = hill_climb_subparsers.add_parser(
         "runs",
