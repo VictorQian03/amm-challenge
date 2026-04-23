@@ -96,23 +96,23 @@ contract Strategy is AMMStrategyBase {
         if (divergence > 6 * BPS) {
             divergenceVol += wmul(divergence - 6 * BPS, divergence);
         }
-        uint256 impactObservation = _max(spotJumpVol, divergenceVol);
-        uint256 volumeParticipation = tradeSize > impactObservation ? tradeSize - impactObservation : 0;
-        uint256 boundedParticipation = wmul(volumeParticipation, 3200 * BPS);
-        uint256 volObservation = _max(tradeSize, impactObservation);
-        uint256 clusterObservation = wmul(
-            impactObservation + boundedParticipation,
-            _oneMinus(gapShort)
-        );
-        uint256 hazardObservation = _max(
-            divergenceVol,
-            impactObservation + boundedParticipation + wmul(clusterObservation, 7200 * BPS)
-        );
-        uint256 baselineHazardFloor = wmul(
-            volObservation + wmul(wmul(volObservation, _oneMinus(gapShort)), 7000 * BPS),
-            9000 * BPS
-        );
-        hazardObservation = _max(hazardObservation, baselineHazardFloor);
+        uint256 volObservation = _max(tradeSize, _max(spotJumpVol, divergenceVol));
+        uint256 clusterObservation = wmul(volObservation, _oneMinus(gapShort));
+        uint256 hazardObservation = _max(divergenceVol, volObservation + wmul(clusterObservation, 7000 * BPS));
+        if (lastSpot > 0 && divergence > 2 * BPS) {
+            bool spotUp = currentSpot >= lastSpot;
+            bool tradeDirectionAgrees = trade.isBuy ? spotUp : !spotUp;
+            bool aboveLatent = currentSpot >= latentSpot;
+            bool movingAwayFromLatent = aboveLatent ? spotUp : !spotUp;
+            if (tradeDirectionAgrees && movingAwayFromLatent) {
+                uint256 signedImpactEvidence = clamp(spotJumpVol + divergenceVol, 0, WAD);
+                hazardObservation = clamp(
+                    hazardObservation + wmul(signedImpactEvidence, 1800 * BPS),
+                    0,
+                    WAD
+                );
+            }
+        }
         uint256 calmObservation = wmul(
             gapLong,
             _oneMinus(clamp(hazardObservation * 6, 0, WAD))
@@ -232,15 +232,6 @@ contract Strategy is AMMStrategyBase {
                 bidFlowRisk = flowDirectionalRisk;
             }
         }
-        uint256 shortGapBurst = 0;
-        if (gap <= 2 && impactObservation > 8 * BPS && clusterObservation > 2 * BPS) {
-            uint256 oobAgreement = _min(impactObservation, hazardObservation);
-            uint256 participationGate = _oneMinus(clamp(wmul(volumeParticipation, 9000 * BPS), 0, WAD));
-            shortGapBurst = wmul(
-                wmul(_oneMinus(gapShort), oobAgreement),
-                participationGate
-            );
-        }
 
         uint256 passiveRecaptureObservation = wmul(
             gapLong,
@@ -309,9 +300,6 @@ contract Strategy is AMMStrategyBase {
             uint256 burstSignal = eventSignal - 8 * BPS;
             eventCarry += wmul(burstSignal, 300 * BPS);
             directionalBurstFee = wmul(burstSignal, 1850 * BPS);
-        }
-        if (shortGapBurst > 0) {
-            eventCarry += wmul(shortGapBurst, 260 * BPS);
         }
         sharedSpread += eventCarry;
 
@@ -440,7 +428,7 @@ contract Strategy is AMMStrategyBase {
     }
 
     function getName() external pure override returns (string memory) {
-        return "OOBGatedShortGapCarryAdmission";
+        return "SignedImpactConsistencyClassifier";
     }
 
     function _blend(uint256 prev, uint256 sample, uint256 alpha) internal pure returns (uint256) {
@@ -464,10 +452,6 @@ contract Strategy is AMMStrategyBase {
 
     function _max(uint256 a, uint256 b) internal pure returns (uint256) {
         return a > b ? a : b;
-    }
-
-    function _min(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a < b ? a : b;
     }
 
     function _oneMinus(uint256 x) internal pure returns (uint256) {

@@ -1,0 +1,393 @@
+# apr21-screen490-1431 rounds 01-05
+
+Run index: [apr21-screen490-1431.md](apr21-screen490-1431.md)
+
+## Objective
+
+- Continue the fresh retained `screen` search under the repaired evaluator.
+- Breakout target remains `490.0` mean edge.
+- Keep the canonical retained lane serialized in the main workspace.
+
+## Why This Replaced `apr21-screen490-1413`
+
+- Diagnosis found that fresh builds of `amm_sim_rs` were missing the scorecard fields required by the Python harness.
+- Root cause: the checked-in Rust binding source did not expose `retail_edge`, `arb_edge`, `retail_trade_count`, `arb_trade_count`, `max_fee_jump`, or `time_weighted_fees`, even though the Python layer required them.
+- Fixes landed in:
+  - `amm_sim_rs/src/types/result.rs`
+  - `amm_sim_rs/src/simulation/engine.rs`
+  - `tests/test_competition.py`
+- Because protected competition mechanics changed, the prior retained lane became historical and the harness required a fresh `run_id`.
+
+## Canonical Baseline
+
+- Run id: `apr21-screen490-1431`
+- Seed eval: `screen_0001`
+- Label: `starter-baseline-post-fix`
+- Mean edge: `485.92377070367183`
+- Gap to breakout target: `4.07622929632817`
+- Baseline profile:
+  - `arb_loss_to_retail_gain`: `0.09961822784430861`
+  - `quote_selectivity_ratio`: `21.366983876018754`
+  - `max_fee_jump`: `0.05949151764735314`
+  - `low_decile_mean_edge`: `370.69865470550553`
+  - `low_retail_mean_edge`: `415.9137203431734`
+  - `low_volatility_mean_edge`: `463.32099611706855`
+
+## Parallel Scratch Probes Under The Repaired Evaluator
+
+- Tail-floor lane:
+  - Scratch label: `tailfloor-pivot`
+  - Mean edge: `485.9231091842001`
+  - Delta vs baseline: `-0.00066151947173`
+  - Outcome: no value over baseline
+- Flow-toxicity lane:
+  - Scratch label: `flowtox-pivot`
+  - Mean edge: `485.6789316282844`
+  - Delta vs baseline: `-0.24483907538743`
+  - Outcome: weaker than baseline
+- Burst-stress lane:
+  - Scratch label: `burst-pivot`
+  - Mean edge: `486.15826964779`
+  - Delta vs baseline: `+0.23449894411817`
+  - Outcome: best raw rerun, but still far below promotion significance
+
+These comparisons were consolidated into the canonical retained lane and are not kept as separate retained run directories.
+
+## Canonical Spend
+
+- Candidate spent on canonical lane: burst-stress handling
+- Canonical eval: `screen_0002`
+- Mean edge: `486.15826964779`
+- Delta vs incumbent: `+0.2344989441181724`
+- Promotion margin: `20.602592009229223`
+- Result: `discard`
+- Post-eval action: restored incumbent into `contracts/src/StarterStrategy.sol`
+
+## Current State
+
+- Active retained lane: `apr21-screen490-1431`
+- Current incumbent: `screen_0001`
+- Current incumbent mean edge: `485.92377070367183`
+- Best raw non-promoted branch: `screen_0002`
+- Best raw gap to breakout target: `3.84173035221`
+
+## Round 1: Structural Probe Batch After The Initial Canonical Spend
+
+### Worker Environment Repair
+
+- Fresh worker worktrees initially failed with `ModuleNotFoundError: No module named 'amm_sim_rs'`.
+- Root cause: the repo root did not declare the in-repo Rust binding as a local dependency for `uv`, so fresh worktree environments did not inherit the evaluator package.
+- Concrete fix landed in:
+  - `pyproject.toml`
+  - `uv.lock`
+- Result:
+  - `uv run --isolated python -c "import amm_sim_rs"` now resolves from a clean `uv` environment
+  - `uv run --isolated amm-match validate ...` now works against worker candidate files without relying on the main workspace `.venv`
+
+### Structural Probe Results
+
+- Opportunity-budget lane: `quiet-refill-auction`
+  - Mean edge: `421.047858`
+  - Delta vs baseline: `-64.87591270367182`
+  - Outcome: clear discard
+- Quote-map lane: `width-skew-decoupled-quote-map`
+  - Mean edge: `485.862856`
+  - Delta vs baseline: `-0.06091470367181`
+  - Outcome: near-incumbent but still weaker; keep as an outsider anchor, not a spend
+- Risk-budget lane: `continuation-handoff-risk-budget`
+  - Mean edge: `366.675668`
+  - Delta vs baseline: `-119.248102703672`
+  - Outcome: clear discard
+- State-estimation lane: `dual-anchor-state-estimator`
+  - Mean edge: `401.860182`
+  - Delta vs baseline: `-84.06358870367183`
+  - Outcome: clear discard
+- Width-formation lane: `quiet-width-floor`
+  - Mean edge: `485.756470`
+  - Delta vs baseline: `-0.16730070367184`
+  - Outcome: second near-incumbent outsider, but still weaker than baseline and not worth a canonical spend
+
+### Entropy Discipline
+
+- Do not collapse the next batch into another burst-neighbor surcharge tweak just because `screen_0002` remains best raw.
+- Treat these as the three anchors for the next round:
+  - incumbent anchor: `screen_0001`
+  - best-raw anchor: `screen_0002`
+  - structurally different outsider anchor: `width-skew-decoupled-quote-map`
+- Keep `quiet-width-floor` as a secondary quote-map reference point, not as permission to spend multiple consecutive quote-map-only follow-ups.
+- Treat these spines as exhausted for now:
+  - quiet refill auction logic
+  - continuation/handoff risk decomposition
+  - dual-anchor estimator split
+
+### Next Batch Direction
+
+- Keep at least one live branch in quote-map / benign-width geometry because it was the only structural family that stayed near the incumbent.
+- Add at least one fresh branch outside quote-map geometry before any more quote-map follow-up, so the run does not collapse around the two near-incumbent outsider branches.
+- Keep any follow-up branch explicitly separated from the burst-stress family so the run does not entropy collapse into short-gap event surcharges.
+
+## Read On Next Turn
+
+- Start from:
+  - `artifacts/hill_climb/index.json`
+  - `uv run amm-match hill-climb status --run-id apr21-screen490-1431`
+  - `uv run amm-match hill-climb history --run-id apr21-screen490-1431`
+  - `uv run amm-match hill-climb show-eval --run-id apr21-screen490-1431 --eval-id screen_0002`
+- Treat this memo plus `artifacts/scratch_probes/apr21-screen490-1431/` as the probe-batch synthesis surface.
+- The thin harness does not provide `analyze-run`, hypothesis queue, or batch-diversity CLI read surfaces.
+- Use `uv run amm-match hill-climb compare-profiles ...` when a fresh candidate needs to be compared against `screen_0001` or `screen_0002`.
+- Treat `screen_0002` as a useful anchor, not a promotion.
+- The next idea batch should not reuse another near-neighbor burst surcharge tweak unless it is paired with a more structural gain in low-volatility or downside-floor behavior.
+
+## Round 2: Entropy-Preserving Scratch Batch Across Quote Map, Estimation, Topology, And Risk Budget
+
+### Probe Sources
+
+- Scratch sources live under:
+  - `artifacts/scratch_probes/apr21-screen490-1431/round2/`
+- Families explored:
+  - `counterflow_reopen_quote_map.sol`
+  - `confidence_debt_estimator.sol`
+  - `regime_bucket_quote_topology.sol`
+  - `shock_carry_insurance_budget.sol`
+
+### Probe Results
+
+- Quote-map follow-up: `CounterflowReopenQuoteMap`
+  - Mean edge: `485.64077655464894`
+  - Delta vs incumbent baseline: `-0.28299414902289`
+  - Key profile: `arb_loss_to_retail_gain=0.09815689136232937`, `quote_selectivity_ratio=20.76964241427333`, `time_weighted_mean_fee=0.004725978878426617`
+  - Outcome: closest branch in the batch, but weaker than both the incumbent and the original `width-skew-decoupled-quote-map` outsider
+- State-estimation branch: `ConfidenceDebtEstimator`
+  - Mean edge: `407.2168683644717`
+  - Delta vs incumbent baseline: `-78.70690233920013`
+  - Key profile: `arb_loss_to_retail_gain=0.2548907617138956`, `quote_selectivity_ratio=70.31323600834827`, `time_weighted_mean_fee=0.0036250751093810057`
+  - Outcome: clear discard; estimator-confidence framing over-opened and leaked badly
+- Quote-topology branch: `RegimeBucketQuoteTopology`
+  - Mean edge: `482.5324501381442`
+  - Delta vs incumbent baseline: `-3.39132056552763`
+  - Key profile: `arb_loss_to_retail_gain=0.0703328967388698`, `quote_selectivity_ratio=11.61814795619335`, `time_weighted_mean_fee=0.006053709851523887`
+  - Outcome: more protective but materially worse overall; width ladder cut too much retail flow and downside floor
+- Risk-budget branch: `ShockCarryInsuranceBudget`
+  - Mean edge: `406.9601290737033`
+  - Delta vs incumbent baseline: `-78.96364162996853`
+  - Key profile: `arb_loss_to_retail_gain=0.25663380655608026`, `quote_selectivity_ratio=72.01267939418928`, `time_weighted_mean_fee=0.003563730841777123`
+  - Outcome: clear discard; persistent shock insurance relaxed the book too far and collapsed downside quality
+
+### Decision
+
+- No Round 2 candidate earned a canonical spend.
+- The retained lane remains:
+  - incumbent: `screen_0001`
+  - best raw non-promoted: `screen_0002`
+  - structurally different outsider anchor: `width-skew-decoupled-quote-map`
+- `contracts/src/StarterStrategy.sol` stays on the incumbent because spending any Round 2 branch would only add noise to the retained lane.
+
+### Updated Entropy Discipline
+
+- Treat these new spines as explored and currently exhausted:
+  - counterflow-reopen quote-map follow-up
+  - confidence-debt estimator confidence gating
+  - regime-bucket width ladder topology
+  - shock-carry insurance persistence
+- The repeated failure mode outside quote-map was not "too conservative"; it was the opposite:
+  - average fees dropped too far
+  - `quote_selectivity_ratio` blew out into the `70+` range
+  - `arb_loss_to_retail_gain` more than doubled versus the incumbent
+  - `low_decile_mean_edge` collapsed into the low `200s`
+- The quote-map family still has the only near-incumbent outsider, but second-generation follow-up degraded from `-0.060915` to `-0.282994`, so more quote-map work should be admitted only if it explicitly targets downside-floor or low-volatility lift, not just another benign reopen tweak.
+
+### Next Batch Direction
+
+- Keep the next batch high-entropy with exactly one live branch near the quote-map outsider and the rest in fresh families.
+- Favor branches that make a hard promise about `low_decile_mean_edge` or `low_volatility_mean_edge`, because the failed fresh abstractions all traded away floor quality.
+- Avoid any branch whose mechanism depends on reducing mean fee broadly or letting calm-state reopen logic dominate without an explicit downside clamp.
+- Good next fresh directions:
+  - downside-floor / tail-budget architecture that tightens when floor quality weakens instead of simply storing more calm or shock memory
+  - low-volatility capture branch that is conditional on explicit floor preservation, not just quiet-state openness
+  - opportunity-budget design that stays strict under estimator uncertainty instead of responding by reopening more of the safe side
+
+## Round 3: Floor-Control Scratch Batch Across Opportunity Budget, Transition Control, And Quote Map
+
+### Probe Sources
+
+- Scratch sources live under:
+  - `artifacts/scratch_probes/apr21-screen490-1431/round3/`
+- Families explored:
+  - `tail_floor_governor.sol`
+  - `toxic_streak_reset_controller.sol`
+  - `floor_clamped_benign_width_map.sol`
+
+### Probe Results
+
+- Opportunity-budget branch: `TailFloorGovernor`
+  - Mean edge: `407.3805505786399`
+  - Delta vs incumbent baseline: `-78.54322012503194`
+  - Key profile: `arb_loss_to_retail_gain=0.25490040764357513`, `quote_selectivity_ratio=70.5847503042684`, `time_weighted_mean_fee=0.003611267399045553`
+  - Floor slices: `low_decile_mean_edge=213.53482106574324`, `low_volatility_mean_edge=415.0828297974922`
+  - Outcome: clear discard; the tail clamp still relaxed mean fees too broadly and fell back into the same high-selectivity / weak-floor failure mode as the earlier fresh non-quote-map branches
+- Transition-control branch: `ToxicStreakResetController`
+  - Mean edge: `362.9448109158135`
+  - Delta vs incumbent baseline: `-122.97895978785833`
+  - Key profile: `arb_loss_to_retail_gain=0.21125455791525385`, `quote_selectivity_ratio=19.898416722928246`, `time_weighted_mean_fee=0.01061665160886055`
+  - Floor slices: `low_decile_mean_edge=225.70702011257418`, `low_volatility_mean_edge=353.065962719701`
+  - Outcome: clear discard; it did not over-open, but it over-tightened the book so hard that both overall edge and floor quality collapsed
+- Quote-map branch: `FloorClampedBenignWidthMap`
+  - Mean edge: `446.6882349880723`
+  - Delta vs incumbent baseline: `-39.23553571559953`
+  - Key profile: `arb_loss_to_retail_gain=0.20399856258831006`, `quote_selectivity_ratio=65.93685806461009`, `time_weighted_mean_fee=0.003093847183140214`
+  - Floor slices: `low_decile_mean_edge=346.2641311298016`, `low_volatility_mean_edge=426.1378182091459`
+  - Outcome: best of the batch on downside-floor retention, but still materially weaker than the incumbent and still trapped in the low-fee / high-selectivity failure regime
+
+### Decision
+
+- No Round 3 candidate earned a canonical spend.
+- The retained lane remains:
+  - incumbent: `screen_0001`
+  - best raw non-promoted: `screen_0002`
+  - structurally different outsider anchor: `width-skew-decoupled-quote-map`
+- `contracts/src/StarterStrategy.sol` stays on the incumbent because rerunning any Round 3 branch into the retained lane would add noise without improving the search frontier.
+
+### Updated Entropy Discipline
+
+- Treat these new spines as explored and currently exhausted:
+  - tail-debt opportunity clamp / floor governor
+  - toxic-streak reset controller
+  - floor-clamped benign width map
+- Round 3 reinforced the same higher-level trap from a different angle:
+  - floor-control ideas that still lean on broad fee compression drift into the `65+` quote-selectivity regime and remain too weak overall
+  - transition-control ideas can avoid over-open failure yet still lose badly by over-tightening and starving benign flow
+  - the only partially resilient branch in the batch was still quote-map-adjacent, but it was nowhere close to incumbent quality
+- Do not spend another batch on local variants of these exact mechanisms. They are now evidence, not live hypotheses.
+
+### Next Batch Direction
+
+- Keep the next batch high-entropy and do not admit more quote-map descendants for the immediate next round.
+- The next fresh directions should stop trying to tune generosity directly and instead change the search abstraction:
+  - state-partition or topology changes that alter when the strategy believes it is in a benign regime, without broad fee compression
+  - conditional width-formation designs that preserve calm capture while keeping a hard floor on low-decile behavior
+  - architectures that explicitly separate downside-floor preservation from safe-side refill, rather than trying to fix both with one budget or one memory
+
+## Round 4: High-Entropy Scratch Batch Across Latent Motion, Observation Shaping, And Fee Assembly
+
+### Probe Sources
+
+- Scratch sources live under:
+  - `artifacts/scratch_probes/apr21-screen490-1431/round4/`
+- Families explored:
+  - `latent_ratchet_recenter.sol`
+  - `impact_split_hazard.sol`
+  - `carry_split_assembler.sol`
+
+### Probe Results
+
+- Latent-motion branch: `LatentRatchetRecenter`
+  - Mean edge: `485.4635121216384`
+  - Delta vs incumbent baseline: `-0.46025858203343`
+  - Key profile: `arb_loss_to_retail_gain=0.09906465148863941`, `quote_selectivity_ratio=20.94606653874535`, `time_weighted_mean_fee=0.00472951097073013`
+  - Floor slices: `low_decile_mean_edge=370.26113207325625`, `low_volatility_mean_edge=462.75840885783276`
+  - Outcome: the only fresh non-quote-map branch that stayed on the frontier; it preserved the incumbent’s overall phenotype but failed to create a positive lift
+- Observation-shaping branch: `ImpactSplitHazard`
+  - Mean edge: `470.60918660298086`
+  - Delta vs incumbent baseline: `-15.31458410069097`
+  - Key profile: `arb_loss_to_retail_gain=0.09220987181632258`, `quote_selectivity_ratio=14.986487274686722`, `time_weighted_mean_fee=0.0061528675883955695`
+  - Floor slices: `low_decile_mean_edge=356.3955361896821`, `low_volatility_mean_edge=448.26116311807004`
+  - Outcome: informative but too expensive; the impact-split classifier reduced arb leakage and selectivity at the cost of over-tightening away too much benign flow
+- Fee-assembly branch: `CarrySplitAssembler`
+  - Mean edge: `406.27557660409843`
+  - Delta vs incumbent baseline: `-79.6481940995734`
+  - Key profile: `arb_loss_to_retail_gain=0.050335473832406344`, `quote_selectivity_ratio=3.5948106692243`, `time_weighted_mean_fee=0.014002260053174901`
+  - Floor slices: `low_decile_mean_edge=308.63621394684515`, `low_volatility_mean_edge=394.25296250022166`
+  - Outcome: clear discard; the carry split moved too much width onto the toxic side and collapsed retail capture across nearly every slice
+
+### Decision
+
+- No Round 4 candidate earned a canonical spend.
+- The retained lane remains:
+  - incumbent: `screen_0001`
+  - best raw non-promoted: `screen_0002`
+  - structurally different outsider anchor: `width-skew-decoupled-quote-map`
+- `contracts/src/StarterStrategy.sol` stays on the incumbent because the best Round 4 branch still lost to the baseline.
+
+### Updated Entropy Discipline
+
+- Treat these Round 4 spines as follows:
+  - keep `LatentRatchetRecenter` live as a new non-quote-map frontier anchor
+  - treat pure impact-split observation shaping as a diagnostic reference, not a live spend candidate
+  - retire carry-split fee assembly as an exhausted over-tightening seam
+- Round 4 clarified the actual bottlenecks:
+  - changing the benign-regime classifier can stay near the incumbent if it avoids broad new guard memories
+  - pure upstream toxicity splitting can improve arb metrics but still lose badly if it raises average fees too much
+  - pure downstream carry routing is currently too brittle and over-tightens the book far faster than it improves protection
+- Do not reintroduce a new persistent debt/shock/streak memory that touches multiple downstream benign-flow controls at once. Round 2 through Round 4 all punished that pattern.
+
+### Next Batch Direction
+
+- Keep exactly one live follow-up in the latent-motion family; it is now the best fresh non-quote-map lead.
+- Allow at most one controlled crossover between the latent-motion lead and the older quote-map outsider, because those are the two closest branches but they succeeded on different layers of the pipeline.
+- If another fresh family is admitted, it should target the same bottleneck `ImpactSplitHazard` exposed:
+  - preserve its lower arb leakage and lower selectivity
+  - but recover benign-flow capture without raising `time_weighted_mean_fee` into the `0.006+` range
+- Do not spend another round on fee-assembly-only rewrites without a separate upstream classifier improvement; the carry split branch showed that downstream redistribution alone is not a productive seam here.
+
+## Round 5: High-Entropy Scratch Batch Across Controlled Crossover, Boundary Normalization, And Dual Anchors
+
+### Probe Sources
+
+- Scratch sources live under:
+  - `artifacts/scratch_probes/apr21-screen490-1431/round5/`
+- Families explored:
+  - `latent_quote_bridge.sol`
+  - `boundary_normalized_state_loop.sol`
+  - `dual_anchor_quote_topology.sol`
+
+### Probe Results
+
+- Controlled crossover branch: `LatentQuoteBridge`
+  - Mean edge: `471.20858613554714`
+  - Delta vs incumbent baseline: `-14.71518456812469`
+  - Key profile: `arb_loss_to_retail_gain=0.12704045045790896`, `quote_selectivity_ratio=28.034283516712268`, `time_weighted_mean_fee=0.004531610389906183`
+  - Floor slices: `low_decile_mean_edge=291.13010838816035`, `low_volatility_mean_edge=462.75852638496787`
+  - Outcome: best of the Round 5 batch, but still materially worse than the incumbent and also weaker than `LatentRatchetRecenter`; the controlled crossover pulled the phenotype away from the frontier without buying a compensating lift
+- Boundary-normalization branch: `BoundaryNormalizedStateLoop`
+  - Mean edge: `251.08389818934035`
+  - Delta vs incumbent baseline: `-234.83987251433148`
+  - Key profile: `arb_loss_to_retail_gain=0.0612953881207297`, `quote_selectivity_ratio=1.7696438119150881`, `time_weighted_mean_fee=0.03463713302531572`
+  - Floor slices: `low_decile_mean_edge=162.87912518204408`, `low_volatility_mean_edge=241.20380620683412`
+  - Outcome: catastrophic over-tightening; curving the boundary inputs pushed the whole loop into a high-fee, low-capture regime instead of improving the frontier
+- Dual-anchor topology branch: `DualAnchorQuoteTopology`
+  - Mean edge: `341.67683472556723`
+  - Delta vs incumbent baseline: `-144.2469359781046`
+  - Key profile: `arb_loss_to_retail_gain=0.3532740953278344`, `quote_selectivity_ratio=71.98957453956088`, `time_weighted_mean_fee=0.004907295224167459`
+  - Floor slices: `low_decile_mean_edge=223.66075269262586`, `low_volatility_mean_edge=335.11132753561975`
+  - Outcome: broad topology rewrite fell into the opposite failure basin; the fast/slow anchor split reopened too much safe-side flow and exploded arb leakage
+
+### Decision
+
+- No Round 5 candidate earned a canonical spend.
+- The retained lane remains:
+  - incumbent: `screen_0001`
+  - best raw non-promoted: `screen_0002`
+  - structurally different outsider anchor: `width-skew-decoupled-quote-map`
+  - best fresh non-quote-map anchor: `LatentRatchetRecenter`
+- `contracts/src/StarterStrategy.sol` stays on the incumbent because spending any Round 5 branch would only add noise and move the frontier backward.
+
+### Updated Entropy Discipline
+
+- Treat these Round 5 spines as explored and currently exhausted:
+  - controlled latent/quote-map bridge
+  - upstream boundary normalization of the full estimator loop
+  - wholesale dual-anchor topology rewrite
+- Round 5 clarified three additional failure modes:
+  - even a narrow quote-map crossover can still reintroduce too much safe-side generosity; `LatentQuoteBridge` lifted `quote_selectivity_ratio` from the low `20s` frontier band into `28.0` and dropped `low_decile_mean_edge` to `291.1`
+  - upstream input reshaping can over-tighten the strategy just as badly as downstream protection guards; `BoundaryNormalizedStateLoop` drove `time_weighted_mean_fee` to `0.0346` and crushed retail capture
+  - topological rewrites that touch multiple slots at once can jump straight into the known high-leak basin; `DualAnchorQuoteTopology` landed at `quote_selectivity_ratio=71.99` and `arb_loss_to_retail_gain=0.3533`
+- Do not spend the immediate next round on another whole-loop rewrite that moves multiple anchors or remaps the entire estimator input surface at once.
+
+### Next Batch Direction
+
+- Keep `LatentRatchetRecenter` as the live non-quote-map anchor and `width-skew-decoupled-quote-map` as the older quote-map outsider, but do not admit another direct crossover between them immediately.
+- Favor fresh branches that target a narrower bottleneck than Round 5 did:
+  - explicit inventory-pressure memory distinct from `oneSidedFlow`, so side skew can react to inventory asymmetry without broad fee compression or a full topology rewrite
+  - selective impact-relief rerouting that preserves `ImpactSplitHazard`'s lower leakage/selectivity benefit while moving burst cost out of shared spread unless extension persists
+  - minimal anchor overlay rather than a full dual-anchor rewrite: a medium-horizon anchor can be tried as an advisory gate on refill/opportunity logic instead of replacing the entire latent-state pipeline

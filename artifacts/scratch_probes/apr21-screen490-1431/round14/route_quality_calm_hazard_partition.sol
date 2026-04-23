@@ -99,7 +99,6 @@ contract Strategy is AMMStrategyBase {
 
         uint256 routeImpact = _max(spotJumpVol, divergenceVol);
         uint256 routeSizeMismatch = routeImpact > tradeSize ? routeImpact - tradeSize : 0;
-        uint256 routeAbsorption = tradeSize > routeImpact ? tradeSize - routeImpact : 0;
         uint256 routeImpactShare = _share(routeImpact, routeImpact + tradeSize);
         uint256 staleRouteHazard = 0;
         if (gap >= 2) {
@@ -107,32 +106,6 @@ contract Strategy is AMMStrategyBase {
                 wmul(wmul(routeImpact, gapLong), 6600 * BPS) +
                     wmul(routeSizeMismatch, gap >= 4 ? 3400 * BPS : 2100 * BPS) +
                     wmul(wmul(routeImpact, routeImpactShare), 2600 * BPS),
-                0,
-                WAD
-            );
-        }
-        uint256 calmRouteQuality = wmul(
-            gapLong,
-            _oneMinus(
-                clamp(
-                    wmul(routeImpact, 9000 * BPS) +
-                        wmul(spotJump, 5200 * BPS) +
-                        wmul(routeSizeMismatch, 4200 * BPS),
-                    0,
-                    WAD
-                )
-            )
-        );
-        if (gap >= 3 && routeImpact <= 3 * BPS && spotJump <= 2 * BPS) {
-            calmRouteQuality = clamp(
-                calmRouteQuality + wmul(gapLong, 650 * BPS),
-                0,
-                WAD
-            );
-        }
-        if (gap >= 3 && routeAbsorption > 0) {
-            calmRouteQuality = clamp(
-                calmRouteQuality + wmul(wmul(gapLong, routeAbsorption), 1400 * BPS),
                 0,
                 WAD
             );
@@ -146,7 +119,6 @@ contract Strategy is AMMStrategyBase {
             gapLong,
             _oneMinus(clamp(hazardObservation * 6, 0, WAD))
         );
-        calmObservation = _max(calmObservation, calmRouteQuality);
 
         volMemory = _blend(volMemory, volObservation, ALPHA_VOL);
         hazardMemory = _blend(hazardMemory, hazardObservation, ALPHA_HAZARD);

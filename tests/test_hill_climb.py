@@ -357,6 +357,32 @@ def test_probe_source_returns_gate_without_persisting_run_artifacts(tmp_path):
     assert not (tmp_path / "artifacts" / "hill_climb").exists()
 
 
+def test_relative_artifact_root_in_git_worktree_consolidates_to_primary_checkout(
+    tmp_path, monkeypatch
+):
+    repo_root, _ = _build_protected_repo(tmp_path)
+    worktree_root = tmp_path / "worker"
+    _git(["git", "worktree", "add", "--detach", str(worktree_root), "HEAD"], cwd=repo_root)
+
+    source_path = worktree_root / "contracts" / "src" / "StarterStrategy.sol"
+    source_path.write_text("// worktree eval\n")
+
+    monkeypatch.chdir(worktree_root)
+    harness = _build_test_harness(
+        tmp_path,
+        artifact_root=Path("artifacts") / "hill_climb",
+    )
+
+    summary = harness.evaluate(run_id="mar26", stage="screen", source_path=source_path)
+
+    canonical_run_dir = repo_root / "artifacts" / "hill_climb" / "mar26"
+    assert summary["run_id"] == "mar26"
+    assert (canonical_run_dir / "run.json").exists()
+    assert (canonical_run_dir / "results.jsonl").exists()
+    assert not (worktree_root / "artifacts" / "hill_climb").exists()
+    assert harness.get_run_status(run_id="mar26")["eval_count"] == 1
+
+
 def test_status_history_show_eval_and_pull_best(tmp_path):
     harness = _build_test_harness(
         tmp_path,
@@ -603,6 +629,10 @@ def test_stable_hill_climb_docs_do_not_reference_removed_queue_surfaces():
     docs_text = Path("docs/hill_climb.md").read_text()
     assert "docs/plans/active/" in docs_text
     assert "artifacts/scratch_probes/<run_id>/" in docs_text
+    assert "primary checkout" in docs_text
+    assert "<run_id>.md" in docs_text
+    assert "<run_id>-round01-05.md" in docs_text
+    assert "5-round" in docs_text
     assert "observation shaping" in docs_text
     assert "latent state" in docs_text
     assert "hazard/calm classifier" in docs_text
@@ -622,6 +652,8 @@ def test_stable_hill_climb_docs_do_not_reference_removed_queue_surfaces():
 
     assert "observation shaping" in readme_text
     assert "latent state" in readme_text
+    assert "<run_id>.md" in readme_text
+    assert "<run_id>-round01-05.md" in readme_text
     assert "hazard/calm classifier" in readme_text
     assert "shared spread" in readme_text
     assert "side-specific protection" in readme_text
@@ -629,6 +661,21 @@ def test_stable_hill_climb_docs_do_not_reference_removed_queue_surfaces():
     assert "mechanism names" in readme_text
     assert "over_open_leak" in readme_text
     assert "max_fee_jump" in readme_text
+
+
+def test_active_screen490_round_index_is_authoritative_and_points_to_latest_span():
+    index_text = Path("docs/plans/active/apr21-screen490-1431.md").read_text()
+
+    assert "authoritative index" in index_text
+    assert "Rounds 01-05" in index_text
+    assert "Rounds 06-10" in index_text
+    assert "Rounds 11-15" in index_text
+    assert "current latest span" in index_text
+    assert "Current write target" in index_text
+    assert "round11-15" in index_text
+    assert "round16-20" in index_text
+    assert "zero-padded inclusive 5-round span" in index_text
+    assert "create the next 5-round span only after the current one closes" in index_text
 
 
 def test_failure_signature_uses_guidance_basins_and_keeps_max_fee_jump_neutral(tmp_path):

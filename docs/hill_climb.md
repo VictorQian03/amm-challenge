@@ -32,6 +32,7 @@ Each run lives under `artifacts/hill_climb/<run_id>/`.
 Cross-run navigation lives at `artifacts/hill_climb/index.json`.
 The newest valid run is marked `active`; older valid runs are `historical`; fingerprint-stale or corrupted runs are `blocked`.
 The run layout is canonical: retained lanes may keep only `run.json`, `results.jsonl`, and referenced snapshots.
+Relative retained artifact roots resolve against the repository's primary checkout, so linked git worktrees still consolidate into the same canonical lane instead of minting duplicate per-worktree ledgers.
 `status`, `history`, incumbents, and best-raw views are rebuilt from `results.jsonl` instead of being persisted as extra files.
 Legacy per-run files such as `results.tsv`, `history.jsonl`, `incumbents/`, or `.next_eval_index` are treated as invalid retained state.
 
@@ -54,7 +55,9 @@ uv run amm-match hill-climb probe --stage screen contracts/src/StarterStrategy.s
 
 Use `probe` for branch scouting and rerun only the chosen branch into the canonical retained lane with `hill-climb eval`.
 The thin harness does not have an `analyze-run` command, queued-hypothesis surface, or built-in batch-diversity report.
-If a round includes several scratch probes, keep the synthesis in an active plan note under `docs/plans/active/` and store probe sources/results outside the retained lane, for example under `artifacts/scratch_probes/<run_id>/`.
+If a round includes several scratch probes, keep the round-local synthesis under `docs/plans/active/` and store probe sources/results outside the retained lane, for example under `artifacts/scratch_probes/<run_id>/`.
+Keep `<run_id>.md` as the authoritative run index note. Split round writeups into 5-round chunk files named `docs/plans/active/<run_id>-round01-05.md`, `...-round06-10.md`, `...-round11-15.md`, and so on; the root index should list every chunk, mark the latest open span, and only add the next span once the current 5-round block closes.
+Keep [`docs/combination_anchor_map.md`](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/combination_anchor_map.md) as the persistent cross-round planning surface. When a round discovers a durable positive anchor, a durable compatibility/collision rule, or a saturated failure mode that should influence future batches, append that synthesis there instead of burying it only in run-local notes.
 
 List runs:
 
@@ -133,6 +136,8 @@ Use these as search prompts, not as required workflow:
 7. When the search feels trapped, use web search or external literature to import missing topologies instead of relabeling the same design.
 8. Prefer a fresh `run_id` when the evaluator surface changes or a retained run looks stale or corrupted.
 9. Keep memo-grade probe-batch summaries outside the retained lane. `status`, `history`, and `show-eval` only summarize retained evals, not every scratch candidate you explored.
+10. For long runs, chunk memo writeups every 5 rounds and keep the root `<run_id>.md` file as a stable index entrypoint.
+11. Promote only durable cross-round search lessons into [`docs/combination_anchor_map.md`](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/combination_anchor_map.md); keep ephemeral round narration in the active run notes.
 
 ## Entropy Guardrails
 

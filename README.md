@@ -201,8 +201,10 @@ uv run amm-match hill-climb compare-profiles --stage screen --run-id apr21 --bas
 
 The harness keeps the eval layer strict and append-only, but it does not impose an idea-generation workflow.
 On a fresh run, the first passing stage eval seeds that stage incumbent, so evaluating `contracts/src/StarterStrategy.sol` is the canonical local baseline seed.
+Relative retained artifact roots resolve through the repository's primary checkout, so running retained commands from linked git worktrees still updates the same canonical lane.
 Use `hill-climb probe` for worker-local branch scouting so worktree exploration does not create extra retained artifact directories.
 Probe-heavy rounds still need a memo surface: `status`, `history`, and `show-eval` summarize retained evals only, so keep scratch-batch synthesis in `docs/plans/active/` and store probe artifacts outside the retained lane.
+Use `docs/plans/active/<run_id>.md` as the stable run index and split long run notes into 5-round chunk files named `docs/plans/active/<run_id>-round01-05.md`, `...-round06-10.md`, `...-round11-15.md`, and so on.
 Use the six-layer search scaffold (`observation shaping -> latent state -> hazard/calm classifier -> shared spread -> side-specific protection -> safe-side recapture/opportunity`), mutate one interface at a time, and judge novelty by expected movement in outcome-space metrics rather than mechanism names.
 Use the profile/failure-tag read surfaces to retire exhausted basins such as `over_open_leak`, `over_tighten_clamp`, `frontier_neighbor`, and `crossover_regression`. Treat `max_fee_jump` as a diagnostic, not an automatic anti-pattern.
 See [docs/hill_climb.md](docs/hill_climb.md) for the retained run layout, stage discipline, and search guidance.

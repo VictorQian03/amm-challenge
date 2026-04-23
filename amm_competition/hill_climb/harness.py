@@ -10,6 +10,7 @@ import math
 from pathlib import Path
 import re
 import shutil
+import subprocess
 import time
 from typing import Any, Protocol
 
@@ -111,6 +112,29 @@ def _json_load(path: Path) -> dict[str, Any]:
     return payload
 
 
+def _discover_primary_repo_root(cwd: Path) -> Path | None:
+    process = subprocess.run(
+        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if process.returncode != 0:
+        return None
+    common_dir = process.stdout.strip()
+    if not common_dir:
+        return None
+    common_path = Path(common_dir)
+    if not common_path.is_absolute():
+        common_path = (cwd / common_path).resolve()
+    else:
+        common_path = common_path.resolve()
+    if common_path.name != ".git":
+        return None
+    return common_path.parent
+
+
 class _RunLock:
     """Portable directory-based lock for per-run artifact coordination."""
 
@@ -191,6 +215,7 @@ class HillClimbHarness:
         protected_surface_checker: Any | None = None,
     ) -> None:
         self.artifact_root = Path(artifact_root)
+        self._resolved_artifact_root = self._resolve_artifact_root(self.artifact_root)
         self.n_workers = n_workers
         self._strategy_loader = strategy_loader or EVMStrategyAdapter.from_source
         self._baseline_loader = baseline_loader or load_vanilla_strategy
@@ -522,7 +547,7 @@ class HillClimbHarness:
         allow_protected_surface_drift: bool = False,
     ) -> dict[str, Any]:
         normalized_run_id = _slug(run_id, fallback="run")
-        run_dir = self.artifact_root / normalized_run_id
+        run_dir = self._resolved_artifact_root / normalized_run_id
         if not run_dir.exists():
             raise HillClimbHarnessError(f"Unknown hill-climb run: {normalized_run_id}")
         warnings: list[str] = []
@@ -547,9 +572,20 @@ class HillClimbHarness:
             raise HillClimbHarnessError(f"Unable to read strategy source {source_path}") from exc
 
     def _ensure_run_dir(self, run_id: str) -> Path:
-        run_dir = self.artifact_root / run_id
+        run_dir = self._resolved_artifact_root / run_id
         run_dir.mkdir(parents=True, exist_ok=True)
         return run_dir
+
+    def _resolve_artifact_root(self, artifact_root: Path) -> Path:
+        if artifact_root.is_absolute():
+            return artifact_root
+        base = _discover_primary_repo_root(Path.cwd()) or Path.cwd()
+        return (base / artifact_root).resolve()
+
+    def _display_artifact_dir(self, run_dir: Path) -> str:
+        if self.artifact_root.is_absolute():
+            return run_dir.as_posix()
+        return (self.artifact_root / run_dir.name).as_posix()
 
     def _run_lock(self, run_dir: Path) -> _RunLock:
         return _RunLock(run_dir / ".lock")
@@ -1088,10 +1124,12 @@ class HillClimbHarness:
         return history
 
     def _write_cross_run_index(self) -> dict[str, Any]:
-        self.artifact_root.mkdir(parents=True, exist_ok=True)
+        self._resolved_artifact_root.mkdir(parents=True, exist_ok=True)
         entries: list[dict[str, Any]] = []
         valid_indexes: list[int] = []
-        for run_dir in sorted(path for path in self.artifact_root.iterdir() if path.is_dir()):
+        for run_dir in sorted(
+            path for path in self._resolved_artifact_root.iterdir() if path.is_dir()
+        ):
             warnings: list[str] = []
             try:
                 manifest = self._load_manifest(
@@ -1116,7 +1154,7 @@ class HillClimbHarness:
                     "status": status,
                     "created_at": manifest["created_at"],
                     "updated_at": manifest["updated_at"],
-                    "artifact_dir": run_dir.as_posix(),
+                    "artifact_dir": self._display_artifact_dir(run_dir),
                     "eval_count": manifest["eval_count"],
                     "snapshot_count": manifest["snapshot_count"],
                     "latest_eval_id": None if latest is None else latest["eval_id"],
@@ -1135,7 +1173,7 @@ class HillClimbHarness:
                         "status": "blocked",
                         "created_at": None,
                         "updated_at": None,
-                        "artifact_dir": run_dir.as_posix(),
+                        "artifact_dir": self._display_artifact_dir(run_dir),
                         "eval_count": None,
                         "snapshot_count": None,
                         "latest_eval_id": None,
@@ -1170,7 +1208,7 @@ class HillClimbHarness:
                 reverse=True,
             ),
         }
-        (self.artifact_root / "index.json").write_text(_json_dump(payload))
+        (self._resolved_artifact_root / "index.json").write_text(_json_dump(payload))
         return payload
 
     def _index_stage_summary(self, summary: dict[str, Any]) -> dict[str, Any]:
