@@ -129,7 +129,7 @@ Use these as search prompts, not as required workflow:
 3. Keep an explicit explore/exploit split. Do not spend every iteration on local coefficient polish.
 4. Judge novelty in outcome-space, not code-space. Branch diversity is about expected movement in `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, and floor slices, not about mechanism names.
 5. Use `compare-profiles` and retained history to sort branches into failure basins such as `over_open_leak`, `over_tighten_clamp`, `frontier_neighbor`, and `crossover_regression`. Retire exhausted basins instead of relabeling the same spine.
-6. Treat `max_fee_jump` as a neutral diagnostic. It is often informative and sometimes higher in better branches, so do not use it as a blanket smoothing target.
+6. Treat `max_fee_jump` as a neutral diagnostic.
 7. When the search feels trapped, use web search or external literature to import missing topologies instead of relabeling the same design.
 8. Prefer a fresh `run_id` when the evaluator surface changes or a retained run looks stale or corrupted.
 9. Keep memo-grade probe-batch summaries outside the retained lane. `status`, `history`, and `show-eval` only summarize retained evals, not every scratch candidate you explored.
