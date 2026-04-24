@@ -169,20 +169,17 @@ contract Strategy is AMMStrategyBase {
 ## CLI
 
 ```bash
-# Build the Rust engine
-cd amm_sim_rs && pip install maturin && maturin develop --release && cd ..
+# Install/sync the local Python package and Rust engine binding
+uv sync
 
-# Install
-pip install -e .
-
-# Run 1000 simulations (default)
-amm-match run my_strategy.sol
+# Run simulations
+uv run amm-match run my_strategy.sol
 
 # Quick test
-amm-match run my_strategy.sol --simulations 10
+uv run amm-match run my_strategy.sol --simulations 10
 
 # Validate without running
-amm-match validate my_strategy.sol
+uv run amm-match validate my_strategy.sol
 ```
 
 Output is your average edge across simulations. The 30 bps normalizer typically scores around 250-350 edge depending on market conditions.
@@ -207,4 +204,6 @@ Probe-heavy rounds still need a memo surface: `status`, `history`, and `show-eva
 Use `docs/plans/active/<run_id>.md` as the stable run index and split long run notes into 5-round chunk files named `docs/plans/active/<run_id>-round01-05.md`, `...-round06-10.md`, `...-round11-15.md`, and so on.
 Use the six-layer search scaffold (`observation shaping -> latent state -> hazard/calm classifier -> shared spread -> side-specific protection -> safe-side recapture/opportunity`), mutate one interface at a time, and judge novelty by expected movement in outcome-space metrics rather than mechanism names.
 Use the profile/failure-tag read surfaces to retire exhausted basins such as `over_open_leak`, `over_tighten_clamp`, `frontier_neighbor`, and `crossover_regression`. Treat `max_fee_jump` as a diagnostic, not an automatic anti-pattern.
+For the active long-running strategy search workflow, use the subagent pattern in [docs/hill_climb.md](docs/hill_climb.md). This is operator guidance, not harness state; the harness still only measures, records, and protects retained evals.
+Do not inspect oracle/reference strategies unless the active task explicitly authorizes it; when authorized, keep lessons at the phenotype and interface-contract level.
 See [docs/hill_climb.md](docs/hill_climb.md) for the retained run layout, stage discipline, and search guidance.

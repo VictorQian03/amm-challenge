@@ -11,6 +11,7 @@ It does not own idea generation, batch planning, or hypothesis workflow.
 - Content-addressed source snapshots so repeated restores do not regenerate duplicate artifacts.
 - Derived incumbent, best-raw, and history read surfaces without per-run duplicate files.
 - Protected-mechanics fingerprinting so a retained run does not silently span evaluator changes.
+- Subagent workflow and entropy guidance for searching over strategy space. 
 
 ## What It Does Not Cover
 
@@ -128,7 +129,7 @@ This keeps the harness strict on measurement without prescribing what the next s
 Use these as search prompts, not as required workflow:
 
 1. Use the six-layer scaffold `observation shaping -> latent state -> hazard/calm classifier -> shared spread -> side-specific protection -> safe-side recapture/opportunity`.
-2. Hold the scaffold fixed, mutate one interface at a time, and favor explicit interface separation with a factorized causal representation instead of a coupled pipeline rewrite.
+2. Hold the scaffold fixed, mutate one interface at a time, and favor explicit interface separation with a factorized causal representation instead of a coupled pipeline rewrite. Refer to subagent search patterns and sections below for more details. 
 3. Keep an explicit explore/exploit split. Do not spend every iteration on local coefficient polish.
 4. Judge novelty in outcome-space, not code-space. Branch diversity is about expected movement in `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, and floor slices, not about mechanism names.
 5. Use `compare-profiles` and retained history to sort branches into failure basins such as `over_open_leak`, `over_tighten_clamp`, `frontier_neighbor`, and `crossover_regression`. Retire exhausted basins instead of relabeling the same spine.
@@ -139,15 +140,60 @@ Use these as search prompts, not as required workflow:
 10. For long runs, chunk memo writeups every 5 rounds and keep the root `<run_id>.md` file as a stable index entrypoint.
 11. Promote only durable cross-round search lessons into [`docs/combination_anchor_map.md`](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/combination_anchor_map.md); keep ephemeral round narration in the active run notes.
 
+## Subagent Search Pattern
+
+This is an operator convention for long strategy-search rounds, not a harness-enforced workflow.
+The harness still owns only evaluation discipline, retained ledgers, and anti-regression guardrails.
+When a run is using parallel agents, keep the roles explicit:
+
+1. Topology proposer: expands strategy-design space by proposing topology/interface contracts, not coefficient tweaks or renamed incumbent terms. Use the six-layer scaffold as a guide to search over topology/interface contracts and do not be too anchored to the incumbent's vocabulary. Web searches for literature review are encouraged. 
+2. Saturation/entropy critic: checks the proposed batch against retained history, the active run notes, and [`docs/combination_anchor_map.md`](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/combination_anchor_map.md). We want to make sure we (1) do not face entropy collapse in our search and (2) search over distinct research directions in either the strategy idea/topology or eval outcome space that are not already saturated failure basins. 
+3. Strategy worker: owns the accepted scratch implementation loop in its assigned path. It may mutate the strategy, validate it, run `hill-climb probe`, inspect artifacts, reflect on the result, and make bounded follow-up tweaks until it thinks the local idea has reached saturation. It must keep review duties inside the loop: source validity, artifact references, profile interpretation, and fidelity to the accepted topology contract.
+
+The main agent is the coordinator / orchestrator by default. Its roles include but are not limited to: synthesis, active-note updates, choosing whether a worker result deserves a canonical retained `eval`, harness repairs and troubleshooting, updating/cleaning stale artifacts and stopping worker loops that drift from scope. Subagents should not mutate retained ledgers, active run manifests, or cleanup paths they do not own.
+
+For the active screen490 lane, the current operator convention is to use at least one topology proposer, one saturation/entropy critic, and at least one strategy worker for each substantive probe batch.
+
+The topology proposer should ask itself and have clear answers for:
+
+1. What interface contract changes, rather than what variable or coefficient changes?
+2. Which layer owns the new evidence, and which downstream consumers are explicitly allowed to use it?
+3. Which consumers are forbidden from seeing it so the probe has clean attribution?
+4. Can the idea be described without incumbent-local vocabulary such as OOB, route/gap hazard, flow ownership, inventory overlay, burst admission, recenter release, quiet refill, or scalar hazard damping?
+5. Does the batch include at least one candidate outside the incumbent vocabulary?
+6. What public evidence or external mechanism motivates the topology, and what current shortfall does it target?
+7. What outcome-space movement should prove the idea is real: `mean_edge`, `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, `low_decile_mean_edge`, `low_retail_mean_edge`, or `low_volatility_mean_edge`? What range of estimates would you assign each of their expected movement? 
+8. What must stay near the incumbent band to make the result interpretable?
+9. Is this a primary topology/interface idea or only a support control? If it is support-only, what larger primary anchor justifies it?
+10. What no-op, over-open, or over-tightened result would retire the idea cleanly?
+
+The saturation/entropy critic should follow entropy guardrails below and reject a batch when:
+
+1. Multiple probes spend the same support signal under different labels (repeated spines issue). 
+2. A supposedly new idea routes evidence into similar incumbent vocabulary such as global calm, recapture eligibility, refill, inventory centering, safe-side opportunity, or broad fee-band movement without making that the explicit owned interface and a clear justification for why this time it would be different.
+3. The branch stacks several sub-`0.1` positives with weak attribution.
+4. Novelty depends on renamed incumbent-local terms rather than a different topology/interface contract.
+5. A candidate is expected to recover one metric by sacrificing all tracked floor slices (hidden coupling issue). 
+6. The batch lacks a falsifiable expected phenotype and kill signature for each probe.
+7. Any other red flags that you suspect would cause entropy collapse and display lack of rigor. 
+
+The strategy worker should loop only inside the accepted topology contract:
+
+1. Write scratch source variants in owned paths and run validation before probes.
+2. Use `hill-climb probe`, not retained `eval`, for local scoring.
+3. Inspect score/profile artifacts after each probe and decide whether a bounded tweak (i.e., coefficient tuning allowed) is still worth testing the same idea.
+4. Stop when repeated variants produce the same failure tag, exact no-op behavior, floor-slice damage, or only coefficient polish.
+5. Report the best scratch source, artifact paths, profile deltas, saturation reason, and any reason the idea should or should not receive a canonical retained eval.
+
 ## Entropy Guardrails
 
 Use these to keep long-running search loops from collapsing into the incumbent's neighborhood:
 
 1. Keep at least one live branch away from the incumbent on more than one interface in the six-layer scaffold, not just within one local neighborhood.
 2. If two discarded variants land in the same `primary_failure_tag` basin with similar profile deltas, treat that basin as exhausted and switch interfaces instead of polishing coefficients again.
-3. Maintain three anchors in your reasoning: the incumbent, the best raw non-promoted branch, and one structurally different outsider.
+3. Maintain three anchors in your reasoning: the incumbent, the best raw non-promoted branch, and one structurally different outsider (that shows the most promise for breakthrough). 
 4. Write `--label` and `--description` in structural language that makes the touched interface and expected outcome-space basin obvious.
-5. Periodically import outside evidence when the loop keeps regenerating the same failure basin; do not let the harness free-run on stale internal ideas alone.
+5. Periodically import outside evidence (i.e., via web search) when the loop keeps regenerating the same failure basin; do not let the harness free-run on stale internal ideas alone and entropy collapse. 
 
 ## Anti-Patterns
 

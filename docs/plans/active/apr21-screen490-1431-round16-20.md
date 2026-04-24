@@ -114,5 +114,21 @@ Run index: [apr21-screen490-1431.md](apr21-screen490-1431.md)
 - Prefer a structural interface change with clear ownership, such as:
   - an explicit two-channel hazard representation where adverse-selection protection and benign-flow fee capture consume different bounded signals
   - a seed- or regime-conditioned estimator that changes only observation interpretation, not downstream spread/protection formulas
-  - a benchmark-relative normalizer anticipation signal that remains upstream and does not directly change layer 5/6 opportunity
+  - a public-score/profile-relative normalizer anticipation signal that remains upstream and does not directly change layer 5/6 opportunity
 - Keep `CappedLeakageRebateSuppression` as a support-only control and do not combine it until a larger primary anchor exists.
+- Do not inspect `Reference.sol`, `ReferenceStrategy.sol`, or any oracle/reference implementation unless the active task explicitly authorizes it. Use only public score/profile surfaces and sanitized phenotype targets.
+
+### Apr 23 Authorized Oracle Phenotype Calibration
+
+- The external oracle probe was authorized for analysis only and was scored through `hill-climb probe`, not retained `eval`.
+- Screen profile: `mean_edge=535.6745798276557`, `arb_loss_to_retail_gain=0.05164343636902818`, `quote_selectivity_ratio=13.608817574261822`, `time_weighted_mean_fee=0.0037948511020311367`, `low_decile_mean_edge=412.73546803287235`, `low_retail_mean_edge=459.6027208846513`, `low_volatility_mean_edge=508.674622016504`.
+- Use those values as phenotype targets only. Do not inspect or copy oracle/reference implementation details in future rounds unless the active task explicitly re-authorizes that surface.
+
+### Round 17 Subagent Operating Note
+
+- Use at least one topology proposer before source work. It should propose topology/interface contracts, not local terms inside the current latent-state quote engine.
+- Use at least one saturation/entropy critic before implementation. It should screen for renamed incumbent vocabulary, hidden coupling, support-signal reuse, weak-attribution stacking, and missing kill signatures.
+- Use at least one strategy worker after the critic accepts a bounded plan. The worker owns scratch sources only, should not mutate retained ledgers, and combines implementation with review: validate, run `hill-climb probe`, inspect artifacts, reflect, and make bounded refinements until the local idea reaches saturation.
+- The main agent is the coordinator by default. It owns synthesis, active-note updates, and any selected canonical retained `eval`; do not spawn a separate coordinator subagent for that role.
+- Each proposed candidate must state: changed interface, owner layer, allowed consumers, forbidden consumers, expected phenotype movement, invariants that must stay near the incumbent band, and kill signature.
+- The batch must include at least one candidate outside incumbent vocabulary. If all candidates are OOB, route/gap hazard, flow ownership, inventory overlay, burst admission, recenter release, quiet refill, or scalar hazard-damper variants, reject the batch before writing Solidity.

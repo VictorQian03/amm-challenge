@@ -9,6 +9,8 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
 - Official incumbent for the current `screen490` lane remains `screen_0001` at `485.92377070367183` mean edge.
 - Best raw retained discard for the current `screen490` lane remains `screen_0002` / `burst-pivot` at `486.15826964779` mean edge.
 - Use this note for scratch-round combination planning only; it does not change retained promotion semantics.
+- External phenotype calibration from the Apr 23 authorized oracle probe: the target space has much lower arb leakage/selectivity, lower mean fee, and materially higher floor slices than current local anchors.
+- Treat oracle information only as phenotype evidence. Do not inspect or copy oracle/reference implementation details unless the active task explicitly authorizes it.
 
 ## Positive Anchors By Scaffold Layer Or Family
 
@@ -97,12 +99,13 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
 
 ## Productivity Rules For Future Rounds
 
-- Stop spending whole rounds on scalar classifier terms that only add or damp `hazardObservation`; recent signed-impact and reversion-veto probes were either exact no-ops or over-open regressions.
+- Use the three-role subagent pattern for probe-heavy batches as operator guidance, not harness state. Refer to hill_climb.md for more details. 
+- Stop spending whole rounds on scalar classifier terms that only add or damp one hazard value; recent signed-impact and reversion-veto probes were either exact no-ops or over-open regressions.
 - Treat support-only positives as stabilizers, not primary search ideas. `CappedLeakageRebateSuppression`, `ConsumedWidthRefillAmplificationVeto`, and `PassiveRecaptureDecomposition` should not be stacked together without a larger primary anchor.
-- Do not recombine weak anchors across multiple downstream layers. Combination candidates should have one primary layer owner and at most one bounded secondary control.
-- Require a fresh topology before Round 17 source work if the draft uses only incumbent-local vocabulary such as OOB, route/gap hazard, flow ownership, inventory overlay, burst admission, recenter release, or quiet-state refill.
+- Do not recombine weak anchors across multiple downstream layers. Combination candidates should have one primary interface owner and at most one bounded secondary adjunct.
+- Require at least one candidate outside incumbent vocabulary before the next source batch if every draft uses only OOB, route/gap hazard, flow ownership, inventory overlay, burst admission, recenter release, quiet-state refill, or scalar hazard damping.
 - Favor interface-contract changes over coefficient changes:
   - separate adverse-selection protection evidence from benign-flow fee-capture evidence
-  - keep estimator changes upstream of shared spread and side-specific protection
-  - prove layer ownership in the plan before writing Solidity
-- A candidate is not productive just because one diagnostic improves. Future scratch spends should define the expected movement in `mean_edge`, `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, and the three floor slices before probing.
+  - keep upstream interpretation changes upstream of shared spread and side-specific protection
+  - state allowed consumers and forbidden consumers before writing Solidity
+  - prove layer ownership in the plan before source work
