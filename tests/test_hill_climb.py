@@ -645,6 +645,18 @@ def test_stable_hill_climb_docs_do_not_reference_removed_queue_surfaces():
     assert "frontier_neighbor" in docs_text
     assert "crossover_regression" in docs_text
     assert "neutral diagnostic" in docs_text
+    assert "Use it only when the user explicitly asks for parallel agents" in docs_text
+    assert "Do not spawn a coordinator subagent" in docs_text
+    assert "retained-lane decisions" in docs_text
+    assert "Topology proposer" in docs_text
+    assert "Saturation/entropy critic" in docs_text
+    assert "Strategy worker" in docs_text
+    assert "The main agent stays the coordinator by default" in docs_text
+    assert "Which prior failure basin is this idea most likely to replay" in docs_text
+    assert "add a more precise basin name" in docs_text
+    assert "promoted to [`docs/combination_anchor_map.md`]" in docs_text
+    assert "For the active screen490 lane" not in docs_text
+    assert "Subagent workflow and entropy guidance" not in docs_text
     assert "state estimation" not in docs_text
     assert "risk budget" not in docs_text
     assert "opportunity budget" not in docs_text
@@ -660,7 +672,9 @@ def test_stable_hill_climb_docs_do_not_reference_removed_queue_surfaces():
     assert "safe-side recapture/opportunity" in readme_text
     assert "mechanism names" in readme_text
     assert "over_open_leak" in readme_text
+    assert "add precise new basin vocabulary" in readme_text
     assert "max_fee_jump" in readme_text
+    assert "when the user explicitly asks for parallel help" in readme_text
 
 
 def test_active_screen490_round_index_is_authoritative_and_points_to_latest_span():

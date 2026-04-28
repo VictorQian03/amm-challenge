@@ -21,6 +21,13 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
   - Compatibility: best used as one narrow gated admission inside a floor-preserving combination, not as another broad burst-carry clone.
   - Collision: low-decile weakened already, so do not stack with another burst/event relaxation or any safe-side reopen branch.
 
+### Layer 1/4 curve geometry and shared-spread floor
+
+- Scratch `ConstantProductCurvatureGuard`
+  - Signal: `+0.48478819025184` mean edge vs incumbent with better `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, `low_decile_mean_edge`, `low_retail_mean_edge`, and `low_volatility_mean_edge`, but still `-0.60380506850828` versus `screen_0005`.
+  - Compatibility: useful as bounded curve-geometry evidence for shared-spread protection when a separate primary topology supplies the main upside.
+  - Collision: not strong enough as a standalone retained candidate. Do not spend a round on curvature coefficients alone or combine it with broad fee-rent / LVR-floor tuning.
+
 ### Layer 1/3 observation basis and classifier evidence
 
 - `screen_0005` / `RegimeSelectorStrongerFloor`
@@ -55,6 +62,13 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
   - Compatibility: usable only as a narrow secondary control next to a floor-positive anchor.
   - Collision: floor slices were weaker than both incumbent and OOB, so do not stack it with both OOB and the layer-5 inventory overlay in the same probe.
 
+### Layer 2/3 floor-risk partition
+
+- Scratch `RetailFloorFirstStatePartition`
+  - Signal: `+1.0762424413238136` mean edge vs incumbent with much better `arb_loss_to_retail_gain=0.08387766865965202`, `quote_selectivity_ratio=16.081469460894738`, `low_retail_mean_edge=416.32788458867`, and `low_volatility_mean_edge=464.1427325479601`, but still `-0.012350817436299621` versus `screen_0005` and with elevated `time_weighted_mean_fee=0.005215796284264762`.
+  - Compatibility: useful as a positive floor-first partition anchor when a distinct primary topology can preserve the leakage/selectivity lift without fee overcharge.
+  - Collision: do not locally polish the floor partition or stack it with another classifier/protection-only control. Its next use needs a different primary interface or a fee-band-preserving constraint that does not create release/opportunity behavior.
+
 ### Layer 5 toxic-side protection
 
 - `InventoryToxicFloorOverlay` -> `RetailGuardedInventoryToxicOverlay` -> `RetailRecoveredInventoryOverlay`
@@ -82,6 +96,8 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
 
 ## Saturated Failure Modes
 
+Keep this section extensible. Add a new failure mode when repeated probes share a profile signature that is not well described by the current vocabulary; prefer a precise phenotype name over forcing evidence into `over_open_leak`, `over_tighten_clamp`, `frontier_neighbor`, or `crossover_regression`. A useful entry names the signature, repeated sources, and the critique question that should block similar future ideas before source work.
+
 - Over-open leak basin
   - Signature: `quote_selectivity_ratio` drifts into roughly the high `20s` through `70+`, mean fee softens, arb leakage rises, and low-decile quality collapses.
   - Repeated sources: `ConfidenceDebtEstimator`, `ShockCarryInsuranceBudget`, `InventorySkewCenteringOverlay`, `RetailFloorGuardedInventoryOverlay`, `BasisOwnedClassifierExports`, `DualAnchorQuoteTopology`, `ProfileTargetShadowNormalizer`.
@@ -108,6 +124,21 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
   - Repeated sources: `ForecastErrorObservationGate`, `ImpactReconstructabilityEncoder`, `HorizonQuorumStateContract`, `AdverseOptionalityClassifier`.
   - Use: do not keep relabeling estimator confidence gates. Future upstream work needs an explicit protection-preserving boundary, not more trust/attenuation logic.
 
+- Post-spread fee-rent collapse
+  - Signature: a public microstructure-inspired fee-rent idea adds global or asymmetric rent after the incumbent has already formed shared spread / side protection, but fails to protect floors and often reopens selectivity.
+  - Repeated sources: `VolatilityIndexedBaseSpread`, `InventoryDirectionFeeSlope`, `TwoClockRiskRent`.
+  - Use: do not retry simple volatility-indexed base fees, inventory-direction surcharges, or dual-clock rent overlays.
+
+- Strict LVR floor no-op
+  - Signature: a narrow AMM/LVR floor proxy avoids over-open collapse and preserves the incumbent band, but is effectively phenotype-identical to the incumbent and remains below `screen_0005`.
+  - Repeated sources: `LVRProxySpreadFloor`.
+  - Use: do not coefficient-tune the strict LVR floor alone. Only revisit if a distinct primary topology supplies new floor-risk evidence before the layer-4 floor proxy consumes it.
+
+- Protection-starvation basin
+  - Signature: a protection-only classifier or geometry signal avoids over-open leakage but pushes fees/protection high enough that mean edge and all floor slices collapse.
+  - Repeated sources: `BatchClearingLatencyPressure`, `ReserveBandExhaustionClassifier`, `VolumeBucketImbalanceLattice`.
+  - Use: do not retry broad latency-pressure or reserve-exhaustion classifiers unless the interface includes an explicit cap that preserves retail capture and keeps the incumbent fee band interpretable.
+
 - Near-frontier negative classifier controls
   - Signature: classifier-local evidence keeps the profile near the incumbent but moves floor slices slightly negative and fails to create a new anchor.
   - Repeated sources: `ClassifierExportSplit`, `TypedClassifierExportFirewall`, `RouteQualityCalmHazardPartition`.
@@ -126,7 +157,7 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
 
 ## Productivity Rules For Future Rounds
 
-- Use the three-role subagent pattern for probe-heavy batches as operator guidance, not harness state. Refer to hill_climb.md for more details. 
+- Use the optional proposer / critic / worker subagent pattern for probe-heavy batches only when parallel help is explicitly requested. Treat it as operator guidance, not harness state; retained eval decisions stay with the main coordinator.
 - Stop spending whole rounds on scalar classifier terms that only add or damp one hazard value; recent signed-impact and reversion-veto probes were either exact no-ops or over-open regressions.
 - Treat support-only positives as stabilizers, not primary search ideas. `CappedLeakageRebateSuppression`, `ConsumedWidthRefillAmplificationVeto`, and `PassiveRecaptureDecomposition` should not be stacked together without a larger primary anchor.
 - Do not recombine weak anchors across multiple downstream layers. Combination candidates should have one primary interface owner and at most one bounded secondary adjunct.
