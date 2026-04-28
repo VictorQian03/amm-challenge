@@ -41,6 +41,7 @@ contract Strategy is AMMStrategyBase {
         slots[8] = 0; // latent divergence memory
         slots[9] = 0; // directional flow pressure memory
         slots[10] = 0; // passive recapture memory
+        slots[11] = 0; // short-lived adverse evidence continuity
 
         return (BASE_FEE, BASE_FEE);
     }
@@ -125,6 +126,15 @@ contract Strategy is AMMStrategyBase {
         uint256 flowImbalance = totalFlow == 0 ? 0 : wdiv(absDiff(buyFlow, sellFlow), totalFlow);
         uint256 flowPressure = _blend(slots[9], flowImbalance, ALPHA_FLOW);
         uint256 oneSidedFlow = wmul(flowImbalance, _max(volMemory, hazardMemory));
+        uint256 adverseEvidence = wmul(_max(hazardMemory, divergenceMemory), _max(flowPressure, oneSidedFlow));
+        if (spotJump > 4 * BPS) {
+            adverseEvidence = clamp(adverseEvidence + wmul(spotJump, 1600 * BPS), 0, WAD);
+        }
+        uint256 adverseContinuity = wmul(
+            slots[11],
+            _gapAdjustedDecay(7200 * BPS, gapShort, 2400 * BPS)
+        );
+        adverseContinuity = _blend(adverseContinuity, adverseEvidence, 2800 * BPS);
         bool toxicBidSide = currentSpot >= latentSpot;
         bool continuationAligned =
             toxicBidSide ? buyFlow >= sellFlow : sellFlow > buyFlow;
@@ -256,6 +266,25 @@ contract Strategy is AMMStrategyBase {
             wmul(buyShare, sideHazard) +
             wmul(cheapSignal, 8500 * BPS) +
             askFlowRisk;
+
+        uint256 floorPremiumRequest = 0;
+        if (hazardMemory > 35 * BPS && flowPressure > 90 * BPS && oneSidedFlow > 3 * BPS) {
+            floorPremiumRequest = 10 * BPS;
+        }
+        if (hazardMemory > 80 * BPS && flowPressure > 160 * BPS && oneSidedFlow > 6 * BPS && gap <= 2) {
+            floorPremiumRequest = 18 * BPS;
+        }
+        uint256 continuityBudget = 0;
+        if (adverseContinuity > 5 * BPS) {
+            continuityBudget = 7 * BPS + wmul(adverseContinuity, 1500 * BPS);
+        }
+        if (adverseEvidence > adverseContinuity) {
+            continuityBudget += wmul(adverseEvidence - adverseContinuity, 900 * BPS);
+        }
+        uint256 agedFloorPremium = floorPremiumRequest < continuityBudget
+            ? floorPremiumRequest
+            : continuityBudget;
+        agedFloorPremium = clamp(agedFloorPremium, 0, 20 * BPS);
 
         uint256 opportunityGate = wmul(
             calmMemory,
@@ -394,6 +423,13 @@ contract Strategy is AMMStrategyBase {
         askFee = sharedSpread + askProtection;
         bidFee = bidFee > bidOpportunityCut ? bidFee - bidOpportunityCut : MIN_FEE;
         askFee = askFee > askOpportunityCut ? askFee - askOpportunityCut : MIN_FEE;
+        if (agedFloorPremium > 0) {
+            if (toxicBidSide) {
+                bidFee += agedFloorPremium;
+            } else {
+                askFee += agedFloorPremium;
+            }
+        }
 
         bidFee = clampFee(bidFee);
         askFee = clampFee(askFee);
@@ -409,6 +445,7 @@ contract Strategy is AMMStrategyBase {
         slots[8] = divergenceMemory;
         slots[9] = flowPressure;
         slots[10] = passiveRecaptureMemory;
+        slots[11] = adverseContinuity;
 
         return (bidFee, askFee);
     }

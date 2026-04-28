@@ -171,3 +171,142 @@ Run index: [apr21-screen490-1431.md](apr21-screen490-1431.md)
 - Preserve `RetailFloorFirstStatePartition` as a positive but non-promotable scratch anchor; future use needs a distinct primary topology or a fee-band-preserving variant, not a local floor-partition coefficient polish.
 - Retire volume-bucket imbalance lattices that become broad protection floors. The failure mode was not over-open leakage; it was fee-overcharge with low-decile / low-retail damage.
 - Round 28 should not run another classifier/protection-only batch. The next proposal needs a different outcome-space topology, ideally one that lowers the high-fee floor-first phenotype without using release/opportunity paths or weakening the protected floor slices.
+
+## Round 28: Aged Evidence Premium Cap
+
+### Starting State
+
+- Official incumbent: `screen_0001` at `485.92377070367183`.
+- Best retained raw discard: `screen_0005` / `regime-selector-stronger-floor` at `487.01236396243195`.
+- Breakout target: `490`.
+- Round 27 preserved `RetailFloorFirstStatePartition` as a strong positive scratch anchor, but killed it for missing `screen_0005` and carrying a high-fee phenotype.
+
+### Subagent Workflow
+
+- Topology proposer supplied four candidate contracts:
+  - `CohortNettingClassifier`
+  - `FloorPremiumBudgetCap`
+  - `AgingEvidenceLedger`
+  - `SliceConditionalProtectionSwitchboard`
+- Saturation critic rejected the batch as written because it was too concentrated in classifier/protection vocabulary after Round 27 explicitly closed with a warning against another classifier/protection-only batch.
+- Critic rejected:
+  - `CohortNettingClassifier` as renamed batch-collision / volume-bucket / route-quality evidence.
+  - `SliceConditionalProtectionSwitchboard` as hidden floor-slice coupling and protection-only switching.
+- Accepted worker contract:
+  - `AgingEvidenceLedgerWithPremiumBudgetCap` as the only primary probe, narrowed to layer 2 evidence-lifetime ownership into a bounded layer 4 incremental-premium cap.
+- Enforced entropy constraints:
+  - no layer 5/6 edits
+  - no final quote arbitration, per-slice branches, fee release/compression, opportunity/recapture/refill changes, inventory paths, split-bus polish, regime-selector polish, estimator trust gates, broad elapsed-gap hazard, direct side-protection magnitude edits, or support-signal stacking
+
+### Accepted Probe Contract
+
+- `AgingEvidenceLedgerWithPremiumBudgetCap`
+  - Layer mutation: layer 2 adverse-evidence continuity into a bounded layer 4 incremental premium.
+  - Interface boundary: maintain a short-lived adverse evidence ledger; the ledger may cap only a new incremental floor premium and must not lower incumbent base protection or change final quote selection.
+  - Forbidden consumers: slice-conditionals, opportunity/recapture/refill, inventory, final quote selection, split-bus/regime-selector paths, and global fee-band movement.
+  - Kill signature: `mean_edge <= 487.01236396243195` unless every floor slice materially clears `screen_0005`, `low_decile_mean_edge < 371.0`, `low_retail_mean_edge < 416.3`, `low_volatility_mean_edge < 464.0`, `quote_selectivity_ratio > 19.0`, `time_weighted_mean_fee > 0.00505`, or `time_weighted_mean_fee < 0.00466` with worse arb leakage.
+
+### Probe Sources
+
+- `artifacts/scratch_probes/apr21-screen490-1431/round28/aging_evidence_ledger_with_premium_budget_cap.sol`
+- `artifacts/scratch_probes/apr21-screen490-1431/round28/aging_evidence_post_cut_premium.sol`
+
+### Probe Results
+
+- `AgingEvidenceLedgerWithPremiumBudgetCap`
+  - Mean edge: `407.3822230447608`
+  - Delta vs incumbent: `-78.54154765891103`
+  - Delta vs `screen_0005`: `-79.63014091719115`
+  - Key profile: `arb_loss_to_retail_gain=0.25490350718832544`, `quote_selectivity_ratio=70.58714958601561`, `time_weighted_mean_fee=0.0036111885617042356`
+  - Floor slices: `low_decile_mean_edge=213.53482106574324`, `low_retail_mean_edge=361.37180275293304`, `low_volatility_mean_edge=415.0876388835831`
+  - Outcome: killed as an over-open release replay. The new premium expanded downstream behavior instead of preserving the floor-first leakage/selectivity band.
+- `AgingEvidencePostCutPremium`
+  - Mean edge: `407.3803014679076`
+  - Delta vs incumbent: `-78.54346923576422`
+  - Delta vs `screen_0005`: `-79.63206249452436`
+  - Key profile: `arb_loss_to_retail_gain=0.25490704886796944`, `quote_selectivity_ratio=70.58838813138075`, `time_weighted_mean_fee=0.003611175373398958`
+  - Floor slices: `low_decile_mean_edge=213.53482106574324`, `low_retail_mean_edge=361.37180275293304`, `low_volatility_mean_edge=415.08204884182834`
+  - Outcome: killed as the same over-open release replay. Moving the premium after opportunity cuts did not change the phenotype, so the failure belongs to the aged-evidence premium topology as implemented, not just its first insertion point.
+
+### Decision
+
+- No Round 28 candidate earned a canonical retained eval.
+- Retained lane remains unchanged:
+  - incumbent: `screen_0001`
+  - best raw non-promoted: `screen_0005`
+- Validation and probe commands:
+  - `uv run amm-match validate artifacts/scratch_probes/apr21-screen490-1431/round28/aging_evidence_ledger_with_premium_budget_cap.sol`
+  - `uv run amm-match validate artifacts/scratch_probes/apr21-screen490-1431/round28/aging_evidence_post_cut_premium.sol`
+  - `uv run amm-match hill-climb probe --stage screen --json artifacts/scratch_probes/apr21-screen490-1431/round28/aging_evidence_ledger_with_premium_budget_cap.sol > artifacts/scratch_probes/apr21-screen490-1431/round28/aging_evidence_ledger_with_premium_budget_cap.json`
+  - `uv run amm-match hill-climb probe --stage screen --json artifacts/scratch_probes/apr21-screen490-1431/round28/aging_evidence_post_cut_premium.sol > artifacts/scratch_probes/apr21-screen490-1431/round28/aging_evidence_post_cut_premium.json`
+
+### Updated Entropy Discipline
+
+- Retire aged-evidence premium caps as implemented. Both variants landed in the same over-open release phenotype: very high selectivity, weak arb discipline, low fees, and broken low-decile / low-retail floors.
+- Do not retry the Round 27 high-fee fix by adding another cap to floor-risk or evidence-age terms. It is behaving like a hidden release path rather than a fee-band-preserving layer 4 budget.
+- Round 29 needs a primary topology outside classifier/protection/premium-cap vocabulary. Prefer a layer 1 raw observation transform or layer 2 state ownership change whose output cannot feed opportunity cuts, inventory, final quote selection, or shared fee compression.
+
+## Round 29: Discrete Clearing Clock State
+
+### Starting State
+
+- Official incumbent: `screen_0001` at `485.92377070367183`.
+- Best retained raw discard: `screen_0005` / `regime-selector-stronger-floor` at `487.01236396243195`.
+- Breakout target: `490`.
+- Round 28 killed aged-evidence premium caps as hidden release paths.
+
+### Subagent Workflow
+
+- Topology proposer supplied four candidate contracts:
+  - `DiscreteClearingClockState`
+  - `RebalanceDebtStateAccount`
+  - `BenignSizeInvariantNormalizer`
+  - `FloorSliceBlindStateFirewall`
+- Saturation critic narrowed the batch to one scratch worker:
+  - Accepted `DiscreteClearingClockState` as the only sufficiently distinct primary interface: a temporal clearing-state ownership probe, not another floor partition, fee cap, reserve/LVR proxy, or size-bucket classifier.
+  - Rejected `RebalanceDebtStateAccount` as too close to strict LVR floor / reserve-band exhaustion / protection-preservation support controls.
+  - Rejected `BenignSizeInvariantNormalizer` as likely size/collision/volume-bucket normalization replay.
+  - Rejected `FloorSliceBlindStateFirewall` as review doctrine rather than a scoring probe.
+- Enforced entropy constraints:
+  - one worker path only
+  - no layer 5/6 edits
+  - no final quote selection, opportunity cuts, inventory, recapture/refill, regime selector, split bus, aged-premium cap, broad fee compression, side-specific protection magnitude edit, or floor-slice conditional
+  - normal/unknown clock state must remain incumbent-equivalent; all movement must come from the discrete clearing-clock classification boundary
+
+### Accepted Probe Contract
+
+- `DiscreteClearingClockState`
+  - Layer mutation: layer 1 serial trade observations into a bounded layer 2 clearing-clock enum, consumed only by layer 3 classification.
+  - Interface boundary: classify short-window stale-pickup / synchronized-clearing pressure; layer 4 may only preserve incumbent spread/protection in stale-pickup state, not add new spread or release fees.
+  - Forbidden consumers: layer 5/6, final quote selection, opportunity cuts, inventory, recapture/refill, regime selector, split bus, aged-premium caps, broad fee compression, side-specific protection magnitude edits, and floor-slice conditionals.
+  - Kill signature: `mean_edge < 485.92377070367183`, `quote_selectivity_ratio > 30`, `quote_selectivity_ratio < 10`, `time_weighted_mean_fee < 0.00420`, `time_weighted_mean_fee > 0.00520`, `arb_loss_to_retail_gain > 0.12`, `low_decile_mean_edge < 371.0`, `low_retail_mean_edge < 416.3`, `low_volatility_mean_edge < 464.0`, or failure to beat `screen_0005` without materially better floor slices.
+
+### Probe Source
+
+- `artifacts/scratch_probes/apr21-screen490-1431/round29/discrete_clearing_clock_state.sol`
+
+### Probe Result
+
+- `DiscreteClearingClockState`
+  - Mean edge: `376.9252481330432`
+  - Delta vs incumbent: `-108.99852257062863`
+  - Delta vs `screen_0005`: `-110.08711582938875`
+  - Key profile: `arb_loss_to_retail_gain=0.23917725270126566`, `quote_selectivity_ratio=33.17763415059683`, `time_weighted_mean_fee=0.007208990599378321`
+  - Floor slices: `low_decile_mean_edge=225.2613187959861`, `low_retail_mean_edge=333.2531210964584`, `low_volatility_mean_edge=367.0478525214157`
+  - Outcome: killed as temporal-clearing overprotection / protection-starvation. The topology did not replay Round 28's low-fee release; it instead drove fees and selectivity too high while breaking every tracked floor slice.
+
+### Decision
+
+- No Round 29 candidate earned a canonical retained eval.
+- Retained lane remains unchanged:
+  - incumbent: `screen_0001`
+  - best raw non-promoted: `screen_0005`
+- Validation and probe commands:
+  - `uv run amm-match validate artifacts/scratch_probes/apr21-screen490-1431/round29/discrete_clearing_clock_state.sol`
+  - `uv run amm-match hill-climb probe --stage screen --json artifacts/scratch_probes/apr21-screen490-1431/round29/discrete_clearing_clock_state.sol > artifacts/scratch_probes/apr21-screen490-1431/round29/discrete_clearing_clock_state.json`
+
+### Updated Entropy Discipline
+
+- Retire discrete clearing-clock classification as implemented. The interface was distinct, but short-window temporal pressure became another broad protection classifier and collapsed floors.
+- Do not retry temporal clearing, collision, latency, or batch-pressure ideas unless the interface has an explicit cap that prevents fee overcharge and preserves benign retail capture before touching shared spread or hazard classification.
+- Round 30 needs a different primary topology again, not a softened clearing-clock coefficient pass. Candidate families should avoid classifier/protection-only, premium-cap, LVR/reserve-preservation, volume/size/collision, and temporal batch-pressure vocabulary unless paired with a genuinely new upstream evidence owner and a hard no-overcharge boundary.

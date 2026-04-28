@@ -139,6 +139,16 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
   - Repeated sources: `BatchClearingLatencyPressure`, `ReserveBandExhaustionClassifier`, `VolumeBucketImbalanceLattice`.
   - Use: do not retry broad latency-pressure or reserve-exhaustion classifiers unless the interface includes an explicit cap that preserves retail capture and keeps the incumbent fee band interpretable.
 
+- Temporal-clearing overprotection basin
+  - Signature: a discrete-time, latency, collision, or batch-pressure interface looks structurally distinct, but the classification feeds hazard/shared protection too broadly: fees rise above the incumbent band, selectivity climbs, and all tracked floor slices break.
+  - Repeated sources: `BatchClearingLatencyPressure`, `BatchCollisionObservationSplitter`, `DiscreteClearingClockState`.
+  - Use: do not retry temporal clearing or batch-pressure classifiers as a primary scoring idea unless the interface has a hard no-overcharge boundary and can preserve benign retail capture before touching hazard or shared spread.
+
+- Aged-premium release basin
+  - Signature: a layer 2 evidence lifetime or layer 4 premium cap appears to target high-fee floor protection, but instead releases too much downstream behavior: `quote_selectivity_ratio` around `70`, `time_weighted_mean_fee` around `0.00361`, and low-decile / low-retail floors collapse.
+  - Repeated sources: `AgingEvidenceLedgerWithPremiumBudgetCap`, `AgingEvidencePostCutPremium`.
+  - Use: do not retry the Round 27 high-fee fix by adding another cap to floor-risk or evidence-age terms. Future fee-band preservation needs an interface that cannot feed opportunity cuts, inventory, final quote selection, or shared fee compression.
+
 - Near-frontier negative classifier controls
   - Signature: classifier-local evidence keeps the profile near the incumbent but moves floor slices slightly negative and fails to create a new anchor.
   - Repeated sources: `ClassifierExportSplit`, `TypedClassifierExportFirewall`, `RouteQualityCalmHazardPartition`.
@@ -161,6 +171,8 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 - Stop spending whole rounds on scalar classifier terms that only add or damp one hazard value; recent signed-impact and reversion-veto probes were either exact no-ops or over-open regressions.
 - Treat support-only positives as stabilizers, not primary search ideas. `CappedLeakageRebateSuppression`, `ConsumedWidthRefillAmplificationVeto`, and `PassiveRecaptureDecomposition` should not be stacked together without a larger primary anchor.
 - Do not recombine weak anchors across multiple downstream layers. Combination candidates should have one primary interface owner and at most one bounded secondary adjunct.
+- Do not treat age-ledger or premium-cap language as sufficient novelty. Round 28 showed that aged evidence caps can still act like hidden release paths even when implemented outside the first risk-signal insertion point.
+- Do not treat public market-design or batch-auction language as sufficient novelty by itself. Round 29 showed temporal clearing clocks can still become broad protection classifiers unless the contract prevents fee overcharge before hazard/shared-spread consumption.
 - Require at least one candidate outside incumbent vocabulary before the next source batch if every draft uses only OOB, route/gap hazard, flow ownership, inventory overlay, burst admission, recenter release, quiet-state refill, or scalar hazard damping.
 - Favor interface-contract changes over coefficient changes:
   - separate adverse-selection protection evidence from benign-flow fee-capture evidence
