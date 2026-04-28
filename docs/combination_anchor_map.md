@@ -7,7 +7,7 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
 ## Retained Context
 
 - Official incumbent for the current `screen490` lane remains `screen_0001` at `485.92377070367183` mean edge.
-- Best raw retained discard for the current `screen490` lane remains `screen_0002` / `burst-pivot` at `486.15826964779` mean edge.
+- Best raw retained discard for the current `screen490` lane is now `screen_0005` / `regime-selector-stronger-floor` at `487.01236396243195` mean edge.
 - Use this note for scratch-round combination planning only; it does not change retained promotion semantics.
 - External phenotype calibration from the Apr 23 authorized oracle probe: the target space has much lower arb leakage/selectivity, lower mean fee, and materially higher floor slices than current local anchors.
 - Treat oracle information only as phenotype evidence. Do not inspect or copy oracle/reference implementation details unless the active task explicitly authorizes it.
@@ -22,6 +22,21 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
   - Collision: low-decile weakened already, so do not stack with another burst/event relaxation or any safe-side reopen branch.
 
 ### Layer 1/3 observation basis and classifier evidence
+
+- `screen_0005` / `RegimeSelectorStrongerFloor`
+  - Signal: `+1.0885932587601133` mean edge vs incumbent; improved `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, `low_decile_mean_edge`, `low_retail_mean_edge`, and `low_volatility_mean_edge` versus the incumbent and improved all tracked floor slices versus `screen_0004`.
+  - Compatibility: current best raw anchor and measurement baseline; useful as a floor-preserving upstream/mid-scaffold selector when paired with a structurally different primary topology.
+  - Collision: do not spend a full round on more regime-selector floor coefficients, mild fee release, burst-pivot bridge repair, or same-family fee-band polish. Round 20 showed broad release and burst bridging collapse floor slices.
+
+- `screen_0003` / `InformationLiquiditySplitBusHardGuard`
+  - Signal: `+0.29932807026233377` mean edge vs incumbent; improved `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, `low_decile_mean_edge`, `low_retail_mean_edge`, and `low_volatility_mean_edge`.
+  - Compatibility: strongest current upstream anchor because it separates liquidity demand from information stress without touching calm, recentering, refill, inventory, passive recapture, or layer 5/6 opportunity formulas.
+  - Collision: do not turn it into another scalar hazard damper or pair it with broad fee compression; any follow-up should preserve the cleaner leakage/selectivity band and avoid support-only stacking.
+
+- Scratch `SplitBusAdverseSelectionSideOnly`
+  - Signal: `+0.31961900492069617` mean edge vs incumbent and `+0.020290934658362403` vs retained best raw while preserving the split-bus leakage/selectivity band and improving low-decile / low-retail slices.
+  - Compatibility: secondary adjunct only; it extends the split bus into side-specific adverse-selection protection without direct shared-spread, calm, recentering, refill, inventory, passive recapture, or layer 5/6 opportunity changes.
+  - Collision: same-family local refinement, not a new official anchor. Do not spend a round on more split-bus coefficient variants unless paired with a structurally different primary topology.
 
 - `OrthogonalObservationBasis`
   - Signal: `+0.07443633959468` mean edge vs incumbent while improving mean edge, leakage/selectivity, `time_weighted_mean_fee`, `low_decile_mean_edge`, `low_retail_mean_edge`, and `low_volatility_mean_edge` together.
@@ -69,7 +84,7 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
 
 - Over-open leak basin
   - Signature: `quote_selectivity_ratio` drifts into roughly the high `20s` through `70+`, mean fee softens, arb leakage rises, and low-decile quality collapses.
-  - Repeated sources: `ConfidenceDebtEstimator`, `ShockCarryInsuranceBudget`, `InventorySkewCenteringOverlay`, `RetailFloorGuardedInventoryOverlay`, `BasisOwnedClassifierExports`, `DualAnchorQuoteTopology`.
+  - Repeated sources: `ConfidenceDebtEstimator`, `ShockCarryInsuranceBudget`, `InventorySkewCenteringOverlay`, `RetailFloorGuardedInventoryOverlay`, `BasisOwnedClassifierExports`, `DualAnchorQuoteTopology`, `ProfileTargetShadowNormalizer`.
 
 - Over-tightening basin
   - Signature: mean fee spikes or selectivity collapses too far, benign capture disappears, and most slices degrade together.
@@ -83,6 +98,16 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
   - Signature: a tiny anchor gets recopied locally until attribution gets worse and the batch collapses around one weak motif.
   - Repeated sources: inventory-overlay quiet-state tapers, typed-export ownership changes that touch recapture eligibility, direct latent/quote crossovers, standalone burst-label relaxations, and OOB-dependent short-gap or inventory recombinations.
 
+- Downstream floor-admission collapse
+  - Signature: a final quote arbiter or safe-side service window appears structurally new, but it damages low-decile and low-retail floors while reopening leakage/selectivity.
+  - Repeated sources: `FinalQuoteFloorArbiter`, `CapacityServiceWindow`.
+  - Use: do not retry downstream admission without a stronger upstream floor-risk estimator; leave layer 6 alone for the immediate next round.
+
+- Upstream estimator over-open collapse
+  - Signature: an observation/state classifier looks structurally distinct, but attenuates protection too broadly and drives selectivity above roughly `30-65` with low-decile falling toward `210-265`.
+  - Repeated sources: `ForecastErrorObservationGate`, `ImpactReconstructabilityEncoder`, `HorizonQuorumStateContract`, `AdverseOptionalityClassifier`.
+  - Use: do not keep relabeling estimator confidence gates. Future upstream work needs an explicit protection-preserving boundary, not more trust/attenuation logic.
+
 - Near-frontier negative classifier controls
   - Signature: classifier-local evidence keeps the profile near the incumbent but moves floor slices slightly negative and fails to create a new anchor.
   - Repeated sources: `ClassifierExportSplit`, `TypedClassifierExportFirewall`, `RouteQualityCalmHazardPartition`.
@@ -92,6 +117,8 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
 
 - Draft around one primary anchor and at most one secondary adjunct.
 - Keep `OrthogonalObservationBasis` optional, not mandatory infrastructure for every probe.
+- Treat `InformationLiquiditySplitBusHardGuard` as the leading upstream anchor; follow-ups must explain how they preserve its leakage/selectivity improvement instead of merely increasing hazard or fees.
+- Treat `screen_0005` / `RegimeSelectorStrongerFloor` as the current best raw anchor for measurement, but require the next batch to add a different primary topology instead of locally polishing that family.
 - If `burst-pivot` is reused, pair it only with a floor-preserving partner and keep the burst admission narrow.
 - If the layer-5 inventory overlay is reused, it must be the only layer-5/6 exploit slot in that probe.
 - Pause OOB plus inventory and OOB plus short-gap combinations until a new non-OOB upstream anchor exists.
@@ -109,3 +136,6 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
   - keep upstream interpretation changes upstream of shared spread and side-specific protection
   - state allowed consumers and forbidden consumers before writing Solidity
   - prove layer ownership in the plan before source work
+- Round 18 scratch lesson: public microstructure-inspired toxicity timing was structurally distinct but hurt low-decile in its first activation; a future retry needs a floor-preserving estimator selector, not stronger toxicity coefficients.
+- Round 21 scratch lesson: downstream final-quote arbitration and safe-side service admission both collapsed floors; Round 22 should avoid layer 6 and avoid final-quote-only arbiters.
+- Round 22 scratch lesson: upstream confidence/reconstructability/quorum classifiers collapsed even harder. Use external AMM/microstructure guidance before another batch and avoid trust-gate designs that attenuate protection.
