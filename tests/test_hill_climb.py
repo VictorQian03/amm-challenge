@@ -651,6 +651,7 @@ def test_stable_hill_climb_docs_do_not_reference_removed_queue_surfaces():
     assert "Topology proposer" in docs_text
     assert "Saturation/entropy critic" in docs_text
     assert "Strategy worker" in docs_text
+    assert "suggestions, ideas, anchor compatibility notes, saturated failure modes, and productivity rules" in docs_text
     assert "at least four accepted strategy design improvements" in docs_text
     assert "four accepted designs must be distinct in topology" in docs_text
     assert "four coefficient variants" in docs_text
