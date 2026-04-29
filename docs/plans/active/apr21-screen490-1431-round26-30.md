@@ -310,3 +310,70 @@ Run index: [apr21-screen490-1431.md](apr21-screen490-1431.md)
 - Retire discrete clearing-clock classification as implemented. The interface was distinct, but short-window temporal pressure became another broad protection classifier and collapsed floors.
 - Do not retry temporal clearing, collision, latency, or batch-pressure ideas unless the interface has an explicit cap that prevents fee overcharge and preserves benign retail capture before touching shared spread or hazard classification.
 - Round 30 needs a different primary topology again, not a softened clearing-clock coefficient pass. Candidate families should avoid classifier/protection-only, premium-cap, LVR/reserve-preservation, volume/size/collision, and temporal batch-pressure vocabulary unless paired with a genuinely new upstream evidence owner and a hard no-overcharge boundary.
+
+## Round 30: Path Reversal Residue Transform
+
+### Starting State
+
+- Official incumbent: `screen_0001` at `485.92377070367183`.
+- Best retained raw discard: `screen_0005` / `regime-selector-stronger-floor` at `487.01236396243195`.
+- Breakout target: `490`.
+- Round 29 killed temporal clearing clocks as overprotection / protection-starvation.
+- External public AMM/LVR evidence was used only as high-level adverse-selection framing: stale-price arbitrage is the cost to avoid, but this round deliberately avoided another LVR floor, fee-rent overlay, or auction/clearing-clock clone.
+
+### Subagent Workflow
+
+- Topology proposer supplied three structurally distinct contracts:
+  - `LossCreditLedger`
+  - `PathReversalResidueTransform`
+  - `ConservedSpreadBudgetAllocator`
+- Saturation critic narrowed the batch to one worker:
+  - Accepted `PathReversalResidueTransform` as the cleanest entropy move because it changes layer 1 path-shape evidence before layer 2 state update without direct hazard, spread, protection, or quote access.
+  - Rejected `LossCreditLedger` as too close to a softened `RetailFloorFirstStatePartition` follow-up and likely scalar hazard damping / hidden fee release.
+  - Rejected `ConservedSpreadBudgetAllocator` as support-only layer 4 budget language too close to aged-premium caps, fee-rent failures, and strict floor/no-op attempts.
+- Enforced entropy constraints:
+  - one worker path only
+  - no layer 5/6 edits
+  - no direct hazard subtraction/addition after memory update
+  - no shared-spread budget movement, side-protection magnitude edit, final quote selection, opportunity cuts, inventory, recapture/refill, split-bus, regime selector, LVR/reserve proxy, aged cap, or fee release/compression
+
+### Accepted Probe Contract
+
+- `PathReversalResidueTransform`
+  - Layer mutation: layer 1 path-shape observation into layer 2 state-update input.
+  - Interface boundary: classify short-gap same-side reversion toward the latent spot and use a capped residue only to damp the blend inputs for `volMemory`, `hazardMemory`, and `divergenceMemory`.
+  - Forbidden consumers: direct layer 3 hazard edits, layer 4 spread edits, side protection magnitude, final quote selection, opportunity cuts, inventory, recapture/refill, split-bus, regime selector, LVR/reserve proxies, aged caps, and fee release/compression.
+  - Kill signature: `mean_edge <= 487.01236396243195` unless all floor slices materially clear `screen_0005`, `quote_selectivity_ratio > 22` or `< 14`, `time_weighted_mean_fee < 0.00460` or `> 0.00510`, `low_decile_mean_edge < 370.4`, `low_retail_mean_edge < 416.3`, `low_volatility_mean_edge < 464.0`, near-no-op versus incumbent, Round 28 over-open release, or Round 29 overprotection.
+
+### Probe Source
+
+- `artifacts/scratch_probes/apr21-screen490-1431/round30/path_reversal_residue_transform.sol`
+
+### Probe Result
+
+- `PathReversalResidueTransform`
+  - Mean edge: `485.92278978188654`
+  - Delta vs incumbent: `-0.0009809217852989605`
+  - Delta vs `screen_0005`: `-1.0895741805454122`
+  - Key profile: `arb_loss_to_retail_gain=0.09964604085747701`, `quote_selectivity_ratio=21.377037329612232`, `time_weighted_mean_fee=0.00466135878985643`
+  - Floor slices: `low_decile_mean_edge=370.65898071160365`, `low_retail_mean_edge=415.9032082249183`, `low_volatility_mean_edge=463.3256719217641`
+  - Outcome: killed as a near-no-op / slight sub-incumbent path-shape transform. It stayed within the incumbent leakage and fee band, but failed the best-raw threshold and missed the low-retail and low-volatility kill thresholds.
+
+### Decision
+
+- No Round 30 candidate earned a canonical retained eval.
+- Retained lane remains unchanged:
+  - incumbent: `screen_0001`
+  - best raw non-promoted: `screen_0005`
+- Validation and probe commands:
+  - `uv run amm-match validate artifacts/scratch_probes/apr21-screen490-1431/round30/path_reversal_residue_transform.sol`
+  - `uv run amm-match hill-climb probe --stage screen --json artifacts/scratch_probes/apr21-screen490-1431/round30/path_reversal_residue_transform.sol > artifacts/scratch_probes/apr21-screen490-1431/round30/path_reversal_residue_transform.json`
+
+### Updated Entropy Discipline
+
+- Retire path-reversal residue as implemented. The interface respected the layer boundary and avoided over-open / overprotection collapse, but it was effectively incumbent-equivalent and below `screen_0005`.
+- Do not spend Round 31 on another small observation-input damping pass. A follow-up needs a new primary topology with measurable non-no-op movement, not another capped transform on the same state inputs.
+- Round 30 exposed a process bottleneck: critic narrowing left only one worker path. Future subagent-assisted rounds must iterate proposer and critic until at least four distinct, positive-expectation strategy designs are accepted before source work starts.
+- The closed Round 26-30 span leaves the active search with two useful constraints:
+  - near-frontier safe transforms are not enough unless they materially beat `screen_0005`
+  - public AMM/LVR or market-design language must not become another fee-rent, clearing-clock, or strict-floor proxy unless the implementation has a new evidence owner and falsifiable movement away from prior basins

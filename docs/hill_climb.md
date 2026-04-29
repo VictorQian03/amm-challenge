@@ -16,7 +16,7 @@ It does not own idea generation, batch planning, or hypothesis workflow.
 ## What It Does Not Cover
 
 - No required hypothesis registry.
-- No batch-diversity contract.
+- No CLI-owned batch-diversity state machine; operator-owned diversity rules live below.
 - No idea-generation queue or structured planning state.
 - No forced refine or pivot workflow.
 
@@ -154,6 +154,12 @@ For probe-heavy rounds, split roles by responsibility:
 3. Strategy worker: owns an accepted scratch implementation path. It may edit only its assigned scratch source, validate it, run `hill-climb probe`, inspect profile artifacts, and make bounded follow-up tweaks inside the accepted topology contract until the local idea is saturated.
 
 Run the critic after the topology proposer has produced a concrete batch. The critic's job is to accept, reject, or narrow that proposed batch before any strategy worker starts source edits.
+Do not let critic narrowing collapse a round to one or two probes.
+For a subagent-assisted probe round, the coordinator must iterate proposer -> critic -> proposer until at least four accepted strategy design improvements remain.
+Each accepted design must have positive expected movement in `mean_edge` or a named problem-space metric such as `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, `low_decile_mean_edge`, `low_retail_mean_edge`, or `low_volatility_mean_edge`.
+The four accepted designs must be distinct in topology, scaffold layer ownership, vocabulary, implementation design, and nonlinearity; four coefficient variants or four names for the same support signal do not count.
+Only after this four-design floor is met should strategy workers start source edits, preferably in parallel over separate scratch paths.
+If the critic cannot accept four designs, the proposer must generate more candidates or import outside/public evidence until the floor is met or the coordinator records a hard blocker.
 
 Do not spawn a coordinator subagent. Add proposer, critic, or worker roles only when they materially reduce search risk or wall time.
 
@@ -164,11 +170,12 @@ The topology proposer should ask itself and have clear answers for:
 3. Which consumers are forbidden from seeing it so the probe has clean attribution?
 4. Can the idea be described without incumbent-local vocabulary such as OOB, route/gap hazard, flow ownership, inventory overlay, burst admission, recenter release, quiet refill, or scalar hazard damping?
 5. Does the batch include at least one candidate outside the incumbent vocabulary?
-6. What public evidence or external mechanism motivates the topology, and what current shortfall does it target?
-7. What outcome-space movement should prove the idea is real: `mean_edge`, `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, `low_decile_mean_edge`, `low_retail_mean_edge`, or `low_volatility_mean_edge`? What range of estimates would you assign each of their expected movement?
-8. What must stay near the incumbent band to make the result interpretable?
-9. Is this a primary topology/interface idea or only a support control? If it is support-only, what larger primary anchor justifies it?
-10. What no-op, over-open, or over-tightened result would retire the idea cleanly?
+6. Does the critic-accepted batch contain at least four genuinely distinct strategy design improvements before any worker starts?
+7. What public evidence or external mechanism motivates the topology, and what current shortfall does it target?
+8. What outcome-space movement should prove the idea is real: `mean_edge`, `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, `low_decile_mean_edge`, `low_retail_mean_edge`, or `low_volatility_mean_edge`? What range of estimates would you assign each of their expected movement?
+9. What must stay near the incumbent band to make the result interpretable?
+10. Is this a primary topology/interface idea or only a support control? If it is support-only, what larger primary anchor justifies it?
+11. What no-op, over-open, or over-tightened result would retire the idea cleanly?
 
 The saturation/entropy critic should follow entropy guardrails below and reject a batch when:
 
@@ -187,7 +194,8 @@ The critic should pressure-test likely failure modes with concrete questions bef
 3. If it claims to avoid `over_tighten_clamp` or protection starvation, where is the explicit cap that preserves benign retail capture and the incumbent fee band?
 4. If it is near an existing positive anchor, what is the new interface owner rather than the local coefficient or support-signal variant?
 5. Which tracked floor slice is most likely to break first, and what kill threshold would stop the worker loop?
-6. If none of the current basin names fit, what distinct vocabulary should the round use temporarily, and should it be promoted to [`docs/combination_anchor_map.md`](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/combination_anchor_map.md) after repeated evidence?
+6. If the result is a near-no-op, is it a true `Phenotype-identical no-op plateau`, an `Upstream geometry-codec plateau`, or a different floor-owner failure?
+7. If none of the current basin names fit, what distinct vocabulary should the round use temporarily, and should it be promoted to [`docs/combination_anchor_map.md`](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/combination_anchor_map.md) after repeated evidence?
 
 The strategy worker should loop only inside the accepted topology contract:
 

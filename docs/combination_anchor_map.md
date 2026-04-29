@@ -100,19 +100,21 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 
 - Over-open leak basin
   - Signature: `quote_selectivity_ratio` drifts into roughly the high `20s` through `70+`, mean fee softens, arb leakage rises, and low-decile quality collapses.
-  - Repeated sources: `ConfidenceDebtEstimator`, `ShockCarryInsuranceBudget`, `InventorySkewCenteringOverlay`, `RetailFloorGuardedInventoryOverlay`, `BasisOwnedClassifierExports`, `DualAnchorQuoteTopology`, `ProfileTargetShadowNormalizer`.
+  - Repeated sources: `ConfidenceDebtEstimator`, `ShockCarryInsuranceBudget`, `InventorySkewCenteringOverlay`, `RetailFloorGuardedInventoryOverlay`, `BasisOwnedClassifierExports`, `DualAnchorQuoteTopology`, `ProfileTargetShadowNormalizer`, `PriorTradeMarkoutLedger`.
 
 - Over-tightening basin
   - Signature: mean fee spikes or selectivity collapses too far, benign capture disappears, and most slices degrade together.
   - Repeated sources: `CarrySplitAssembler`, `BoundaryNormalizedStateLoop`, `AdverseExtensionFloorGuard`, `ElapsedGapHazardClassifier`; `ImpactSplitHazard` also leaned into this direction even though its arb metrics improved.
 
-- Exact replay / no-op seam
+- Phenotype-identical no-op plateau
   - Signature: source edits look new, but screen phenotype stays identical or effectively unchanged.
-  - Repeated sources: `PersistenceShapedObservationBasis`, `PersistenceWeightedParticipationHazard`, `RecenterReleaseConfirmation`, `RatchetConfidenceVeto`.
+  - Repeated sources: `PersistenceShapedObservationBasis`, `PersistenceWeightedParticipationHazard`, `RecenterReleaseConfirmation`, `RatchetConfidenceVeto`, `PathReversalResidueTransform`.
+  - Use: block proposals whose expected movement is only "stay near the incumbent." Require a named metric to move by enough to distinguish the probe from incumbent noise before worker source edits.
 
-- Saturated clone seam
+- Weak-anchor clone saturation
   - Signature: a tiny anchor gets recopied locally until attribution gets worse and the batch collapses around one weak motif.
   - Repeated sources: inventory-overlay quiet-state tapers, typed-export ownership changes that touch recapture eligibility, direct latent/quote crossovers, standalone burst-label relaxations, and OOB-dependent short-gap or inventory recombinations.
+  - Use: reject batches that combine several sub-`0.1` positives or local variants of one anchor. One weak support signal may accompany a stronger primary owner; it should not define the batch.
 
 - Downstream floor-admission collapse
   - Signature: a final quote arbiter or safe-side service window appears structurally new, but it damages low-decile and low-retail floors while reopening leakage/selectivity.
@@ -134,7 +136,12 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
   - Repeated sources: `LVRProxySpreadFloor`.
   - Use: do not coefficient-tune the strict LVR floor alone. Only revisit if a distinct primary topology supplies new floor-risk evidence before the layer-4 floor proxy consumes it.
 
-- Protection-starvation basin
+- Upstream geometry-codec plateau
+  - Signature: a layer 1/2 observation or latent-state geometry codec avoids catastrophic leakage and stays near the incumbent fee/selectivity band, but remains below `screen_0005` and does not create a new floor-risk owner.
+  - Repeated sources: `PathReversalResidueTransform`, `FairValueCorridorProjector`, `MarginalSlopeDisplacementCodec`, `BandpassDivergenceEncoder`.
+  - Use: do not spend another full round on hazard/divergence input reshaping, fair-value projector geometry, or curve-shape residual codecs unless a different primary anchor owns protection-vs-benign-capture allocation. `BandpassDivergenceEncoder` can remain a diagnostic adjunct because it improved floor slices versus incumbent, but it should not receive local coefficient polish.
+
+- Broad-protection starvation basin
   - Signature: a protection-only classifier or geometry signal avoids over-open leakage but pushes fees/protection high enough that mean edge and all floor slices collapse.
   - Repeated sources: `BatchClearingLatencyPressure`, `ReserveBandExhaustionClassifier`, `VolumeBucketImbalanceLattice`.
   - Use: do not retry broad latency-pressure or reserve-exhaustion classifiers unless the interface includes an explicit cap that preserves retail capture and keeps the incumbent fee band interpretable.
@@ -149,7 +156,7 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
   - Repeated sources: `AgingEvidenceLedgerWithPremiumBudgetCap`, `AgingEvidencePostCutPremium`.
   - Use: do not retry the Round 27 high-fee fix by adding another cap to floor-risk or evidence-age terms. Future fee-band preservation needs an interface that cannot feed opportunity cuts, inventory, final quote selection, or shared fee compression.
 
-- Near-frontier negative classifier controls
+- Classifier-local floor-drag plateau
   - Signature: classifier-local evidence keeps the profile near the incumbent but moves floor slices slightly negative and fails to create a new anchor.
   - Repeated sources: `ClassifierExportSplit`, `TypedClassifierExportFirewall`, `RouteQualityCalmHazardPartition`.
   - Use: allow at most one softened follow-up when the interface remains classifier-local and does not feed global calm or recapture eligibility.
@@ -167,18 +174,41 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 
 ## Productivity Rules For Future Rounds
 
+### Proposal Admission
+
 - Use the optional proposer / critic / worker subagent pattern for probe-heavy batches only when parallel help is explicitly requested. Treat it as operator guidance, not harness state; retained eval decisions stay with the main coordinator.
+- In subagent-assisted probe rounds, critic narrowing must not leave fewer than four accepted strategy design improvements. Iterate proposer -> critic -> proposer until at least four distinct topology/layer/vocabulary/design/nonlinearity candidates have positive expected movement in mean edge or a named problem-space metric.
+- Each proposed design must state one primary interface owner, allowed consumers, forbidden consumers, expected metric movement, and a kill signature tied to `screen_0005`. Reject drafts that describe only a variable, coefficient, or renamed incumbent signal.
+- Require at least one candidate outside incumbent vocabulary before source work if every draft uses only OOB, route/gap hazard, flow ownership, inventory overlay, burst admission, recenter release, quiet-state refill, or scalar hazard damping.
+- Treat public market-design, AMM, and microstructure language as source material, not novelty proof. The proposal still needs a new evidence owner and a protection-preserving boundary.
+
+### Critic Gates
+
 - Stop spending whole rounds on scalar classifier terms that only add or damp one hazard value; recent signed-impact and reversion-veto probes were either exact no-ops or over-open regressions.
 - Treat support-only positives as stabilizers, not primary search ideas. `CappedLeakageRebateSuppression`, `ConsumedWidthRefillAmplificationVeto`, and `PassiveRecaptureDecomposition` should not be stacked together without a larger primary anchor.
 - Do not recombine weak anchors across multiple downstream layers. Combination candidates should have one primary interface owner and at most one bounded secondary adjunct.
 - Do not treat age-ledger or premium-cap language as sufficient novelty. Round 28 showed that aged evidence caps can still act like hidden release paths even when implemented outside the first risk-signal insertion point.
 - Do not treat public market-design or batch-auction language as sufficient novelty by itself. Round 29 showed temporal clearing clocks can still become broad protection classifiers unless the contract prevents fee overcharge before hazard/shared-spread consumption.
-- Require at least one candidate outside incumbent vocabulary before the next source batch if every draft uses only OOB, route/gap hazard, flow ownership, inventory overlay, burst admission, recenter release, quiet-state refill, or scalar hazard damping.
+- Reject another layer 1/2 geometry-codec batch unless it can name the downstream owner that changes protection-vs-benign-capture allocation. Round 30 and Round 31 showed that safe upstream codecs can remain near-frontier without becoming productive anchors.
 - Favor interface-contract changes over coefficient changes:
   - separate adverse-selection protection evidence from benign-flow fee-capture evidence
   - keep upstream interpretation changes upstream of shared spread and side-specific protection
   - state allowed consumers and forbidden consumers before writing Solidity
   - prove layer ownership in the plan before source work
+
+### Worker Handoff
+
+- Workers should receive only critic-accepted contracts with a single scratch path, validation command, probe command, and stop rule. They should not open new topology families mid-worker-loop.
+- The first scratch result should be classified against the precise failure-mode vocabulary above before any bounded tweak. If the result lands in `Phenotype-identical no-op plateau`, `Upstream geometry-codec plateau`, `Over-open leak basin`, or `Broad-protection starvation basin`, stop rather than coefficient-polish.
+- A scratch candidate should receive retained-eval consideration only if it beats `screen_0005` or misses it with a genuinely new floor-risk owner and materially better named floor slices. Near-incumbent safety alone is not enough.
+
+### Round Lessons To Carry Forward
+
 - Round 18 scratch lesson: public microstructure-inspired toxicity timing was structurally distinct but hurt low-decile in its first activation; a future retry needs a floor-preserving estimator selector, not stronger toxicity coefficients.
 - Round 21 scratch lesson: downstream final-quote arbitration and safe-side service admission both collapsed floors; Round 22 should avoid layer 6 and avoid final-quote-only arbiters.
 - Round 22 scratch lesson: upstream confidence/reconstructability/quorum classifiers collapsed even harder. Use external AMM/microstructure guidance before another batch and avoid trust-gate designs that attenuate protection.
+- Round 27 scratch lesson: `RetailFloorFirstStatePartition` is a strong positive scratch anchor but carries a high-fee phenotype and missed `screen_0005`; future reuse needs a distinct primary topology or fee-band-preserving boundary, not local floor-partition polish.
+- Round 28 scratch lesson: aged-evidence premium caps and post-cut premium placement both replayed the same low-fee over-open release; do not treat insertion-point movement as a new topology when the phenotype is unchanged.
+- Round 29 scratch lesson: temporal clearing and batch-pressure ownership can invert into high-fee overprotection; require a hard no-overcharge cap before any new temporal/latency/collision design reaches hazard or shared spread.
+- Round 30 scratch lesson: bounded path-reversal residue respected the layer 1 -> layer 2 boundary but was near-no-op and slightly sub-incumbent. Do not rerun small observation-input damping passes unless the next proposal owns a genuinely different primary topology and precommits to movement away from the incumbent phenotype.
+- Round 31 scratch lesson: public microstructure / AMM evidence did not prevent entropy collapse by itself. Prior-fill markout replayed over-open release when routed into the same upstream hazard/divergence consumers, while fair-value corridor, marginal-slope residual, and bandpass divergence stayed below `screen_0005`; future external-evidence imports need a new protection-preserving owner, not another observation codec.

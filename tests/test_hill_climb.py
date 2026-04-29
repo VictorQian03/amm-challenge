@@ -651,8 +651,13 @@ def test_stable_hill_climb_docs_do_not_reference_removed_queue_surfaces():
     assert "Topology proposer" in docs_text
     assert "Saturation/entropy critic" in docs_text
     assert "Strategy worker" in docs_text
+    assert "at least four accepted strategy design improvements" in docs_text
+    assert "four accepted designs must be distinct in topology" in docs_text
+    assert "four coefficient variants" in docs_text
     assert "The main agent stays the coordinator by default" in docs_text
     assert "Which prior failure basin is this idea most likely to replay" in docs_text
+    assert "Phenotype-identical no-op plateau" in docs_text
+    assert "Upstream geometry-codec plateau" in docs_text
     assert "add a more precise basin name" in docs_text
     assert "promoted to [`docs/combination_anchor_map.md`]" in docs_text
     assert "For the active screen490 lane" not in docs_text
@@ -675,6 +680,15 @@ def test_stable_hill_climb_docs_do_not_reference_removed_queue_surfaces():
     assert "add precise new basin vocabulary" in readme_text
     assert "max_fee_jump" in readme_text
     assert "when the user explicitly asks for parallel help" in readme_text
+    assert "at least four critic-accepted" in readme_text
+
+    anchor_text = Path("docs/combination_anchor_map.md").read_text()
+    assert "### Proposal Admission" in anchor_text
+    assert "### Critic Gates" in anchor_text
+    assert "### Worker Handoff" in anchor_text
+    assert "### Round Lessons To Carry Forward" in anchor_text
+    assert "Phenotype-identical no-op plateau" in anchor_text
+    assert "Upstream geometry-codec plateau" in anchor_text
 
 
 def test_active_screen490_round_index_is_authoritative_and_points_to_latest_span():
@@ -688,6 +702,8 @@ def test_active_screen490_round_index_is_authoritative_and_points_to_latest_span
     assert "Current write target" in index_text
     assert "round11-15" in index_text
     assert "round16-20" in index_text
+    assert "round31-35" in index_text
+    assert "Latest populated span: `round31-35`" in index_text
     assert "zero-padded inclusive 5-round span" in index_text
     assert "create the next 5-round span only after the current one closes" in index_text
 
