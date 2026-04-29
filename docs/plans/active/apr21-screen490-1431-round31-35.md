@@ -415,3 +415,158 @@ Run index: [apr21-screen490-1431.md](apr21-screen490-1431.md)
 - Debt-before-repair and counterfactual regret memories are killed in their current form. Both replayed the old over-open release basin despite distinct vocabulary.
 - Adverse/benign token separation, convex envelopes, and piecewise side translators were too weak in this implementation; do not retry them as support-only no-op guards unless a new primary topology supplies the movement.
 - Keep the next proposer/critic batch away from local `screen_0006` polish. Prefer a new module/interface that can stack with the one-way firewall without broadening release, opportunity, recapture, refill, inventory, or final quote behavior.
+
+## Round 34: Distributional Tail-State Interface Batch
+
+### Starting State
+
+- Active retained lane: `apr21-screen490-1431`.
+- Official incumbent: `screen_0001` / `starter-baseline-post-fix` at `485.92377070367183`.
+- Best raw retained discard entering the round: `screen_0006` / `monotone-evidence-firewall-strict` at `487.1624615941965`.
+- Breakout target: `490`.
+- Round 33 advanced the best raw with a strict one-way evidence firewall, but explicitly closed local firewall coefficient polish.
+- External evidence used as topology inspiration only:
+  - AMM LVR work frames stale-price pickoff as the core AMM adverse-selection cost: https://arxiv.org/abs/2208.06046
+  - frequent batch auction work frames public-signal arbitrage as a market-design / serial-processing problem, not a scalar fee problem: https://academic.oup.com/qje/article/130/4/1547/1916146
+  - dynamic AMM fee work motivates state-dependent fees while warning that inventory / external-price sensitivity must stay structurally controlled: https://arxiv.org/abs/2506.02869
+
+### Subagent Workflow
+
+- Topology proposer supplied nine candidates:
+  - `PublicShockQuarantineValve`
+  - `QuantileTailRiskSketch`
+  - `MeetSemilatticeQuoteCompiler`
+  - `SignedNeutralityChecksum`
+  - `RankCopulaRiskSplitter`
+  - `HystereticFloorLatch`
+  - `CounterpartyOptionalityCap`
+  - `CurveInvariantStressCertificate`
+  - `BenignFillExclusionProof`
+- Saturation critic accepted six worker contracts and rejected or deferred three:
+  - Accepted `PublicShockQuarantineValve` as a public-signal synchrony certificate that can only raise / hold strict firewall evidence and side-risk floors.
+  - Accepted `QuantileTailRiskSketch` only as bounded tail-bucket state, not a continuous displacement codec or hazard/divergence reshaper.
+  - Accepted `MeetSemilatticeQuoteCompiler` as a high-risk layer-4 invariant only if it cannot compress below the independent adverse floor.
+  - Accepted `RankCopulaRiskSplitter` only as discrete joint-rank dependence state consumed by strict firewall / layer-3 risk class.
+  - Accepted `HystereticFloorLatch` as a layer-3 state-machine boundary whose exit requires independent benign confirmations and cannot authorize repair/release.
+  - Accepted `BenignFillExclusionProof` as a strict exclusion proof: benign fill evidence may suppress overprotection only when adverse evidence is absent.
+  - Rejected `SignedNeutralityChecksum` as support-only side-treatment hygiene too close to symmetry debt / split-bus polish.
+  - Deferred `CounterpartyOptionalityCap` because it read like protection-only optionality cap replay without a new non-classifier owner.
+  - Deferred `CurveInvariantStressCertificate` because it risked strict LVR / geometry plateau replay without a new protection-vs-benign allocation boundary.
+- Enforced entropy constraints:
+  - six accepted designs before source edits
+  - distinct topology, vocabulary, implementation design, and nonlinearities
+  - no retained-ledger edits by workers
+  - no `contracts/src/StarterStrategy.sol` edits
+  - no `Reference.sol` inspection
+  - no layer 5/6 opportunity, refill, recapture, inventory, or final quote expansion
+  - measurement anchor was `screen_0006`, not a local-polish target
+
+### Accepted Scratch Contracts
+
+- `PublicShockQuarantineValve`
+  - Layer mutation: layer 1 -> 2 public-signal synchrony certificate.
+  - Interface boundary: may raise / hold strict firewall evidence and side-risk floor only.
+  - Forbidden consumers: fee cuts, opportunity, refill, recapture, inventory, quote assembly, layer-4 release, and final quote.
+  - Kill signature: `quote_selectivity_ratio` outside `17-21`, `time_weighted_mean_fee < 0.00475`, any floor below `screen_0006`, or no movement in leakage/selectivity.
+- `QuantileTailRiskSketch`
+  - Layer mutation: layer 2 bounded distributional tail-bucket state.
+  - Interface boundary: emits bounded tail classes consumed by layer-3 classifier / strict firewall / side-protection floor.
+  - Forbidden consumers: direct `hazardObservation` or `divergenceMemory` reshaping, shared-spread compression, benign service expansion, and layer 5/6 paths.
+  - Kill signature: `time_weighted_mean_fee > 0.00520`, `quote_selectivity_ratio < 16`, floors falling together, or phenotype indistinguishable from `screen_0006`.
+- `MeetSemilatticeQuoteCompiler`
+  - Layer mutation: layer 4 floor-preserving quote-width compiler.
+  - Interface boundary: computes adverse floor and benign service ceiling independently, then clamps so the quote cannot compress below adverse floor.
+  - Forbidden consumers: account ledgers, side opportunity, refill, recapture, inventory, final quote, and fee release.
+  - Kill signature: `quote_selectivity_ratio > 22`, `time_weighted_mean_fee < 0.00475`, or any Round 32 allocation-release profile.
+- `RankCopulaRiskSplitter`
+  - Layer mutation: layer 2 discrete joint-rank dependence state over displacement / pressure / fee-band stress.
+  - Interface boundary: discrete copula-risk state consumed only by strict firewall / layer-3 risk class.
+  - Forbidden consumers: benign expansion, release, opportunity, refill, recapture, and shared-spread compression.
+  - Kill signature: `quote_selectivity_ratio > 24`, `time_weighted_mean_fee < 0.00470`, floor-slice coupling, or classifier-local floor-drag plateau.
+- `HystereticFloorLatch`
+  - Layer mutation: layer 3 floor-risk latch state.
+  - Interface boundary: enter on strong evidence; exit only after two independent benign confirmations; cannot authorize repair/release.
+  - Forbidden consumers: layer-4 compression, inventory, final quote, and repair paths.
+  - Kill signature: `time_weighted_mean_fee > 0.00520` with floor decline, `quote_selectivity_ratio < 15`, or all floors falling together.
+- `BenignFillExclusionProof`
+  - Layer mutation: layer 2 benign exclusion proof.
+  - Interface boundary: benign evidence may suppress overprotection only when adverse evidence is absent.
+  - Forbidden consumers: rebates, shared-spread compression, recapture, refill, opportunity, and final quote.
+  - Kill signature: `low_retail_mean_edge` below `screen_0006`, `time_weighted_mean_fee < 0.00475`, or Round 32 benign-capacity no-op replay.
+
+### Probe Sources
+
+- `artifacts/scratch_probes/apr21-screen490-1431/round34/public_shock_quarantine_valve.sol`
+- `artifacts/scratch_probes/apr21-screen490-1431/round34/quantile_tail_risk_sketch.sol`
+- `artifacts/scratch_probes/apr21-screen490-1431/round34/meet_semilattice_quote_compiler.sol`
+- `artifacts/scratch_probes/apr21-screen490-1431/round34/rank_copula_risk_splitter.sol`
+- `artifacts/scratch_probes/apr21-screen490-1431/round34/hysteretic_floor_latch.sol`
+- `artifacts/scratch_probes/apr21-screen490-1431/round34/benign_fill_exclusion_proof.sol`
+
+### Probe Results
+
+- `PublicShockQuarantineValve`
+  - Mean edge: `487.1726087045199`
+  - Delta vs `screen_0006`: `+0.010147110323430297`
+  - Key profile: `arb_loss_to_retail_gain=0.09084453521228832`, `quote_selectivity_ratio=18.598339824980425`, `time_weighted_mean_fee=0.004884550775347709`
+  - Floor slices: `low_decile_mean_edge=371.4315246247339`, `low_retail_mean_edge=417.1405040493594`, `low_volatility_mean_edge=464.5264987548075`
+  - Outcome: killed despite a tiny mean-edge lift because all tracked floor slices were below `screen_0006`; keep as public-shock diagnostic only.
+- `QuantileTailRiskSketch`
+  - Mean edge: `487.54341156295743`
+  - Delta vs `screen_0006`: `+0.38094996876094456`
+  - Key profile: `arb_loss_to_retail_gain=0.09217121984585866`, `quote_selectivity_ratio=19.15842357425379`, `time_weighted_mean_fee=0.0048110022982122466`
+  - Floor slices: `low_decile_mean_edge=372.1891559240087`, `low_retail_mean_edge=417.65973102856225`, `low_volatility_mean_edge=464.8246697119466`
+  - Outcome: selected for canonical retained eval because it beat `screen_0006` and improved all tracked floor slices while staying inside the critic's fee/selectivity kill bands.
+- `MeetSemilatticeQuoteCompiler`
+  - Mean edge: `457.6036525148261`
+  - Delta vs `screen_0006`: `-29.558809079370405`
+  - Key profile: `arb_loss_to_retail_gain=0.06995257961152546`, `quote_selectivity_ratio=8.202239897305418`, `time_weighted_mean_fee=0.008528472769310994`
+  - Floor slices: `low_decile_mean_edge=343.5352771676359`, `low_retail_mean_edge=387.21893778941194`, `low_volatility_mean_edge=438.9617701771692`
+  - Outcome: killed as over-tightening / benign-capture starvation. The invariant protected leakage but overcharged and damaged every tracked floor.
+- `RankCopulaRiskSplitter`
+  - Mean edge: `466.2854155897969`
+  - Delta vs `screen_0006`: `-20.877046004399574`
+  - Key profile: `arb_loss_to_retail_gain=0.11937962623268364`, `quote_selectivity_ratio=22.849342723102946`, `time_weighted_mean_fee=0.005224641587260145`
+  - Floor slices: `low_decile_mean_edge=354.27017781618724`, `low_retail_mean_edge=399.5635070236124`, `low_volatility_mean_edge=443.64316595604214`
+  - Outcome: killed as classifier-local floor damage / overcharge. The joint-rank state broke floor slices and exceeded the intended fee band.
+- `HystereticFloorLatch`
+  - Mean edge: `396.80255526636364`
+  - Delta vs `screen_0006`: `-90.35990632783285`
+  - Key profile: `arb_loss_to_retail_gain=0.23910714565749`, `quote_selectivity_ratio=43.393044686504226`, `time_weighted_mean_fee=0.005510264315051746`
+  - Floor slices: `low_decile_mean_edge=213.53482106574324`, `low_retail_mean_edge=348.33608838720005`, `low_volatility_mean_edge=401.74825645185757`
+  - Outcome: hard kill as floor-latch over-open / overcharge collapse. The latch behaved like another broad classifier failure rather than a clean boundary.
+- `BenignFillExclusionProof`
+  - Mean edge: `487.1629913799634`
+  - Delta vs `screen_0006`: `+0.0005297857669006589`
+  - Key profile: `arb_loss_to_retail_gain=0.0917277961667743`, `quote_selectivity_ratio=18.88541248683118`, `time_weighted_mean_fee=0.004857071362922902`
+  - Floor slices: `low_decile_mean_edge=371.5926469771772`, `low_retail_mean_edge=417.1911958924375`, `low_volatility_mean_edge=464.6759651973675`
+  - Outcome: killed as near-`screen_0006` no-op; mean and two floor slices barely moved, while low-volatility was slightly below `screen_0006`.
+
+### Retained Eval
+
+- Canonical eval: `screen_0007` / `quantile-tail-risk-sketch`
+- Status: `discard` because it did not clear the promotion margin, but it is the new best raw retained branch.
+- Delta vs incumbent: `+1.619640859285596`
+- Delta vs prior best raw `screen_0006`: `+0.38094996876094456`
+- Promotion margin: `20.58651522452541`
+- Retained state after Round 34:
+  - incumbent: `screen_0001`
+  - best raw non-promoted: `screen_0007`
+  - best raw mean edge: `487.54341156295743`
+  - best raw gap to breakout target: `2.456588437042568`
+
+### Validation And Commands
+
+- Validated all six accepted scratch sources with `uv run amm-match validate`.
+- Ran scratch probes with `uv run amm-match hill-climb probe --stage screen --json` and wrote each result to the matching concrete JSON file listed in the probe sources/results above.
+- Ran the retained eval:
+  - `uv run amm-match hill-climb eval --run-id apr21-screen490-1431 --stage screen --label quantile-tail-risk-sketch --description "Round 34 retained spend: bounded tail-bucket risk sketch accepted by proposer/critic workflow; selected after scratch beat screen_0006 while improving tracked floor slices and keeping fee/selectivity inside kill bands." --json artifacts/scratch_probes/apr21-screen490-1431/round34/quantile_tail_risk_sketch.sol > artifacts/scratch_probes/apr21-screen490-1431/round34/retained_eval_quantile_tail_risk_sketch.json`
+- Verified retained status with `uv run amm-match hill-climb status --run-id apr21-screen490-1431 --json`.
+
+### Updated Entropy Discipline
+
+- `QuantileTailRiskSketch` is live as a bounded distributional state owner, but Round 35 should not spend on local tail-bucket coefficient polish. Any follow-up needs a different primary topology or an interface that consumes tail buckets in a new falsifiable way.
+- Do not retry public-shock quarantine as a floor-blind mean-edge tiny positive; its first result improved leakage/selectivity but violated the floor-preservation kill rule.
+- Do not retry meet-semilattice quote compilation without a retail-capture-preserving cap. It improved leakage by over-tightening, not by solving the protection-vs-benign-capture split.
+- Hysteretic floor latches and joint-rank classifier states are high-risk in their current shape; they damaged floors and should be treated as broad classifier / overcharge failures rather than near-frontier anchors.
+- Round 35 should preserve the current rule: at least four critic-accepted designs before source work, at most one local descendant of the current best raw, and at least one topology that changes a different layer/interface from distributional tail-state ownership.

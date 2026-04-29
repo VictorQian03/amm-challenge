@@ -7,7 +7,7 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
 ## Retained Context
 
 - Official incumbent for the current `screen490` lane remains `screen_0001` at `485.92377070367183` mean edge.
-- Best raw retained discard for the current `screen490` lane is now `screen_0006` / `monotone-evidence-firewall-strict` at `487.1624615941965` mean edge.
+- Best raw retained discard for the current `screen490` lane is now `screen_0007` / `quantile-tail-risk-sketch` at `487.54341156295743` mean edge.
 - Use this note for scratch-round combination planning only; it does not change retained promotion semantics.
 - External phenotype calibration from the Apr 23 authorized oracle probe: the target space has much lower arb leakage/selectivity, lower mean fee, and materially higher floor slices than current local anchors.
 - Treat oracle information only as phenotype evidence. Do not inspect or copy oracle/reference implementation details unless the active task explicitly authorizes it.
@@ -28,12 +28,17 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
   - Compatibility: useful as bounded curve-geometry evidence for shared-spread protection when a separate primary topology supplies the main upside.
   - Collision: not strong enough as a standalone retained candidate. Do not spend a round on curvature coefficients alone or combine it with broad fee-rent / LVR-floor tuning.
 
-### Layer 1/3 observation basis and classifier evidence
+### Layer 1-3 observation basis, tail state, and classifier evidence
+
+- `screen_0007` / `QuantileTailRiskSketch`
+  - Signal: `+1.619640859285596` mean edge vs incumbent and `+0.38094996876094456` vs prior best raw `screen_0006`; improved `low_decile_mean_edge`, `low_retail_mean_edge`, and `low_volatility_mean_edge` versus `screen_0006` while keeping `quote_selectivity_ratio=19.15842357425379` and `time_weighted_mean_fee=0.0048110022982122466` inside the Round 34 kill bands.
+  - Compatibility: current best raw anchor for bounded distributional tail-state ownership. It is useful when a distinct primary topology needs discrete tail buckets that can feed classifier/firewall/protection floors without directly reshaping hazard/divergence or opening release paths.
+  - Collision: do not turn Round 35 into tail-bucket coefficient polishing. The useful signal is the bounded tail-state interface; local scalar bucket thresholds risk replaying upstream codec/classifier plateau.
 
 - `screen_0006` / `MonotoneEvidenceFirewallStrict`
   - Signal: `+1.2386908905246514` mean edge vs incumbent and `+0.15009763176453816` vs prior best raw `screen_0005`; improved `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `low_retail_mean_edge`, and `low_volatility_mean_edge` versus `screen_0005` while keeping `time_weighted_mean_fee` in the same band.
-  - Compatibility: use as the current best raw anchor for protection-preserving evidence boundaries. It is useful when a distinct primary topology needs a one-way boundary that can raise risk evidence but cannot authorize rebates, opportunity cuts, refill, recapture, inventory, final quote, or layer-4 release.
-  - Collision: do not turn Round 34 into firewall coefficient polishing. The non-strict firewall was sub-best, and the positive result came from enforcing the one-way contract more clearly, not from making another scalar hazard damper.
+  - Compatibility: former best raw anchor and still useful for protection-preserving evidence boundaries. It is useful when a distinct primary topology needs a one-way boundary that can raise risk evidence but cannot authorize rebates, opportunity cuts, refill, recapture, inventory, final quote, or layer-4 release.
+  - Collision: do not turn a future round into firewall coefficient polishing. The non-strict firewall was sub-best, and the positive result came from enforcing the one-way contract more clearly, not from making another scalar hazard damper.
 
 - `screen_0005` / `RegimeSelectorStrongerFloor`
   - Signal: `+1.0885932587601133` mean edge vs incumbent; improved `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, `low_decile_mean_edge`, `low_retail_mean_edge`, and `low_volatility_mean_edge` versus the incumbent and improved all tracked floor slices versus `screen_0004`.
@@ -176,7 +181,7 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 - Draft around one primary anchor and at most one secondary adjunct.
 - Keep `OrthogonalObservationBasis` optional, not mandatory infrastructure for every probe.
 - Treat `InformationLiquiditySplitBusHardGuard` as the leading upstream anchor; follow-ups must explain how they preserve its leakage/selectivity improvement instead of merely increasing hazard or fees.
-- Treat `screen_0006` / `MonotoneEvidenceFirewallStrict` as the current best raw anchor for measurement, but require the next batch to add a different primary topology instead of locally polishing that firewall. Keep `screen_0005` as the prior floor-preserving selector reference.
+- Treat `screen_0007` / `QuantileTailRiskSketch` as the current best raw anchor for measurement, but require the next batch to add a different primary topology instead of locally polishing tail buckets. Keep `screen_0006` as the prior one-way firewall reference and `screen_0005` as the prior floor-preserving selector reference.
 - If `burst-pivot` is reused, pair it only with a floor-preserving partner and keep the burst admission narrow.
 - If the layer-5 inventory overlay is reused, it must be the only layer-5/6 exploit slot in that probe.
 - Pause OOB plus inventory and OOB plus short-gap combinations until a new non-OOB upstream anchor exists.
@@ -188,7 +193,7 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 
 - Use the optional proposer / critic / worker subagent pattern for probe-heavy batches only when parallel help is explicitly requested. Treat it as operator guidance, not harness state; retained eval decisions stay with the main coordinator.
 - In subagent-assisted probe rounds, critic narrowing must not leave fewer than four accepted strategy design improvements. Iterate proposer -> critic -> proposer until at least four distinct topology/layer/vocabulary/design/nonlinearity candidates have positive expected movement in mean edge or a named problem-space metric.
-- Each proposed design must state one primary interface owner, allowed consumers, forbidden consumers, expected metric movement, and a kill signature tied to current best raw `screen_0006`. Reject drafts that describe only a variable, coefficient, or renamed incumbent signal.
+- Each proposed design must state one primary interface owner, allowed consumers, forbidden consumers, expected metric movement, and a kill signature tied to current best raw `screen_0007`. Reject drafts that describe only a variable, coefficient, or renamed incumbent signal.
 - Require at least one candidate outside incumbent vocabulary before source work if every draft uses only OOB, route/gap hazard, flow ownership, inventory overlay, burst admission, recenter release, quiet-state refill, or scalar hazard damping.
 - Treat public market-design, AMM, and microstructure language as source material, not novelty proof. The proposal still needs a new evidence owner and a protection-preserving boundary.
 
@@ -210,7 +215,7 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 
 - Workers should receive only critic-accepted contracts with a single scratch path, validation command, probe command, and stop rule. They should not open new topology families mid-worker-loop.
 - The first scratch result should be classified against the precise failure-mode vocabulary above before any bounded tweak. If the result lands in `Phenotype-identical no-op plateau`, `Upstream geometry-codec plateau`, `Over-open leak basin`, or `Broad-protection starvation basin`, stop rather than coefficient-polish.
-- A scratch candidate should receive retained-eval consideration only if it beats current best raw `screen_0006` or misses it with a genuinely new floor-risk owner and materially better named floor slices. Near-incumbent safety alone is not enough.
+- A scratch candidate should receive retained-eval consideration only if it beats current best raw `screen_0007` or misses it with a genuinely new floor-risk owner and materially better named floor slices. Near-incumbent safety alone is not enough.
 
 ### Round Lessons To Carry Forward
 
@@ -224,3 +229,4 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 - Round 31 scratch lesson: public microstructure / AMM evidence did not prevent entropy collapse by itself. Prior-fill markout replayed over-open release when routed into the same upstream hazard/divergence consumers, while fair-value corridor, marginal-slope residual, and bandpass divergence stayed below `screen_0005`; future external-evidence imports need a new protection-preserving owner, not another observation codec.
 - Round 32 scratch lesson: allocation-owner and account-separation vocabulary did not prevent over-open release. Retail surplus, toxicity/inventory separation, cross-side symmetry debt, and two-account spread assembly all failed once layer 4 could release too much width; future allocation work needs a hard floor-preservation invariant before shared-spread compression.
 - Round 33 scratch lesson: one-way risk evidence boundaries are live, but only when strict enough to preserve the floor without opening release paths. `MonotoneEvidenceFirewallStrict` advanced best raw to `screen_0006`; debt-before-repair and counterfactual regret memories replayed over-open release and should not be followed locally.
+- Round 34 scratch lesson: bounded distributional tail buckets are live, but the positive result is tail-state ownership, not another upstream scalar codec. `QuantileTailRiskSketch` advanced best raw to `screen_0007`; public-shock and benign-exclusion variants were tiny near-frontier moves, while hysteretic latch, rank-copula, and meet-semilattice quote compilation either over-tightened, damaged floors, or collapsed selectivity.

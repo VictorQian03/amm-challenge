@@ -1,29 +1,29 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-29T07:03:58.972441+00:00",
+  "generated_at": "2026-04-29T16:16:53.313991+00:00",
   "runs": [
     {
       "artifact_dir": "artifacts/hill_climb/apr21-screen490-1431",
       "best_by_stage": {
         "screen": {
-          "eval_id": "screen_0006",
+          "eval_id": "screen_0007",
           "failure_tags": [],
-          "label": "monotone-evidence-firewall-strict",
-          "mean_edge": 487.1624615941965,
+          "label": "quantile-tail-risk-sketch",
+          "mean_edge": 487.54341156295743,
           "status": "discard",
-          "strategy_name": "LatentStateQuoteEngine"
+          "strategy_name": "QuantileTailRiskSketch"
         }
       },
       "created_at": "2026-04-21T21:31:27.826002+00:00",
-      "eval_count": 6,
-      "latest_eval_id": "screen_0006",
+      "eval_count": 7,
+      "latest_eval_id": "screen_0007",
       "latest_stage": "screen",
       "latest_status": "discard",
       "notes": [],
       "run_id": "apr21-screen490-1431",
-      "snapshot_count": 6,
+      "snapshot_count": 7,
       "status": "active",
-      "updated_at": "2026-04-29T07:03:58.965030+00:00"
+      "updated_at": "2026-04-29T16:16:53.306347+00:00"
     }
   ]
 }
