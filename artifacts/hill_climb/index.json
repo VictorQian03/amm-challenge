@@ -1,29 +1,29 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-04-28T22:50:57.451565+00:00",
+  "generated_at": "2026-04-29T07:03:58.972441+00:00",
   "runs": [
     {
       "artifact_dir": "artifacts/hill_climb/apr21-screen490-1431",
       "best_by_stage": {
         "screen": {
-          "eval_id": "screen_0005",
+          "eval_id": "screen_0006",
           "failure_tags": [],
-          "label": "regime-selector-stronger-floor",
-          "mean_edge": 487.01236396243195,
+          "label": "monotone-evidence-firewall-strict",
+          "mean_edge": 487.1624615941965,
           "status": "discard",
           "strategy_name": "LatentStateQuoteEngine"
         }
       },
       "created_at": "2026-04-21T21:31:27.826002+00:00",
-      "eval_count": 5,
-      "latest_eval_id": "screen_0005",
+      "eval_count": 6,
+      "latest_eval_id": "screen_0006",
       "latest_stage": "screen",
       "latest_status": "discard",
       "notes": [],
       "run_id": "apr21-screen490-1431",
-      "snapshot_count": 5,
+      "snapshot_count": 6,
       "status": "active",
-      "updated_at": "2026-04-28T06:04:09.251962+00:00"
+      "updated_at": "2026-04-29T07:03:58.965030+00:00"
     }
   ]
 }

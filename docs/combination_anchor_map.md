@@ -7,7 +7,7 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
 ## Retained Context
 
 - Official incumbent for the current `screen490` lane remains `screen_0001` at `485.92377070367183` mean edge.
-- Best raw retained discard for the current `screen490` lane is now `screen_0005` / `regime-selector-stronger-floor` at `487.01236396243195` mean edge.
+- Best raw retained discard for the current `screen490` lane is now `screen_0006` / `monotone-evidence-firewall-strict` at `487.1624615941965` mean edge.
 - Use this note for scratch-round combination planning only; it does not change retained promotion semantics.
 - External phenotype calibration from the Apr 23 authorized oracle probe: the target space has much lower arb leakage/selectivity, lower mean fee, and materially higher floor slices than current local anchors.
 - Treat oracle information only as phenotype evidence. Do not inspect or copy oracle/reference implementation details unless the active task explicitly authorizes it.
@@ -30,9 +30,14 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
 
 ### Layer 1/3 observation basis and classifier evidence
 
+- `screen_0006` / `MonotoneEvidenceFirewallStrict`
+  - Signal: `+1.2386908905246514` mean edge vs incumbent and `+0.15009763176453816` vs prior best raw `screen_0005`; improved `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `low_retail_mean_edge`, and `low_volatility_mean_edge` versus `screen_0005` while keeping `time_weighted_mean_fee` in the same band.
+  - Compatibility: use as the current best raw anchor for protection-preserving evidence boundaries. It is useful when a distinct primary topology needs a one-way boundary that can raise risk evidence but cannot authorize rebates, opportunity cuts, refill, recapture, inventory, final quote, or layer-4 release.
+  - Collision: do not turn Round 34 into firewall coefficient polishing. The non-strict firewall was sub-best, and the positive result came from enforcing the one-way contract more clearly, not from making another scalar hazard damper.
+
 - `screen_0005` / `RegimeSelectorStrongerFloor`
   - Signal: `+1.0885932587601133` mean edge vs incumbent; improved `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, `low_decile_mean_edge`, `low_retail_mean_edge`, and `low_volatility_mean_edge` versus the incumbent and improved all tracked floor slices versus `screen_0004`.
-  - Compatibility: current best raw anchor and measurement baseline; useful as a floor-preserving upstream/mid-scaffold selector when paired with a structurally different primary topology.
+  - Compatibility: former best raw anchor and still useful as a floor-preserving upstream/mid-scaffold selector when paired with a structurally different primary topology.
   - Collision: do not spend a full round on more regime-selector floor coefficients, mild fee release, burst-pivot bridge repair, or same-family fee-band polish. Round 20 showed broad release and burst bridging collapse floor slices.
 
 - `screen_0003` / `InformationLiquiditySplitBusHardGuard`
@@ -156,6 +161,11 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
   - Repeated sources: `AgingEvidenceLedgerWithPremiumBudgetCap`, `AgingEvidencePostCutPremium`.
   - Use: do not retry the Round 27 high-fee fix by adding another cap to floor-risk or evidence-age terms. Future fee-band preservation needs an interface that cannot feed opportunity cuts, inventory, final quote selection, or shared fee compression.
 
+- Layer-4 allocation-release basin
+  - Signature: an allocation-owner or account-separation interface sounds like it preserves protection-vs-benign-capture attribution, but the implementation gives layer 4 too much width-release authority: `quote_selectivity_ratio` jumps into roughly `28-73`, `time_weighted_mean_fee` falls toward `0.00355-0.00450`, and low-decile / low-retail / low-volatility floors break.
+  - Repeated sources: `RetailSurplusConservationAccount`, `ToxicityCostInventorySeparation`, `CrossSideSymmetryDebt`, `TwoAccountSpreadAssembly`.
+  - Use: reject standalone layer 4 allocation ledgers unless they contain a hard mechanical floor-preservation invariant before any fee release path. Do not treat account/escrow/surplus/symmetry vocabulary as novelty unless the consumer boundary prevents broad shared-spread compression.
+
 - Classifier-local floor-drag plateau
   - Signature: classifier-local evidence keeps the profile near the incumbent but moves floor slices slightly negative and fails to create a new anchor.
   - Repeated sources: `ClassifierExportSplit`, `TypedClassifierExportFirewall`, `RouteQualityCalmHazardPartition`.
@@ -166,7 +176,7 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 - Draft around one primary anchor and at most one secondary adjunct.
 - Keep `OrthogonalObservationBasis` optional, not mandatory infrastructure for every probe.
 - Treat `InformationLiquiditySplitBusHardGuard` as the leading upstream anchor; follow-ups must explain how they preserve its leakage/selectivity improvement instead of merely increasing hazard or fees.
-- Treat `screen_0005` / `RegimeSelectorStrongerFloor` as the current best raw anchor for measurement, but require the next batch to add a different primary topology instead of locally polishing that family.
+- Treat `screen_0006` / `MonotoneEvidenceFirewallStrict` as the current best raw anchor for measurement, but require the next batch to add a different primary topology instead of locally polishing that firewall. Keep `screen_0005` as the prior floor-preserving selector reference.
 - If `burst-pivot` is reused, pair it only with a floor-preserving partner and keep the burst admission narrow.
 - If the layer-5 inventory overlay is reused, it must be the only layer-5/6 exploit slot in that probe.
 - Pause OOB plus inventory and OOB plus short-gap combinations until a new non-OOB upstream anchor exists.
@@ -178,7 +188,7 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 
 - Use the optional proposer / critic / worker subagent pattern for probe-heavy batches only when parallel help is explicitly requested. Treat it as operator guidance, not harness state; retained eval decisions stay with the main coordinator.
 - In subagent-assisted probe rounds, critic narrowing must not leave fewer than four accepted strategy design improvements. Iterate proposer -> critic -> proposer until at least four distinct topology/layer/vocabulary/design/nonlinearity candidates have positive expected movement in mean edge or a named problem-space metric.
-- Each proposed design must state one primary interface owner, allowed consumers, forbidden consumers, expected metric movement, and a kill signature tied to `screen_0005`. Reject drafts that describe only a variable, coefficient, or renamed incumbent signal.
+- Each proposed design must state one primary interface owner, allowed consumers, forbidden consumers, expected metric movement, and a kill signature tied to current best raw `screen_0006`. Reject drafts that describe only a variable, coefficient, or renamed incumbent signal.
 - Require at least one candidate outside incumbent vocabulary before source work if every draft uses only OOB, route/gap hazard, flow ownership, inventory overlay, burst admission, recenter release, quiet-state refill, or scalar hazard damping.
 - Treat public market-design, AMM, and microstructure language as source material, not novelty proof. The proposal still needs a new evidence owner and a protection-preserving boundary.
 
@@ -200,7 +210,7 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 
 - Workers should receive only critic-accepted contracts with a single scratch path, validation command, probe command, and stop rule. They should not open new topology families mid-worker-loop.
 - The first scratch result should be classified against the precise failure-mode vocabulary above before any bounded tweak. If the result lands in `Phenotype-identical no-op plateau`, `Upstream geometry-codec plateau`, `Over-open leak basin`, or `Broad-protection starvation basin`, stop rather than coefficient-polish.
-- A scratch candidate should receive retained-eval consideration only if it beats `screen_0005` or misses it with a genuinely new floor-risk owner and materially better named floor slices. Near-incumbent safety alone is not enough.
+- A scratch candidate should receive retained-eval consideration only if it beats current best raw `screen_0006` or misses it with a genuinely new floor-risk owner and materially better named floor slices. Near-incumbent safety alone is not enough.
 
 ### Round Lessons To Carry Forward
 
@@ -212,3 +222,5 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 - Round 29 scratch lesson: temporal clearing and batch-pressure ownership can invert into high-fee overprotection; require a hard no-overcharge cap before any new temporal/latency/collision design reaches hazard or shared spread.
 - Round 30 scratch lesson: bounded path-reversal residue respected the layer 1 -> layer 2 boundary but was near-no-op and slightly sub-incumbent. Do not rerun small observation-input damping passes unless the next proposal owns a genuinely different primary topology and precommits to movement away from the incumbent phenotype.
 - Round 31 scratch lesson: public microstructure / AMM evidence did not prevent entropy collapse by itself. Prior-fill markout replayed over-open release when routed into the same upstream hazard/divergence consumers, while fair-value corridor, marginal-slope residual, and bandpass divergence stayed below `screen_0005`; future external-evidence imports need a new protection-preserving owner, not another observation codec.
+- Round 32 scratch lesson: allocation-owner and account-separation vocabulary did not prevent over-open release. Retail surplus, toxicity/inventory separation, cross-side symmetry debt, and two-account spread assembly all failed once layer 4 could release too much width; future allocation work needs a hard floor-preservation invariant before shared-spread compression.
+- Round 33 scratch lesson: one-way risk evidence boundaries are live, but only when strict enough to preserve the floor without opening release paths. `MonotoneEvidenceFirewallStrict` advanced best raw to `screen_0006`; debt-before-repair and counterfactual regret memories replayed over-open release and should not be followed locally.
