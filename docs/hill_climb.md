@@ -56,8 +56,8 @@ uv run amm-match hill-climb probe --stage screen contracts/src/StarterStrategy.s
 
 Use `probe` for branch scouting and rerun only the chosen branch into the canonical retained lane with `hill-climb eval`.
 The thin harness does not have an `analyze-run` command, queued-hypothesis surface, or built-in batch-diversity report.
-If a round includes several scratch probes, keep the round-local synthesis under `docs/plans/active/` and store probe sources/results outside the retained lane, for example under `artifacts/scratch_probes/<run_id>/`.
-Keep `<run_id>.md` as the authoritative run index note. Split round writeups into 5-round chunk files named `docs/plans/active/<run_id>-round01-05.md`, `...-round06-10.md`, `...-round11-15.md`, and so on; the root index should list every chunk, mark the latest open span, and only add the next span once the current 5-round block closes.
+If a round includes several scratch probes, keep the round-local synthesis under `docs/plans/active/` while the run is live and store probe sources/results outside the retained lane, for example under `artifacts/scratch_probes/<run_id>/`.
+Keep `<run_id>.md` as the authoritative run index note. Split round writeups into 5-round chunk files named `docs/plans/active/<run_id>-round01-05.md`, `...-round06-10.md`, `...-round11-15.md`, and so on while the run is live; the root index should list every chunk, mark the latest open span, and only add the next span once the current 5-round block closes. When a retained lane is retired, move its run index and chunks to `docs/plans/completed/` and leave `docs/plans/active/` for the current lane.
 Keep [`docs/combination_anchor_map.md`](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/combination_anchor_map.md) as the persistent cross-round planning surface. When a round discovers a durable positive anchor, a durable compatibility/collision rule, or a saturated failure mode that should influence future batches, append that synthesis there instead of burying it only in run-local notes.
 
 List runs:
@@ -134,7 +134,7 @@ Use these as search prompts, not as required workflow:
 4. Judge novelty in outcome-space, not code-space. Branch diversity is about expected movement in `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, and floor slices, not about mechanism names.
 5. Use `compare-profiles` and retained history to sort branches into failure basins such as `over_open_leak`, `over_tighten_clamp`, `frontier_neighbor`, and `crossover_regression`. Retire exhausted basins instead of relabeling the same spine, and add a more precise basin name when repeated evidence no longer fits the old labels.
 6. Treat `max_fee_jump` as a neutral diagnostic.
-7. When the search feels trapped, use web search or external literature to import missing topologies instead of relabeling the same design.
+7. When the search feels trapped, use web search or external literature to import missing topologies instead of relabeling the same design. Bias these searches toward out-of-distribution vocabulary and mechanism classes that would not naturally appear in the incumbent notes; do not satisfy this by searching more in-distribution AMM, LOB, hazard, refill, recapture, inventory, or fee-band terms.
 8. Prefer a fresh `run_id` when the evaluator surface changes or a retained run looks stale or corrupted.
 9. Keep memo-grade probe-batch summaries outside the retained lane. `status`, `history`, and `show-eval` only summarize retained evals, not every scratch candidate you explored.
 10. For long runs, chunk memo writeups every 5 rounds and keep the root `<run_id>.md` file as a stable index entrypoint.
@@ -171,7 +171,7 @@ The topology proposer should ask itself and have clear answers for:
 4. Can the idea be described without incumbent-local vocabulary such as OOB, route/gap hazard, flow ownership, inventory overlay, burst admission, recenter release, quiet refill, or scalar hazard damping?
 5. Does the batch include at least one candidate outside the incumbent vocabulary?
 6. Does the critic-accepted batch contain at least four genuinely distinct strategy design improvements before any worker starts?
-7. What public evidence or external mechanism motivates the topology, and what current shortfall does it target?
+7. What public evidence or external mechanism motivates the topology, what out-of-distribution search terms produced it, and what current shortfall does it target?
 8. What outcome-space movement should prove the idea is real: `mean_edge`, `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, `low_decile_mean_edge`, `low_retail_mean_edge`, or `low_volatility_mean_edge`? What range of estimates would you assign each of their expected movement?
 9. What must stay near the incumbent band to make the result interpretable?
 10. Is this a primary topology/interface idea or only a support control? If it is support-only, what larger primary anchor justifies it?
@@ -213,7 +213,8 @@ Use these to keep long-running search loops from collapsing into the incumbent's
 2. If two discarded variants land in the same `primary_failure_tag` basin with similar profile deltas, treat that basin as exhausted and switch interfaces instead of polishing coefficients again.
 3. Maintain three anchors in your reasoning: the incumbent, the best raw non-promoted branch, and one structurally different outsider (that shows the most promise for breakthrough). 
 4. Write `--label` and `--description` in structural language that makes the touched interface and expected outcome-space basin obvious.
-5. Periodically import outside evidence (i.e., via web search) when the loop keeps regenerating the same failure basin; do not let the harness free-run on stale internal ideas alone and entropy collapse. 
+5. Periodically import outside evidence (i.e., via web search) when the loop keeps regenerating the same failure basin; prioritize search phrases from outside the current AMM/microstructure vocabulary so the import changes the conceptual frame, not just the citation trail.
+6. Do not treat layer 5/6 as categorically closed. It can receive a bounded diagnostic slot when the proposal is motivated by out-of-distribution vocabulary, names a new evidence owner, forbids incumbent-local release/refill/recapture/opportunity semantics unless they are the explicit target, and has tight floor-loss kill thresholds.
 
 ## Anti-Patterns
 

@@ -692,21 +692,32 @@ def test_stable_hill_climb_docs_do_not_reference_removed_queue_surfaces():
     assert "Upstream geometry-codec plateau" in anchor_text
 
 
-def test_active_screen490_round_index_is_authoritative_and_points_to_latest_span():
-    index_text = Path("docs/plans/active/apr21-screen490-1431.md").read_text()
+def test_screen490_plan_lifecycle_points_active_and_completed_runs_correctly():
+    active_index = Path("docs/plans/active/may08-screen490-0001.md")
+    completed_index = Path("docs/plans/completed/apr21-screen490-1431.md")
 
-    assert "authoritative index" in index_text
+    assert active_index.exists()
+    assert completed_index.exists()
+
+    index_text = active_index.read_text()
+
+    assert "active index" in index_text
     assert "Rounds 01-05" in index_text
-    assert "Rounds 06-10" in index_text
-    assert "Rounds 11-15" in index_text
     assert "current latest span" in index_text
     assert "Current write target" in index_text
-    assert "round11-15" in index_text
-    assert "round16-20" in index_text
-    assert "round31-35" in index_text
-    assert "Latest populated span: `round31-35`" in index_text
+    assert "may08-screen490-0001-round01-05.md" in index_text
+    assert "Latest populated span: `round01-05`" in index_text
+    assert "Current write target: `may08-screen490-0001-round01-05.md`" in index_text
     assert "zero-padded inclusive 5-round span" in index_text
     assert "create the next 5-round span only after the current one closes" in index_text
+
+    completed_text = completed_index.read_text()
+    assert "completed index" in completed_text
+    assert "Status: `historical`" in completed_text
+    assert "Rounds 46-50" in completed_text
+    assert "Latest populated span: `round46-50`" in completed_text
+    assert "Current write target: none; this run is closed." in completed_text
+    assert "Follow-up active retained lane: `docs/plans/active/may08-screen490-0001.md`" in completed_text
 
 
 def test_failure_signature_uses_guidance_basins_and_keeps_max_fee_jump_neutral(tmp_path):

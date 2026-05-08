@@ -7,7 +7,7 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
 ## Retained Context
 
 - Official incumbent for the current `screen490` lane remains `screen_0001` at `485.92377070367183` mean edge.
-- Best raw retained discard for the current `screen490` lane is now `screen_0007` / `quantile-tail-risk-sketch` at `487.54341156295743` mean edge.
+- Best raw retained discard for the current `screen490` lane is now `screen_0008` / `weak-consistency-event-feasibility-mask` at `488.03274719863765` mean edge.
 - Use this note for scratch-round combination planning only; it does not change retained promotion semantics.
 - External phenotype calibration from the Apr 23 authorized oracle probe: the target space has much lower arb leakage/selectivity, lower mean fee, and materially higher floor slices than current local anchors.
 - Treat oracle information only as phenotype evidence. Do not inspect or copy oracle/reference implementation details unless the active task explicitly authorizes it.
@@ -30,9 +30,14 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
 
 ### Layer 1-3 observation basis, tail state, and classifier evidence
 
+- `screen_0008` / `WeakConsistencyEventFeasibilityMask`
+  - Signal: `+2.108976494965816` mean edge vs incumbent and `+0.4893356356802201` vs prior best raw `screen_0007`; improved `arb_loss_to_retail_gain=0.08680487844146438`, `quote_selectivity_ratio=17.3749619948117`, `low_decile_mean_edge=372.41891117598567`, `low_retail_mean_edge=417.8656683116062`, and `low_volatility_mean_edge=465.1871007698987` while keeping `time_weighted_mean_fee=0.004995975154787965` below the Round 39 overcharge kill band.
+  - Compatibility: current best raw anchor for weak LOB event-feasibility validation. It is useful as a one-way uncertainty/feasibility residual that can raise protection evidence when observed trade direction contradicts price-path movement without authorizing release, refill, recapture, opportunity, final-quote edits, or tail-consumer behavior.
+  - Collision: do not turn the next round into feasibility-residual coefficient tuning. The productive signal was the mechanical event-path validity owner; local scalar residual weight polish risks replaying firewall / classifier-local floor-drag plateaus.
+
 - `screen_0007` / `QuantileTailRiskSketch`
   - Signal: `+1.619640859285596` mean edge vs incumbent and `+0.38094996876094456` vs prior best raw `screen_0006`; improved `low_decile_mean_edge`, `low_retail_mean_edge`, and `low_volatility_mean_edge` versus `screen_0006` while keeping `quote_selectivity_ratio=19.15842357425379` and `time_weighted_mean_fee=0.0048110022982122466` inside the Round 34 kill bands.
-  - Compatibility: current best raw anchor for bounded distributional tail-state ownership. It is useful when a distinct primary topology needs discrete tail buckets that can feed classifier/firewall/protection floors without directly reshaping hazard/divergence or opening release paths.
+  - Compatibility: former best raw anchor for bounded distributional tail-state ownership. It is useful when a distinct primary topology needs discrete tail buckets that can feed classifier/firewall/protection floors without directly reshaping hazard/divergence or opening release paths.
   - Collision: do not turn Round 35 into tail-bucket coefficient polishing. The useful signal is the bounded tail-state interface; local scalar bucket thresholds risk replaying upstream codec/classifier plateau.
 
 - `screen_0006` / `MonotoneEvidenceFirewallStrict`
@@ -153,7 +158,7 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 
 - Broad-protection starvation basin
   - Signature: a protection-only classifier or geometry signal avoids over-open leakage but pushes fees/protection high enough that mean edge and all floor slices collapse.
-  - Repeated sources: `BatchClearingLatencyPressure`, `ReserveBandExhaustionClassifier`, `VolumeBucketImbalanceLattice`.
+  - Repeated sources: `BatchClearingLatencyPressure`, `ReserveBandExhaustionClassifier`, `VolumeBucketImbalanceLattice`, `RetailCaptureInvariantProjector`, `LossBudgetedSideProtectionIntegrator`.
   - Use: do not retry broad latency-pressure or reserve-exhaustion classifiers unless the interface includes an explicit cap that preserves retail capture and keeps the incumbent fee band interpretable.
 
 - Temporal-clearing overprotection basin
@@ -173,17 +178,82 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 
 - Classifier-local floor-drag plateau
   - Signature: classifier-local evidence keeps the profile near the incumbent but moves floor slices slightly negative and fails to create a new anchor.
-  - Repeated sources: `ClassifierExportSplit`, `TypedClassifierExportFirewall`, `RouteQualityCalmHazardPartition`.
+  - Repeated sources: `ClassifierExportSplit`, `TypedClassifierExportFirewall`, `RouteQualityCalmHazardPartition`, `ConformalAbstentionCertificate`, `IndependentEvidenceQuorumRouter`, `MinimumRetailServiceCertificate`, `ResidualRetailConvexityPartition`, `AdverseSelectionAbstentionBus`.
   - Use: allow at most one softened follow-up when the interface remains classifier-local and does not feed global calm or recapture eligibility.
+
+- Tail-consumer over-open collapse
+  - Signature: a tail-state or pickoff-state consumer appears bounded upstream, but downstream consumption turns it into broad release or leakage: `quote_selectivity_ratio` rises into roughly `42-59`, `arb_loss_to_retail_gain` rises above `0.20`, and low-decile falls toward `213-226`.
+  - Repeated sources: `TailBucketConsumerTransducer`, `PickoffExposureStopLoss`, `SequentialAdverseStopTest`.
+  - Use: do not locally rewrite `screen_0007` tail-bucket consumers, stale-pickoff exposure states, or bounded stop-state consumers unless the proposal proves a mechanical boundary that cannot widen release or starve floors after evidence enters the pipeline.
+
+- Mix-state over-open collapse
+  - Signature: a counterparty, participation, or mix-stability state looks upstream and bounded, but downstream consumption lowers fees or weakens protection enough that selectivity jumps above roughly `50` and all floor slices break.
+  - Repeated sources: `CounterpartyMixStabilitySketch`.
+  - Use: do not retry mix-stability sketches as primary topology until the state is provably read-only diagnostic or has a hard no-release proof before any classifier or protection consumer sees it.
+
+- Attribution-state over-open collapse
+  - Signature: a continuation, symmetry, or invariant-loss attribution state sounds like a new upstream owner, but downstream consumption behaves like hidden fee relief: `quote_selectivity_ratio` rises to roughly `70`, `time_weighted_mean_fee` falls to roughly `0.00361-0.00363`, and low-decile / low-retail floors collapse.
+  - Repeated sources: `MatchedImpactContinuationState`, `InvariantLossAttributionSplitter`, `HawkesExcitationSourceSplitter`.
+  - Use: do not retry continuation or invariant-loss attribution as a primary topology unless the state is mechanically read-only or can only add a hard spread hold with no path into calm, release, opportunity, inventory, final quote, or fee compression.
+
+- Worst-slice assembly overcharge basin
+  - Signature: a layer-4 worst-case or min-slice spread assembler appears floor-preserving, but aggregate protection overcharges, selectivity breaks, and all tracked floor slices collapse.
+  - Repeated sources: `WorstSliceSpreadAssembler`.
+  - Use: reject worst-slice shared-spread aggregation unless a separate benign-capture conservation proof caps overcharge before the layer-4 spread floor is applied.
+
+- Source-deconvolution over-open collapse
+  - Signature: an external microstructure source-splitting idea looks upstream and non-AMM, but deconvolution or excitation labels still weaken downstream protection: selectivity rises toward roughly `69-71`, `time_weighted_mean_fee` falls toward roughly `0.00361-0.00382`, and low-decile collapses near `213`.
+  - Repeated sources: `BidAskBounceDeconvolutionBus`, `HawkesExcitationSourceSplitter`.
+  - Use: do not treat bounce, excitation, or source-split vocabulary as sufficient novelty. Future source deconvolution must be read-only or must prove a hard no-release boundary before layer-3 / layer-4 consumers can act on it.
+
+- Robust-demand leakage collapse
+  - Signature: robust-statistics or demand-elasticity bins preserve or stabilize headline fee level but misallocate protection so badly that arb leakage rises above `0.30`, selectivity rises toward `69`, and low-retail / low-volatility floors collapse.
+  - Repeated sources: `RobustRetailDemandElasticitySurface`.
+  - Use: do not retry robust retail-demand bins as a primary topology until the contract proves the bins cannot lower protection for low-retail and low-volatility slices.
+
+- Run-length / context-segment over-open collapse
+  - Signature: BOCPD-style run-length or context-tree sequence segmentation looks upstream and public-evidence motivated, but downstream consumption behaves like hidden release: `quote_selectivity_ratio` rises toward roughly `67`, `time_weighted_mean_fee` falls toward roughly `0.00371-0.00372`, and low-decile collapses near `213.5`.
+  - Repeated sources: `PosteriorRunLengthBoundaryTape`, `ContextTreeSymbolSegmentOwner`.
+  - Use: do not retry run-length or context-tree segment labels as primary topology unless the segment state is read-only or can only add a hard no-release hold before any calm, release, hazard, or shared-spread consumer sees it.
+
+- Liquidity-shortfall overcharge basin
+  - Signature: liquidity-risk / placement-envelope language improves leakage and selectivity, but adds enough shared width that mean and all tracked floor slices fall below the best raw anchor while `time_weighted_mean_fee` rises above roughly `0.00520`.
+  - Repeated sources: `LiquidityShortfallPlacementEnvelope`.
+  - Use: do not retry liquidity-shortfall placement envelopes as direct shared-spread adders. Future liquidity-risk ideas need a floor-preserving owner that avoids both broad overcharge and layer-5 protection behavior.
+
+- Queue/depth open-release collapse
+  - Signature: queue, depth, passive-fill, latency-window, or depth-shape state looks like public microstructure evidence, but downstream consumption behaves like hidden relief: `quote_selectivity_ratio` rises toward roughly `51-80`, `arb_loss_to_retail_gain` rises above roughly `0.21`, mean falls far below `screen_0008`, and tracked floor slices break.
+  - Repeated sources: `DepthImbalanceCrossingBarrier`, `PassiveQueueFillProbabilityWitness`, `LatencyAdverseWindowBudget`, `ResilientDepthShapeRecoveryState`.
+  - Use: do not retry queue/depth witnesses as primary topology unless the state is read-only diagnostic or mechanically barred from release, fee compression, calm, opportunity, refill, recapture, final quote, or direct shared-spread control.
+
+- Causal-label hidden-release collapse
+  - Signature: a causal, directional-mass, or adverse-fill owner appears to preserve width only, but the label still reaches existing relief/protection consumers: `quote_selectivity_ratio` rises into roughly `55-60`, `arb_loss_to_retail_gain` rises above `0.22`, and low-decile collapses near `213.5`.
+  - Repeated sources: `AdverseFillCausalityLedger`, `DirectionalAdverseMassSplitter`.
+  - Use: do not retry causal or directional adverse-mass labels as primary topology unless the label is read-only diagnostic or has a hard no-release proof and cannot alter calm, opportunity, refill, recapture, final quote, inventory, shared-spread release, or side-specific relief.
+
+- Generic uncertainty-label hidden-release collapse
+  - Signature: a convexity, rank-stability, continuity, or other upstream uncertainty label appears one-way on paper, but downstream consumption still behaves like hidden release: `quote_selectivity_ratio` rises toward roughly `54-65`, `arb_loss_to_retail_gain` rises above roughly `0.23`, mean falls near `406-409`, and low-decile collapses near `213.5`.
+  - Repeated sources: `ExecutionCostConvexitySurface`, `CrossScenarioRankStabilityOwner`, `RetailContinuityShockAbsorber`.
+  - Use: stop adding new uncertainty labels into the existing consumer path unless the implementation proves the label cannot lower protection, cannot influence calm/release/refill/recapture/opportunity/final quote, and has an independent floor-preservation invariant.
+
+- Relief-removal overcharge / floor-loss basin
+  - Signature: controlled deletion or nullification of relief/discount consumers improves leakage and selectivity, but raises effective fee / protection enough to lose mean and all tracked floor slices versus `screen_0008`.
+  - Repeated sources: `FeasibilityReliefConsumerPruner`, `UnsafeDiscountBranchNullifier`.
+  - Use: do not retry simple removal of discount or relief branches as a primary topology. Future downstream work must preserve benign floor slices before disabling relief, not just lower leakage.
+
+- Mechanical isolation hidden-release basin
+  - Signature: private-lane isolation or local width monotonicity sounds mechanically safe, but downstream interactions still reopen leakage: selectivity rises above roughly `32-47`, low-decile and low-retail floors fall sharply, and mean stays far below `screen_0008`.
+  - Repeated sources: `OneWayWidthMonotonicityAssembler`, `ProtectedPathConsumerIsolation`.
+  - Use: do not spend another worker on mechanical lower envelopes or private lanes unless the design also proves benign floor preservation and avoids the existing downstream interaction path entirely.
 
 ## Immediate Combination Rules
 
 - Draft around one primary anchor and at most one secondary adjunct.
 - Keep `OrthogonalObservationBasis` optional, not mandatory infrastructure for every probe.
 - Treat `InformationLiquiditySplitBusHardGuard` as the leading upstream anchor; follow-ups must explain how they preserve its leakage/selectivity improvement instead of merely increasing hazard or fees.
-- Treat `screen_0007` / `QuantileTailRiskSketch` as the current best raw anchor for measurement, but require the next batch to add a different primary topology instead of locally polishing tail buckets. Keep `screen_0006` as the prior one-way firewall reference and `screen_0005` as the prior floor-preserving selector reference.
+- Treat `screen_0008` / `WeakConsistencyEventFeasibilityMask` as the current best raw anchor for measurement, but require the next batch to add a different primary topology instead of locally polishing event-feasibility residual weights. Keep `screen_0007` as the prior bounded tail-state reference, `screen_0006` as the prior one-way firewall reference, and `screen_0005` as the prior floor-preserving selector reference.
 - If `burst-pivot` is reused, pair it only with a floor-preserving partner and keep the burst admission narrow.
-- If the layer-5 inventory overlay is reused, it must be the only layer-5/6 exploit slot in that probe.
+- Layer 5/6 is not categorically banned, but it is no longer an in-distribution exploit-polish surface. Admit at most one layer-5/6 diagnostic slot when it comes from an out-of-distribution mechanism vocabulary, names a new evidence owner, and proves a hard boundary against broad release, refill, recapture, opportunity, inventory-overlay replay, final quote, and fee compression.
 - Pause OOB plus inventory and OOB plus short-gap combinations until a new non-OOB upstream anchor exists.
 - Reject any draft that broadens safe-side opportunity, lowers fees across the board, or stacks several small safe signals with weak attribution.
 
@@ -193,9 +263,10 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 
 - Use the optional proposer / critic / worker subagent pattern for probe-heavy batches only when parallel help is explicitly requested. Treat it as operator guidance, not harness state; retained eval decisions stay with the main coordinator.
 - In subagent-assisted probe rounds, critic narrowing must not leave fewer than four accepted strategy design improvements. Iterate proposer -> critic -> proposer until at least four distinct topology/layer/vocabulary/design/nonlinearity candidates have positive expected movement in mean edge or a named problem-space metric.
-- Each proposed design must state one primary interface owner, allowed consumers, forbidden consumers, expected metric movement, and a kill signature tied to current best raw `screen_0007`. Reject drafts that describe only a variable, coefficient, or renamed incumbent signal.
+- Each proposed design must state one primary interface owner, allowed consumers, forbidden consumers, expected metric movement, and a kill signature tied to current best raw `screen_0008`. Reject drafts that describe only a variable, coefficient, or renamed incumbent signal.
 - Require at least one candidate outside incumbent vocabulary before source work if every draft uses only OOB, route/gap hazard, flow ownership, inventory overlay, burst admission, recenter release, quiet-state refill, or scalar hazard damping.
-- Treat public market-design, AMM, and microstructure language as source material, not novelty proof. The proposal still needs a new evidence owner and a protection-preserving boundary.
+- Treat public market-design, AMM, and microstructure language as source material, not novelty proof. Prefer deliberately out-of-distribution search vocabulary over more in-distribution AMM/LOB/hazard/refill/recapture/opportunity terms when the current lane is saturated; the proposal still needs a new evidence owner and a protection-preserving boundary.
+- A layer-5/6 proposal is admissible only as a bounded diagnostic when its source vocabulary is out-of-distribution and the interface contract prevents incumbent-local exploit polish. Reject layer-5/6 drafts that merely rename safe-side service, refill, recapture, inventory centering, opportunity, or final-quote behavior.
 
 ### Critic Gates
 
@@ -215,7 +286,7 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 
 - Workers should receive only critic-accepted contracts with a single scratch path, validation command, probe command, and stop rule. They should not open new topology families mid-worker-loop.
 - The first scratch result should be classified against the precise failure-mode vocabulary above before any bounded tweak. If the result lands in `Phenotype-identical no-op plateau`, `Upstream geometry-codec plateau`, `Over-open leak basin`, or `Broad-protection starvation basin`, stop rather than coefficient-polish.
-- A scratch candidate should receive retained-eval consideration only if it beats current best raw `screen_0007` or misses it with a genuinely new floor-risk owner and materially better named floor slices. Near-incumbent safety alone is not enough.
+- A scratch candidate should receive retained-eval consideration only if it beats current best raw `screen_0008` or misses it with a genuinely new floor-risk owner and materially better named floor slices. Near-incumbent safety alone is not enough.
 
 ### Round Lessons To Carry Forward
 
@@ -230,3 +301,17 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 - Round 32 scratch lesson: allocation-owner and account-separation vocabulary did not prevent over-open release. Retail surplus, toxicity/inventory separation, cross-side symmetry debt, and two-account spread assembly all failed once layer 4 could release too much width; future allocation work needs a hard floor-preservation invariant before shared-spread compression.
 - Round 33 scratch lesson: one-way risk evidence boundaries are live, but only when strict enough to preserve the floor without opening release paths. `MonotoneEvidenceFirewallStrict` advanced best raw to `screen_0006`; debt-before-repair and counterfactual regret memories replayed over-open release and should not be followed locally.
 - Round 34 scratch lesson: bounded distributional tail buckets are live, but the positive result is tail-state ownership, not another upstream scalar codec. `QuantileTailRiskSketch` advanced best raw to `screen_0007`; public-shock and benign-exclusion variants were tiny near-frontier moves, while hysteretic latch, rank-copula, and meet-semilattice quote compilation either over-tightened, damaged floors, or collapsed selectivity.
+- Round 35 scratch lesson: diversified interfaces across layers 1-4 did not advance retained state. `CurvatureExposurePassport` improved leakage/selectivity but lost mean and all tracked floors, so keep it as a bounded diagnostic adjunct only. Tail-bucket consumers, pickoff exposure accounting, and SPRT-style stop states collapsed into a new tail-consumer over-open basin, while the layer-4 no-release projector over-tightened and damaged benign capture.
+- Round 36 scratch lesson: operating-boundary and mix-stability interfaces did not advance retained state. `RetailThroughputPreservationCap` was a baseline replay, `IndependentEvidenceQuorumRouter` and `MinimumRetailServiceCertificate` were classifier/certificate floor-drag variants, `CounterpartyMixStabilitySketch` opened a new mix-state over-open collapse, and the single layer-5 `LossBudgetedSideProtectionIntegrator` over-tightened. Future rounds need a different primary floor-risk owner rather than another guard/certificate/cap around existing consumers.
+- Round 37 scratch lesson: floor-risk ownership words did not guarantee new behavior. `ResidualRetailConvexityPartition` and `AdverseSelectionAbstentionBus` were classifier-local floor-drag variants, `MatchedImpactContinuationState` and `InvariantLossAttributionSplitter` became attribution-state over-open collapses, and `WorstSliceSpreadAssembler` overcharged into floor destruction. Future rounds should demand mechanical isolation from relief/overcharge paths, not just new upstream vocabulary.
+- Round 38 scratch lesson: diverse external-topology imports did not advance retained state. `BidAskBounceDeconvolutionBus` and `HawkesExcitationSourceSplitter` collapsed into over-open release, `RobustRetailDemandElasticitySurface` created a robust-demand leakage / floor-collapse phenotype, and `CrossImpactResidualOwnershipSplitter` was incumbent-equivalent. Future literature-inspired probes need mechanical no-release or no-floor-damage proofs, not only non-AMM terminology.
+- Round 39 scratch lesson: weak LOB event-feasibility validation is live and advanced best raw to `screen_0008`; the productive part is a one-way event-path validity residual, not another scalar firewall pass. BOCPD run-length and context-tree segment labels replayed over-open hidden-release profiles, liquidity-shortfall placement overcharged into floor loss, and median-of-means floor-loss aggregation was near-frontier but sub-`screen_0007`, so future rounds should not locally tune those support controls.
+- Round 40 scratch lesson: queue/depth microstructure imports did not advance retained state. Depth imbalance, passive fill probability, latency adverse windows, and depth-shape recovery all collapsed into open-release or adverse-leakage profiles, so future queue/depth work needs a read-only diagnostic or hard no-release proof before any consumer sees it.
+- Round 41 scratch lesson: causal ownership and conservation vocabulary did not prevent hidden release. `AdverseFillCausalityLedger` and `DirectionalAdverseMassSplitter` collapsed into high-selectivity causal-label release, `BenignCaptureConservationSwitch` damaged low-decile and low-retail while preserving only low-volatility, and `PublicKyleLambdaFeasibilityBand` replayed `screen_0007` below the current `screen_0008` anchor. Future rounds should avoid causal/mass labels and Kyle/impact-band coefficients unless they introduce a different primary floor-risk owner with a mechanical no-release proof.
+- Round 42 scratch lesson: public-dispersion, convexity, rank-stability, and continuity-shock labels did not advance retained state. `PublicSpreadDispersionEnvelope` damaged mean/leakage/floors, while `ExecutionCostConvexitySurface`, `CrossScenarioRankStabilityOwner`, and `RetailContinuityShockAbsorber` collapsed into generic uncertainty-label hidden release. Future rounds should stop feeding new labels into the existing downstream consumer path and instead test mechanical no-relief invariants or controlled downstream-consumer removal while preserving the `screen_0008` feasibility anchor.
+- Round 43 scratch lesson: removing or isolating relief consumers was not enough. `FeasibilityReliefConsumerPruner` and `UnsafeDiscountBranchNullifier` improved leakage/selectivity only by overcharging and losing all floors, while `OneWayWidthMonotonicityAssembler` and `ProtectedPathConsumerIsolation` still collapsed into hidden release. Future rounds need a mechanism that preserves benign floor slices while retaining `screen_0008`'s leakage/selectivity gain, or the coordinator should record search saturation before spending more same-surface probes.
+- Round 44 saturation gate: the proposer could not defend four genuinely distinct designs without replaying saturated basins under the current banned-family set. Continuing the same `screen_0008`-adjacent consumer/interface repair frame would be naming churn. The next productive move requires an operator-level search-frame change: deliberately relax one banned family with tight kill thresholds, authorize a fresh outside-literature import with new admissible mechanism classes, or change the seed / anchor frame.
+- Round 45 scratch lesson: a fresh outside-mechanism reset was not sufficient. `ProperScoreReserveLedger` collapsed into reserve-score hidden release, `StableServiceMatchingKernel` and `ClearingPriorityWaterfall` were incumbent-equivalent or near-incumbent no-ops, and `SupplyFunctionServiceCurve` improved leakage/selectivity while losing mean and all tracked floors. Treat service-capacity shaping as a diagnostic only; do not coefficient-polish it without a hard no-floor-loss boundary, and do not import more market-design vocabulary unless the primary owner is mechanically distinct from labels, accounts, allocation, fee rights, and downstream relief.
+- Round 46 scratch lesson: the narrow no-floor-loss service-capacity relaxation did not survive measurement. `IsofloorServiceSlopeSplitter` and `ProtectedSideServiceElasticity` were near-incumbent no-ops with floor loss versus `screen_0008`, `RetailFloorFirstServiceOwner` dragged every tracked floor and worsened leakage/selectivity, and `VolatilityIsoquantServiceMap` was incumbent-equivalent. Do not continue service-capacity curves, slope splitters, retail-floor gates, isoquant maps, or protected-side elasticity under the current `screen_0008` anchor; the next round needs either a different seed/anchor frame or a non-service primary owner mechanically distinct from labels, accounts, allocation, fee rights, downstream relief, and service gating.
+- Round 47 scratch lesson: scratch-only retained-snapshot seeding did not break out. `SplitBusFeasibilityUnion` and `FirewallEventPathConjunction` improved leakage/selectivity only by overcharging and losing all tracked floors, while `SelectorFeasibilityCrosscheck` and `QuantileFirewallIngress` collapsed into hidden-release / floor-collapse basins. Do not keep unioning split-bus, feasibility, selector, tail, or firewall evidence across retained snapshots; those seed-frame recombinations are saturated under the current lane.
+- Round 48 saturation gate: under the current ban set, proposer could not defend four genuinely distinct non-service, non-label primary owners without replaying saturated basins. Invariant/geometry holds, floor consensus, benign-capture caps, bandpass adjuncts, monotonicity proofs, and reserve-neutrality checks all map back to known failures. The next operator decision must either retire this retained lane and start a fresh run from a new seed/anchor frame, or explicitly relax one banned family for a tightly bounded diagnostic batch with concrete kill thresholds.

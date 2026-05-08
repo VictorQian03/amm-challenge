@@ -570,3 +570,146 @@ Run index: [apr21-screen490-1431.md](apr21-screen490-1431.md)
 - Do not retry meet-semilattice quote compilation without a retail-capture-preserving cap. It improved leakage by over-tightening, not by solving the protection-vs-benign-capture split.
 - Hysteretic floor latches and joint-rank classifier states are high-risk in their current shape; they damaged floors and should be treated as broad classifier / overcharge failures rather than near-frontier anchors.
 - Round 35 should preserve the current rule: at least four critic-accepted designs before source work, at most one local descendant of the current best raw, and at least one topology that changes a different layer/interface from distributional tail-state ownership.
+
+## Round 35: Diversified Interface Batch
+
+### Starting State
+
+- Active retained lane: `apr21-screen490-1431`.
+- Official incumbent: `screen_0001` / `starter-baseline-post-fix` at `485.92377070367183`.
+- Best raw retained discard entering the round: `screen_0007` / `quantile-tail-risk-sketch` at `487.54341156295743`.
+- Breakout target: `490`.
+- Round 34 advanced the best raw, but the carry-forward rule explicitly blocked local tail-bucket coefficient polish.
+
+### Subagent Workflow
+
+- Topology proposer supplied nine candidates:
+  - `ConformalAbstentionCertificate`
+  - `CurvatureExposurePassport`
+  - `RetailCaptureInvariantProjector`
+  - `SidewisePickoffCostMatrix`
+  - `SequentialAdverseStopTest`
+  - `TailBucketConsumerTransducer`
+  - `NoDiscountAdverseCertificate`
+  - `PickoffExposureStopLoss`
+  - `RetailServiceCeilingNotch`
+- Saturation critic accepted six worker contracts and rejected or deferred three:
+  - Accepted `ConformalAbstentionCertificate` as a layer-3 abstention boundary, not a generic classifier, consumed only by strict firewall / side-risk floor.
+  - Accepted `CurvatureExposurePassport` as a layer-1 discrete AMM curvature exposure passport, consumed only by layer-3 firewall class / side-protection floor.
+  - Accepted `RetailCaptureInvariantProjector` as the only layer-4 invariant slot, with a no-release projection before shared-width assembly.
+  - Accepted `SequentialAdverseStopTest` as a layer-2 bounded SPRT-style stop state, not a temporal-clearing clock.
+  - Accepted `TailBucketConsumerTransducer` as the single allowed local `screen_0007` descendant, changing only tail-bucket consumption.
+  - Accepted `PickoffExposureStopLoss` as layer-2 stale-price pickoff exposure accounting, not an LVR fee floor or surcharge.
+  - Deferred `SidewisePickoffCostMatrix` because it overlapped too much with `PickoffExposureStopLoss`.
+  - Rejected `NoDiscountAdverseCertificate` as same-spine with the strict one-way firewall and support-only no-discount veto shape.
+  - Rejected `RetailServiceCeilingNotch` as a weaker layer-4 family member with hidden benign-release risk.
+- Enforced entropy constraints:
+  - six accepted scratch paths before any retained decision
+  - at most one local `screen_0007` descendant
+  - no retained-ledger edits by workers
+  - no `Reference.sol` inspection
+  - no layer 5/6, inventory, refill, recapture, opportunity, final quote selector, broad fee release, shared-spread compression, or incumbent / best-raw coefficient polish
+
+### Accepted Scratch Contracts
+
+- `ConformalAbstentionCertificate`
+  - Layer mutation: layer-3 set-membership abstention boundary over normalized state residuals.
+  - Interface boundary: may only hold or raise strict firewall evidence and side-risk floor.
+  - Forbidden consumers: shared-spread compression, benign expansion, refill, recapture, opportunity, inventory, and final quote.
+  - Kill signature: mean not above `screen_0007`, any tracked floor below `screen_0007`, `time_weighted_mean_fee > 0.00515`, `quote_selectivity_ratio < 17` or `> 21`, or indistinguishable phenotype.
+- `CurvatureExposurePassport`
+  - Layer mutation: layer-1 AMM curve-exposure passport as discrete curvature stress classes.
+  - Interface boundary: may feed only layer-3 firewall class and side-protection floor.
+  - Forbidden consumers: direct shared spread, LVR proxy, reserve floor, fee rent, layer 5/6, and final quote.
+  - Kill signature: geometry-codec plateau, `arb_loss_to_retail_gain >= 0.09217`, selectivity outside `17-21`, or no floor lift.
+- `RetailCaptureInvariantProjector`
+  - Layer mutation: layer-4 no-release projection before quote-width assembly.
+  - Interface boundary: cannot compress the adverse floor.
+  - Forbidden consumers: account ledgers, opportunity cuts, recapture/refill, inventory, final quote selector, and benign fee cuts.
+  - Kill signature: any Round 32 allocation-release profile, `time_weighted_mean_fee < 0.00475`, `quote_selectivity_ratio > 22`, or any tracked floor below `screen_0007`.
+- `SequentialAdverseStopTest`
+  - Layer mutation: layer-2 bounded SPRT-style stop state.
+  - Interface boundary: emits only hold/raise evidence into firewall / side floor.
+  - Forbidden consumers: fee compression, opportunity, refill, recapture, inventory, temporal-clearing clocks, and final quote.
+  - Kill signature: temporal-clearing overprotection, `quote_selectivity_ratio > 24`, fee above `0.00520` with floor decline, fee below `0.00475`, or no mean/floor lift.
+- `TailBucketConsumerTransducer`
+  - Layer mutation: layer-3 finite transducer consuming existing `screen_0007` tail buckets.
+  - Interface boundary: may feed strict firewall class and side-protection floor only.
+  - Forbidden consumers: bucket threshold changes, direct hazard/divergence rewrites, shared-spread compression, benign expansion, and layer 5/6.
+  - Kill signature: tail-bucket polish, phenotype-identical no-op, any floor below `screen_0007`, fee outside `0.00475-0.00515`, or no new consumer attribution.
+- `PickoffExposureStopLoss`
+  - Layer mutation: layer-2 stale-price pickoff exposure accounting.
+  - Interface boundary: may only raise side-specific protection floor inside the current fee band.
+  - Forbidden consumers: shared-spread release, LVR fee floor, inventory/capital-cost surcharge, opportunity, refill, recapture, and final quote.
+  - Kill signature: fee-rent collapse, `quote_selectivity_ratio > 22`, low-decile below `372.189`, low-retail below `417.660`, low-volatility below `464.825`, or no leakage improvement.
+
+### Probe Sources
+
+- `artifacts/scratch_probes/apr21-screen490-1431/round35/conformal_abstention_certificate.sol`
+- `artifacts/scratch_probes/apr21-screen490-1431/round35/curvature_exposure_passport.sol`
+- `artifacts/scratch_probes/apr21-screen490-1431/round35/retail_capture_invariant_projector.sol`
+- `artifacts/scratch_probes/apr21-screen490-1431/round35/sequential_adverse_stop_test.sol`
+- `artifacts/scratch_probes/apr21-screen490-1431/round35/tail_bucket_consumer_transducer.sol`
+- `artifacts/scratch_probes/apr21-screen490-1431/round35/pickoff_exposure_stop_loss.sol`
+
+### Probe Results
+
+- `ConformalAbstentionCertificate`
+  - Mean edge: `472.6118251473712`
+  - Delta vs `screen_0007`: `-14.9315864155862`
+  - Key profile: `arb_loss_to_retail_gain=0.11971038998584069`, `quote_selectivity_ratio=25.600271359705864`, `time_weighted_mean_fee=0.004676137541817686`
+  - Floor slices: `low_decile_mean_edge=291.4876048963283`, `low_retail_mean_edge=398.9575779188266`, `low_volatility_mean_edge=464.2373583831493`
+  - Outcome: killed as classifier-local floor-drag / leakage regression. Abstention lowered max fee jump slightly but damaged low-decile and worsened leakage/selectivity.
+- `CurvatureExposurePassport`
+  - Mean edge: `487.27871911371267`
+  - Delta vs `screen_0007`: `-0.26469244924476243`
+  - Key profile: `arb_loss_to_retail_gain=0.08992618168169789`, `quote_selectivity_ratio=18.254594511135544`, `time_weighted_mean_fee=0.004926221813738`
+  - Floor slices: `low_decile_mean_edge=371.41702302446095`, `low_retail_mean_edge=417.1351043052807`, `low_volatility_mean_edge=464.4271103105342`
+  - Outcome: killed as sub-best frontier neighbor. It improved leakage/selectivity, but lost mean edge and all tracked floor slices versus `screen_0007`.
+- `RetailCaptureInvariantProjector`
+  - Mean edge: `473.3150122744842`
+  - Delta vs `screen_0007`: `-14.228399288473213`
+  - Key profile: `arb_loss_to_retail_gain=0.05262971724781848`, `quote_selectivity_ratio=6.759145663621839`, `time_weighted_mean_fee=0.00778644519100617`
+  - Floor slices: `low_decile_mean_edge=357.62910360473273`, `low_retail_mean_edge=404.519164775821`, `low_volatility_mean_edge=451.62653546437673`
+  - Outcome: killed as broad-protection starvation / over-tightening. The invariant protected leakage by overcharging and collapsing retail capture plus every floor slice.
+- `SequentialAdverseStopTest`
+  - Mean edge: `418.29210508415184`
+  - Delta vs `screen_0007`: `-69.25130647880559`
+  - Key profile: `arb_loss_to_retail_gain=0.2100210866437799`, `quote_selectivity_ratio=42.114208442289126`, `time_weighted_mean_fee=0.004986941329589054`
+  - Floor slices: `low_decile_mean_edge=224.5299074928966`, `low_retail_mean_edge=371.16332075453994`, `low_volatility_mean_edge=411.765053078274`
+  - Outcome: hard kill as stop-state over-open / temporal-classifier relapse. It reduced max fee jump but materially collapsed downside quality and increased arb leakage/selectivity.
+- `TailBucketConsumerTransducer`
+  - Mean edge: `407.4839132609917`
+  - Delta vs `screen_0007`: `-80.05949830196573`
+  - Key profile: `arb_loss_to_retail_gain=0.24309434753177714`, `quote_selectivity_ratio=58.58495904456805`, `time_weighted_mean_fee=0.004149432746839423`
+  - Floor slices: `low_decile_mean_edge=213.53482106574324`, `low_retail_mean_edge=361.20239629219054`, `low_volatility_mean_edge=415.3616671081755`
+  - Outcome: hard kill as tail-bucket consumer over-open collapse. The only local `screen_0007` descendant turned the tail signal into broad leakage and severe floor damage.
+- `PickoffExposureStopLoss`
+  - Mean edge: `421.10695845199905`
+  - Delta vs `screen_0007`: `-66.43645311095838`
+  - Key profile: `arb_loss_to_retail_gain=0.2260367626910699`, `quote_selectivity_ratio=57.72528153808277`, `time_weighted_mean_fee=0.003915732529462814`
+  - Floor slices: `low_decile_mean_edge=226.1345341684304`, `low_retail_mean_edge=375.32809115870515`, `low_volatility_mean_edge=415.08204884182834`
+  - Outcome: hard kill as stale-pickoff over-open release. Exposure accounting behaved like broad release / arb leakage instead of a bounded side-protection floor.
+
+### Decision
+
+- No Round 35 scratch candidate earned a canonical retained eval.
+- Retained lane remains unchanged:
+  - incumbent: `screen_0001`
+  - best raw non-promoted: `screen_0007`
+  - best raw mean edge: `487.54341156295743`
+  - best raw gap to breakout target: `2.456588437042568`
+
+### Validation And Commands
+
+- Validated all six accepted scratch sources with `uv run amm-match validate`.
+- Ran scratch probes with `uv run amm-match hill-climb probe --stage screen --json` and wrote each result to the matching concrete JSON file listed in the probe sources/results above.
+- Verified retained state with `uv run amm-match hill-climb status --run-id apr21-screen490-1431`.
+
+### Updated Entropy Discipline
+
+- Round 35 tested six genuinely distinct contracts across layers 1-4, but most collapsed because the new evidence ultimately changed protection or release too aggressively. Do not reinterpret that as evidence that the current best raw architecture is ideal; it is evidence that these particular consumer boundaries failed.
+- `CurvatureExposurePassport` is the only constructive diagnostic from the batch: it improved leakage/selectivity but lost mean and all floors. It may be useful as a bounded adjunct only if a separate primary owner preserves the floor slices; do not spend a full round on curvature-passport coefficients.
+- Tail-bucket descendants are saturated for now. The finite transducer replayed a hard over-open collapse, so future use of `screen_0007` should be as a measurement anchor or optional state input, not a local consumer rewrite.
+- Abstention, SPRT-style stop states, and pickoff exposure accounting all translated into floor damage or over-open leakage in this implementation. Future external-evidence imports need a mechanical consumer boundary that cannot widen release or starve benign capture after evidence enters the pipeline.
+- Layer-4 invariant work remains risky in both directions: allocation ledgers released too much in Round 32, while this no-release projector over-tightened. A future layer-4 attempt needs an explicit retail-capture preservation cap, not merely a stronger adverse floor.
