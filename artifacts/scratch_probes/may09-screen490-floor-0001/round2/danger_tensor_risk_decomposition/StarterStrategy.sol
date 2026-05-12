@@ -307,6 +307,40 @@ contract Strategy is AMMStrategyBase {
             wmul(cheapSignal, 8500 * BPS) +
             askFlowRisk;
 
+        uint256 dangerTensor = clamp(
+            wmul(hazardMemory, 6200 * BPS) +
+                wmul(informationStress, 4200 * BPS) +
+                wmul(flowPressure, 2600 * BPS) +
+                wmul(divergenceMemory, 3600 * BPS),
+            0,
+            WAD
+        );
+        uint256 damageTensor = clamp(
+            wmul(liquidityDemand, 3000 * BPS) +
+                wmul(_max(spotJumpVol, divergenceVol), 3600 * BPS) +
+                wmul(oneSidedFlow, 4600 * BPS),
+            0,
+            WAD
+        );
+        uint256 safeTensor = clamp(
+            wmul(calmMemory, quietGate) +
+                wmul(gapLong, 900 * BPS),
+            0,
+            WAD
+        );
+        uint256 hiddenRiskTensor = wmul(safeTensor, _max(dangerTensor, damageTensor));
+        uint256 tensorRiskSignal = clamp(
+            wmul(dangerTensor, 70 * BPS) +
+                wmul(damageTensor, 60 * BPS) +
+                wmul(hiddenRiskTensor, 30 * BPS),
+            0,
+            WAD
+        );
+        uint256 bidTensorShare = toxicBidSide ? 7600 * BPS : 2400 * BPS;
+        uint256 askTensorShare = WAD - bidTensorShare;
+        bidRiskSignal = clamp(bidRiskSignal + wmul(tensorRiskSignal, bidTensorShare), 0, WAD);
+        askRiskSignal = clamp(askRiskSignal + wmul(tensorRiskSignal, askTensorShare), 0, WAD);
+
         uint256 opportunityGate = wmul(
             calmMemory,
             _oneMinus(
@@ -472,7 +506,7 @@ contract Strategy is AMMStrategyBase {
     }
 
     function getName() external pure override returns (string memory) {
-        return "LatentStateQuoteEngine";
+        return "DangerTensorRiskDecomposition";
     }
 
     function _blend(uint256 prev, uint256 sample, uint256 alpha) internal pure returns (uint256) {

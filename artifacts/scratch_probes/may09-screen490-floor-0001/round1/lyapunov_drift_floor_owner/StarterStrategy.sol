@@ -4,8 +4,8 @@ pragma solidity ^0.8.24;
 import {AMMStrategyBase} from "./AMMStrategyBase.sol";
 import {TradeInfo} from "./IAMMStrategy.sol";
 
-/// @title Latent State Quote Engine
-/// @notice Estimate fair value and market state first, then map state into spread, side risk, and side opportunity.
+/// @title Lyapunov Drift Floor Owner
+/// @notice Estimate fair value and market state first, then cap calm observations only while risk energy rises.
 contract Strategy is AMMStrategyBase {
     uint256 internal constant BASE_FEE = 16 * BPS;
 
@@ -14,6 +14,7 @@ contract Strategy is AMMStrategyBase {
     uint256 internal constant DECAY_HAZARD = 8900 * BPS;
     uint256 internal constant DECAY_CALM = 9300 * BPS;
     uint256 internal constant DECAY_DIVERGENCE = 9150 * BPS;
+    uint256 internal constant DECAY_ENERGY = 9200 * BPS;
 
     uint256 internal constant ALPHA_SPOT = 12 * BPS;
     uint256 internal constant ALPHA_VOL = 26 * BPS;
@@ -22,6 +23,7 @@ contract Strategy is AMMStrategyBase {
     uint256 internal constant ALPHA_DIVERGENCE = 22 * BPS;
     uint256 internal constant ALPHA_FLOW = 18 * BPS;
     uint256 internal constant ALPHA_PASSIVE = 18 * BPS;
+    uint256 internal constant ALPHA_ENERGY = 20 * BPS;
 
     function afterInitialize(uint256 initialX, uint256 initialY)
         external
@@ -41,6 +43,7 @@ contract Strategy is AMMStrategyBase {
         slots[8] = 0; // latent divergence memory
         slots[9] = 0; // directional flow pressure memory
         slots[10] = 0; // passive recapture memory
+        slots[11] = 0; // Lyapunov-style energy memory
 
         return (BASE_FEE, BASE_FEE);
     }
@@ -143,6 +146,28 @@ contract Strategy is AMMStrategyBase {
             gapLong,
             _oneMinus(clamp(hazardObservation * 6, 0, WAD))
         );
+        uint256 priorEnergy = wmul(
+            slots[11],
+            _gapAdjustedDecay(DECAY_ENERGY, gapShort, 900 * BPS)
+        );
+        uint256 lyapunovEnergy = clamp(
+            wmul(volObservation, 3400 * BPS) +
+                wmul(hazardObservation, 3600 * BPS) +
+                wmul(divergence, 2400 * BPS) +
+                wmul(liquidityDemand, 1800 * BPS),
+            0,
+            WAD
+        );
+        uint256 energyMemory = _blend(priorEnergy, lyapunovEnergy, ALPHA_ENERGY);
+        if (lyapunovEnergy > priorEnergy) {
+            uint256 energyDrift = lyapunovEnergy - priorEnergy;
+            uint256 calmCap = _oneMinus(clamp(wmul(energyDrift, 5200 * BPS), 0, 6500 * BPS));
+            calmObservation = wmul(calmObservation, calmCap);
+            uint256 hazardFloor = wmul(energyDrift, 1700 * BPS);
+            if (hazardObservation < hazardFloor) {
+                hazardObservation = hazardFloor;
+            }
+        }
 
         volMemory = _blend(volMemory, volObservation, ALPHA_VOL);
         hazardMemory = _blend(hazardMemory, hazardObservation, ALPHA_HAZARD);
@@ -467,12 +492,13 @@ contract Strategy is AMMStrategyBase {
         slots[8] = divergenceMemory;
         slots[9] = flowPressure;
         slots[10] = passiveRecaptureMemory;
+        slots[11] = energyMemory;
 
         return (bidFee, askFee);
     }
 
     function getName() external pure override returns (string memory) {
-        return "LatentStateQuoteEngine";
+        return "LyapunovDriftFloorOwner";
     }
 
     function _blend(uint256 prev, uint256 sample, uint256 alpha) internal pure returns (uint256) {

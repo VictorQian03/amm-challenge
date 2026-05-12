@@ -14,6 +14,7 @@ contract Strategy is AMMStrategyBase {
     uint256 internal constant DECAY_HAZARD = 8900 * BPS;
     uint256 internal constant DECAY_CALM = 9300 * BPS;
     uint256 internal constant DECAY_DIVERGENCE = 9150 * BPS;
+    uint256 internal constant DECAY_WRITE_MUX = 8600 * BPS;
 
     uint256 internal constant ALPHA_SPOT = 12 * BPS;
     uint256 internal constant ALPHA_VOL = 26 * BPS;
@@ -22,6 +23,7 @@ contract Strategy is AMMStrategyBase {
     uint256 internal constant ALPHA_DIVERGENCE = 22 * BPS;
     uint256 internal constant ALPHA_FLOW = 18 * BPS;
     uint256 internal constant ALPHA_PASSIVE = 18 * BPS;
+    uint256 internal constant ALPHA_WRITE_MUX = 24 * BPS;
 
     function afterInitialize(uint256 initialX, uint256 initialY)
         external
@@ -41,6 +43,7 @@ contract Strategy is AMMStrategyBase {
         slots[8] = 0; // latent divergence memory
         slots[9] = 0; // directional flow pressure memory
         slots[10] = 0; // passive recapture memory
+        slots[11] = 0; // safe-context noisy-write suppressor
 
         return (BASE_FEE, BASE_FEE);
     }
@@ -142,6 +145,18 @@ contract Strategy is AMMStrategyBase {
         uint256 calmObservation = wmul(
             gapLong,
             _oneMinus(clamp(hazardObservation * 6, 0, WAD))
+        );
+        uint256 writeMuxMemory = _blend(
+            wmul(slots[11], _gapAdjustedDecay(DECAY_WRITE_MUX, gapShort, 1800 * BPS)),
+            _writeMuxObservation(
+                gapLong,
+                liquidityDemand,
+                informationStress,
+                spotJump,
+                divergence,
+                hazardObservation
+            ),
+            ALPHA_WRITE_MUX
         );
 
         volMemory = _blend(volMemory, volObservation, ALPHA_VOL);
@@ -466,13 +481,19 @@ contract Strategy is AMMStrategyBase {
         slots[7] = trade.timestamp;
         slots[8] = divergenceMemory;
         slots[9] = flowPressure;
-        slots[10] = passiveRecaptureMemory;
+        slots[10] = _withheldMemoryWrite(
+            passiveRecaptureMemory,
+            slots[10],
+            writeMuxMemory,
+            900 * BPS
+        );
+        slots[11] = writeMuxMemory;
 
         return (bidFee, askFee);
     }
 
     function getName() external pure override returns (string memory) {
-        return "LatentStateQuoteEngine";
+        return "DangerSafeMemoryWriteMux";
     }
 
     function _blend(uint256 prev, uint256 sample, uint256 alpha) internal pure returns (uint256) {
@@ -507,5 +528,42 @@ contract Strategy is AMMStrategyBase {
             return WAD / 2;
         }
         return wdiv(part, total);
+    }
+
+    function _writeMuxObservation(
+        uint256 gapLong,
+        uint256 liquidityDemand,
+        uint256 informationStress,
+        uint256 spotJump,
+        uint256 divergence,
+        uint256 hazardObservation
+    ) internal pure returns (uint256) {
+        uint256 safeContext = wmul(
+            gapLong,
+            _oneMinus(clamp(hazardObservation * 5 + wmul(divergence, 1800 * BPS), 0, WAD))
+        );
+        uint256 noisyWrite = clamp(
+            wmul(liquidityDemand, 4200 * BPS) +
+                wmul(informationStress, 6200 * BPS) +
+                wmul(spotJump, 5200 * BPS) +
+                wmul(divergence, 3600 * BPS),
+            0,
+            WAD
+        );
+        return wmul(safeContext, noisyWrite);
+    }
+
+    function _withheldMemoryWrite(
+        uint256 fullWrite,
+        uint256 withheldWrite,
+        uint256 muxMemory,
+        uint256 cap
+    ) internal pure returns (uint256) {
+        uint256 gate = wmul(muxMemory, cap);
+        if (gate == 0) {
+            return fullWrite;
+        }
+        uint256 routedWrite = _blend(fullWrite, withheldWrite, gate);
+        return routedWrite > fullWrite ? fullWrite : routedWrite;
     }
 }

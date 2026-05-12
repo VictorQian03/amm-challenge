@@ -149,6 +149,38 @@ contract Strategy is AMMStrategyBase {
         calmMemory = _blend(calmMemory, calmObservation, ALPHA_CALM);
         divergenceMemory = _blend(divergenceMemory, divergence, ALPHA_DIVERGENCE);
 
+        uint256 protectiveVolMemory = volMemory;
+        uint256 protectiveHazardMemory = hazardMemory;
+        uint256 protectiveDivergenceMemory = divergenceMemory;
+        uint256 recoveryStress = _max(volObservation, _max(hazardObservation, divergence));
+        uint256 priorProtectiveStress = _max(slots[1], _max(slots[4], slots[8]));
+        if (gap >= 2 && priorProtectiveStress > 1800 * BPS && recoveryStress > 500 * BPS) {
+            protectiveVolMemory = _max(
+                protectiveVolMemory,
+                _blend(
+                    wmul(slots[1], _gapAdjustedDecay(DECAY_VOL, gapShort, 1200 * BPS)),
+                    volObservation,
+                    24 * BPS
+                )
+            );
+            protectiveHazardMemory = _max(
+                protectiveHazardMemory,
+                _blend(
+                    wmul(slots[4], _gapAdjustedDecay(DECAY_HAZARD, gapShort, 1500 * BPS)),
+                    hazardObservation,
+                    28 * BPS
+                )
+            );
+            protectiveDivergenceMemory = _max(
+                protectiveDivergenceMemory,
+                _blend(
+                    wmul(slots[8], _gapAdjustedDecay(DECAY_DIVERGENCE, gapShort, 1050 * BPS)),
+                    divergence,
+                    20 * BPS
+                )
+            );
+        }
+
         uint256 flowPulse = liquidityDemand + wmul(volObservation, 4500 * BPS);
         uint256 crossPulse = wmul(flowPulse, 2200 * BPS);
         if (trade.isBuy) {
@@ -165,12 +197,26 @@ contract Strategy is AMMStrategyBase {
         uint256 flowImbalance = totalFlow == 0 ? 0 : wdiv(absDiff(buyFlow, sellFlow), totalFlow);
         uint256 flowPressure = _blend(slots[9], flowImbalance, ALPHA_FLOW);
         uint256 oneSidedFlow = wmul(flowImbalance, _max(volMemory, hazardMemory));
+        uint256 protectiveOneSidedFlow = wmul(
+            flowImbalance,
+            _max(protectiveVolMemory, protectiveHazardMemory)
+        );
         uint256 adverseSelectionComponent = wmul(
             hazardMemory,
             clamp(
                 wmul(flowPressure, 2200 * BPS) +
                     wmul(informationStress, 5200 * BPS) +
                     wmul(divergenceMemory, 3800 * BPS),
+                0,
+                WAD
+            )
+        );
+        uint256 protectiveAdverseSelectionComponent = wmul(
+            protectiveHazardMemory,
+            clamp(
+                wmul(flowPressure, 2200 * BPS) +
+                    wmul(informationStress, 5200 * BPS) +
+                    wmul(protectiveDivergenceMemory, 3800 * BPS),
                 0,
                 WAD
             )
@@ -382,6 +428,45 @@ contract Strategy is AMMStrategyBase {
                 wmul(adverseSelectionComponent, 1350 * BPS);
         }
 
+        uint256 protectiveSideHazard =
+            protectiveHazardMemory +
+            wmul(flowImbalance, _max(protectiveVolMemory, protectiveDivergenceMemory));
+        if (protectiveSideHazard > WAD) {
+            protectiveSideHazard = WAD;
+        }
+        uint256 protectiveBidProtection =
+            wmul(
+                wmul(sellShare, protectiveSideHazard) +
+                    wmul(richSignal, 8500 * BPS) +
+                    bidFlowRisk,
+                5400 * BPS
+            );
+        uint256 protectiveAskProtection =
+            wmul(
+                wmul(buyShare, protectiveSideHazard) +
+                    wmul(cheapSignal, 8500 * BPS) +
+                    askFlowRisk,
+                5400 * BPS
+            );
+        uint256 protectiveOneSidedProtection = wmul(protectiveOneSidedFlow, 2800 * BPS);
+        if (currentSpot >= latentSpot) {
+            protectiveBidProtection +=
+                directionalBurstFee +
+                protectiveOneSidedProtection +
+                inventoryCenteringOffset +
+                wmul(protectiveAdverseSelectionComponent, 1350 * BPS);
+        } else {
+            protectiveAskProtection +=
+                directionalBurstFee +
+                protectiveOneSidedProtection +
+                inventoryCenteringOffset +
+                wmul(protectiveAdverseSelectionComponent, 1350 * BPS);
+        }
+        uint256 bidProtectionExtra =
+            protectiveBidProtection > bidProtection ? protectiveBidProtection - bidProtection : 0;
+        uint256 askProtectionExtra =
+            protectiveAskProtection > askProtection ? protectiveAskProtection - askProtection : 0;
+
         uint256 bidOpportunityCut = wmul(bidOpportunitySignal, 8200 * BPS);
         uint256 askOpportunityCut = wmul(askOpportunitySignal, 8200 * BPS);
         uint256 passiveRecaptureCut = wmul(passiveRecaptureMemory, 1550 * BPS);
@@ -452,6 +537,8 @@ contract Strategy is AMMStrategyBase {
         askFee = sharedSpread + askProtection;
         bidFee = bidFee > bidOpportunityCut ? bidFee - bidOpportunityCut : MIN_FEE;
         askFee = askFee > askOpportunityCut ? askFee - askOpportunityCut : MIN_FEE;
+        bidFee += bidProtectionExtra;
+        askFee += askProtectionExtra;
 
         bidFee = clampFee(bidFee);
         askFee = clampFee(askFee);
@@ -472,7 +559,7 @@ contract Strategy is AMMStrategyBase {
     }
 
     function getName() external pure override returns (string memory) {
-        return "LatentStateQuoteEngine";
+        return "RecoveryHalfLifeHazardDecay";
     }
 
     function _blend(uint256 prev, uint256 sample, uint256 alpha) internal pure returns (uint256) {

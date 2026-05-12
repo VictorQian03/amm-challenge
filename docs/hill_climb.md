@@ -34,6 +34,7 @@ Cross-run navigation lives at `artifacts/hill_climb/index.json`.
 The newest valid run is marked `active`; older valid runs are `historical`; fingerprint-stale or corrupted runs are `blocked`.
 The run layout is canonical: retained lanes may keep only `run.json`, `results.jsonl`, and referenced snapshots.
 Relative retained artifact roots resolve against the repository's primary checkout, so linked git worktrees still consolidate into the same canonical lane instead of minting duplicate per-worktree ledgers.
+Do not deduplicate snapshots across run directories just because the content hash repeats; a historical run may still need its local snapshot path for ledger replay and audit.
 `status`, `history`, incumbents, and best-raw views are rebuilt from `results.jsonl` instead of being persisted as extra files.
 Legacy per-run files such as `results.tsv`, `history.jsonl`, `incumbents/`, or `.next_eval_index` are treated as invalid retained state.
 
@@ -130,15 +131,40 @@ Use these as search prompts, not as required workflow:
 
 1. Use the six-layer scaffold `observation shaping -> latent state -> hazard/calm classifier -> shared spread -> side-specific protection -> safe-side recapture/opportunity`.
 2. Hold the scaffold fixed, mutate one interface at a time, and favor explicit interface separation with a factorized causal representation instead of a coupled pipeline rewrite.
-3. Keep an explicit explore/exploit split. Do not spend every iteration on local coefficient polish.
+3. Keep an explicit explore/exploit split. Do not spend every iteration on local coefficient polish, and do not treat a new label or imported vocabulary as exploration unless it changes the evidence owner or consumer contract.
 4. Judge novelty in outcome-space, not code-space. Branch diversity is about expected movement in `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, and floor slices, not about mechanism names.
-5. Use `compare-profiles` and retained history to sort branches into failure basins such as `over_open_leak`, `over_tighten_clamp`, `frontier_neighbor`, and `crossover_regression`. Retire exhausted basins instead of relabeling the same spine, and add a more precise basin name when repeated evidence no longer fits the old labels.
+5. Use `compare-profiles`, retained history, and scratch result profiles to sort branches into failure basins such as `over_open_leak`, `over_tighten_clamp`, `frontier_neighbor`, and `crossover_regression`. Retire exhausted basins instead of relabeling the same spine, and add a more precise basin name when repeated evidence no longer fits the old labels.
 6. Treat `max_fee_jump` as a neutral diagnostic.
 7. When the search feels trapped, use web search or external literature to import missing topologies instead of relabeling the same design. Bias these searches toward out-of-distribution vocabulary and mechanism classes that would not naturally appear in the incumbent notes; do not satisfy this by searching more in-distribution AMM, LOB, hazard, refill, recapture, inventory, or fee-band terms.
 8. Prefer a fresh `run_id` when the evaluator surface changes or a retained run looks stale or corrupted.
 9. Keep memo-grade probe-batch summaries outside the retained lane. `status`, `history`, and `show-eval` only summarize retained evals, not every scratch candidate you explored.
 10. For long runs, chunk memo writeups every 5 rounds and keep the root `<run_id>.md` file as a stable index entrypoint.
 11. Promote only durable cross-round search lessons into [`docs/combination_anchor_map.md`](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/combination_anchor_map.md); keep ephemeral round narration in the active run notes.
+12. If multiple recent accepted proposals fail before retained eval consideration, pause source work and write a meta-search diagnosis before the next proposer pass. The diagnosis should name the repeated consumer path, the metric tradeoff, the stale assumption that admitted the batch, and the one guardrail to tighten or loosen.
+
+Prompt and eval hygiene for agent-facing search instructions:
+
+- Keep proposer and critic prompts direct, scoped, and delimited with section headers or tables. Avoid asking agents to expose chain-of-thought; ask for the decision fields needed for review.
+- Make success criteria explicit before source work: live seed, live `best_raw`, breakout target, expected metric movement, protected floor slices, kill thresholds, and forbidden consumers.
+- Prefer structured outputs for proposals and critic reviews so the coordinator can compare candidates mechanically instead of reading narrative confidence.
+- Treat the proposal gate itself as an eval. Mine recent failed proposals for negative examples, then update the admission fields or basin table so future critics can reject similar ideas earlier.
+- Official OpenAI references used for these prompt rules: [Prompt engineering](https://developers.openai.com/api/docs/guides/prompt-engineering), [Reasoning best practices](https://developers.openai.com/api/docs/guides/reasoning-best-practices), and [Evaluation best practices](https://developers.openai.com/api/docs/guides/evaluation-best-practices).
+
+## Proposal Quality Gate
+
+Before any accepted proposal reaches a worker, the coordinator or critic should be able to fill this scorecard:
+
+| Field | Required answer |
+| --- | --- |
+| `primary_owner` | The one scaffold interface that owns the new state, evidence, or control. |
+| `consumer_contract` | Which downstream code paths may read it, and exactly what they may do. |
+| `forbidden_consumers` | Paths that must not see it, especially release, refill, recapture, opportunity, calm, final quote, direct fee/base spread, inventory overlay, and hidden relief paths. |
+| `mechanical_difference` | Why the implementation is not the same prior consumer path with new vocabulary. |
+| `expected_movement` | Estimated direction and minimum meaningful movement for `mean_edge`, leakage/selectivity, fee band, and floor slices. |
+| `nearest_negative_example` | The closest failed basin from [`docs/combination_anchor_map.md`](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/combination_anchor_map.md), plus the metric movement that would prove this is not a replay. |
+| `kill_signature` | The first profile shape that stops the worker loop without coefficient polish. |
+
+Reject the proposal if any field is vague. Recent failed rounds show that "outside vocabulary" and "different code path" are too weak: physical-reservoir, danger-theory, process-control, causal-label, service-capacity, and queue/depth ideas still failed when their outputs flowed into the old hazard, protection, release, or side-risk consumers.
 
 ## Subagent Search Pattern
 
@@ -176,6 +202,7 @@ The topology proposer should ask itself and have clear answers for:
 9. What must stay near the incumbent band to make the result interpretable?
 10. Is this a primary topology/interface idea or only a support control? If it is support-only, what larger primary anchor justifies it?
 11. What no-op, over-open, or over-tightened result would retire the idea cleanly?
+12. Which exact `Proposal Quality Gate` row is the weakest, and what evidence would strengthen it before source work?
 
 The saturation/entropy critic should follow entropy guardrails below and reject a batch when:
 
@@ -185,7 +212,8 @@ The saturation/entropy critic should follow entropy guardrails below and reject 
 4. Novelty depends on renamed incumbent-local terms rather than a different topology/interface contract.
 5. A candidate is expected to recover one metric by sacrificing all tracked floor slices (hidden coupling issue). 
 6. The batch lacks a falsifiable expected phenotype and kill signature for each probe.
-7. Any other red flags that would cause entropy collapse or make the batch hard to falsify.
+7. A candidate imports external vocabulary but routes the resulting signal into the same failed downstream consumer path.
+8. Any other red flags that would cause entropy collapse or make the batch hard to falsify.
 
 The critic should pressure-test likely failure modes with concrete questions before accepting a batch:
 
@@ -196,6 +224,8 @@ The critic should pressure-test likely failure modes with concrete questions bef
 5. Which tracked floor slice is most likely to break first, and what kill threshold would stop the worker loop?
 6. If the result is a near-no-op, is it a true `Phenotype-identical no-op plateau`, an `Upstream geometry-codec plateau`, or a different floor-owner failure?
 7. If none of the current basin names fit, what distinct vocabulary should the round use temporarily, and should it be promoted to [`docs/combination_anchor_map.md`](/Users/victorqian/Desktop/opt_arena/simple_amm/docs/combination_anchor_map.md) after repeated evidence?
+8. If the proposal says "new owner," what storage slot, state transition, or fee-output consumer proves ownership has actually moved?
+9. If the proposal says "OOD," which prior in-distribution consumer path has been mechanically severed?
 
 The strategy worker should loop only inside the accepted topology contract:
 
@@ -215,6 +245,8 @@ Use these to keep long-running search loops from collapsing into the incumbent's
 4. Write `--label` and `--description` in structural language that makes the touched interface and expected outcome-space basin obvious.
 5. Periodically import outside evidence (i.e., via web search) when the loop keeps regenerating the same failure basin; prioritize search phrases from outside the current AMM/microstructure vocabulary so the import changes the conceptual frame, not just the citation trail.
 6. Do not treat layer 5/6 as categorically closed. It can receive a bounded diagnostic slot when the proposal is motivated by out-of-distribution vocabulary, names a new evidence owner, forbids incumbent-local release/refill/recapture/opportunity semantics unless they are the explicit target, and has tight floor-loss kill thresholds.
+7. Do not overfit the ban list. When the critic cannot defend four designs because every route maps to a saturated family, stop padding candidates and choose one explicit search-frame move: retire the seed, relax exactly one banned family with predeclared kill thresholds, or demand a new external mechanism class with a new consumer contract.
+8. Track hit rate by accepted proposal, not by round. If a batch has several accepted proposals and none beats live `best_raw`, update the admission gate before the next batch rather than only appending more banned labels.
 
 ## Anti-Patterns
 

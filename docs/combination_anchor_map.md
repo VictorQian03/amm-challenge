@@ -4,15 +4,64 @@ Seeded from `apr21-screen490-1431`.
 This is the persistent cross-round synthesis surface for combination planning.
 Append only durable positive anchors, compatibility/collision notes, and saturated failure modes that remain useful after a single round closes.
 
-## Retained Context
+## 00 Agent Query Index
 
-- Official incumbent for the current `screen490` lane remains `screen_0001` at `485.92377070367183` mean edge.
-- Best raw retained discard for the current `screen490` lane is now `screen_0008` / `weak-consistency-event-feasibility-mask` at `488.03274719863765` mean edge.
+Use this file as a decision map, not as a narrative log. It should answer four agent questions quickly:
+
+1. What is the active seed/comparison frame?
+2. Which anchors are still useful, and under what compatibility constraints?
+3. Which failure basin is this new idea likely to replay?
+4. What must a proposer, critic, or worker decide before source edits?
+
+Read order for a probe-heavy round:
+
+| Need | Read first | Then read |
+| --- | --- | --- |
+| Current seed and parked anchors | [Retained Context](#01-retained-context) | [Anchor Decision Router](#02-anchor-decision-router) |
+| Proposing a candidate | [Immediate Combination Rules](#06-immediate-combination-rules) | [Proposal Admission](#proposal-admission) |
+| Critic narrowing | [Failure Basin Query Table](#05-failure-basin-query-table) | [Critic Gates](#critic-gates) |
+| Diagnosing low hit rate | [Meta Search Lessons](#meta-search-lessons) | [Proposal Admission Scorecard](#proposal-admission-scorecard) |
+| Worker handoff | [Worker Handoff](#worker-handoff) | [Round Lessons To Carry Forward](#round-lessons-to-carry-forward) |
+| Adding durable evidence | [Entry Format](#08-entry-format) | The relevant anchor or basin detail section |
+
+Stable search tokens:
+
+- `seed-frame`: active lane, incumbent, parked comparison anchors.
+- `positive-anchor`: reusable signal with compatibility and collision notes.
+- `support-only`: stabilizer that cannot be a primary thesis.
+- `failure-basin`: repeated profile signature that should reject similar proposals early.
+- `admission-gate`: proposer requirements before source work.
+- `critic-gate`: rejection checks before worker handoff.
+- `worker-stop`: scratch result classification and bounded follow-up rules.
+- `round-lesson`: durable but chronology-shaped evidence from prior rounds.
+- `proposal-scorecard`: structured fields required before source work.
+- `consumer-contract`: allowed and forbidden downstream readers for new evidence.
+- `search-frame-change`: explicit seed, ban-list, or external-mechanism pivot after saturation.
+
+## 01 Retained Context
+
+- Historical Apr21 official incumbent remains `screen_0001` at `485.92377070367183` mean edge; active May09 incumbent state is listed below.
+- Active May09 floor-seed lane is `may09-screen490-floor-0001`, seeded as `screen_0001` / `RegimeSelectorStrongerFloor` at `487.01236396243195`; the recently retired QTRS lane best raw was `screen_0004` / `MajorizationRiskVectorFilter` at `487.7232131981818`, status `discard`.
+- Parked cross-run best raw retained discard is May08/Apr21 `screen_0008` / `WeakConsistencyEventFeasibilityMask` at `488.03274719863765` mean edge.
 - Use this note for scratch-round combination planning only; it does not change retained promotion semantics.
 - External phenotype calibration from the Apr 23 authorized oracle probe: the target space has much lower arb leakage/selectivity, lower mean fee, and materially higher floor slices than current local anchors.
 - Treat oracle information only as phenotype evidence. Do not inspect or copy oracle/reference implementation details unless the active task explicitly authorizes it.
 
-## Positive Anchors By Scaffold Layer Or Family
+## 02 Anchor Decision Router
+
+| Tag | Anchor or family | Agent decision |
+| --- | --- | --- |
+| `seed-frame` | Active May09 `RegimeSelectorStrongerFloor` seed | Use as the current floor-preserving frame, not as permission for selector-polish rounds. |
+| `parked-best-raw` | May08/Apr21 `WeakConsistencyEventFeasibilityMask` | Keep as parked comparison evidence for one-way event-feasibility validation; do not tune residual weights locally. |
+| `parked-qtrs` | Retired `MajorizationRiskVectorFilter` | Treat as a weak measurement anchor from the retired QTRS lane; do not reopen vector-order filter polish without a new owner. |
+| `floor-first-near-miss` | Scratch `RetailFloorFirstStatePartition` | Reuse only with a different primary interface or fee-band-preserving boundary. |
+| `support-only` | `ConsumedWidthRefillAmplificationVeto`, `PassiveRecaptureDecomposition`, `CappedLeakageRebateSuppression` | May stabilize another thesis; must not become the primary search idea. |
+| `layer-5-6-diagnostic` | Inventory/toxic-side and final-quote adjacent work | Admit at most one diagnostic slot, only with out-of-distribution vocabulary and a hard no-release boundary. |
+
+Default stance: one primary anchor, at most one secondary adjunct, and no retained-eval consideration unless the scratch result beats live `best_raw` or creates a genuinely new floor-risk owner with materially better named floor slices.
+Current low-hit-rate diagnosis: recent accepted proposals usually failed because the proposal changed source vocabulary but not the consumer path. The recurring failure is new evidence flowing into existing hazard, protection, release, side-risk, service, or tail-consumer logic without a mechanical boundary that preserves benign floors.
+
+## 03 Positive Anchors By Scaffold Layer Or Family
 
 ### Layer 4 burst / short-gap carry
 
@@ -32,7 +81,7 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
 
 - `screen_0008` / `WeakConsistencyEventFeasibilityMask`
   - Signal: `+2.108976494965816` mean edge vs incumbent and `+0.4893356356802201` vs prior best raw `screen_0007`; improved `arb_loss_to_retail_gain=0.08680487844146438`, `quote_selectivity_ratio=17.3749619948117`, `low_decile_mean_edge=372.41891117598567`, `low_retail_mean_edge=417.8656683116062`, and `low_volatility_mean_edge=465.1871007698987` while keeping `time_weighted_mean_fee=0.004995975154787965` below the Round 39 overcharge kill band.
-  - Compatibility: current best raw anchor for weak LOB event-feasibility validation. It is useful as a one-way uncertainty/feasibility residual that can raise protection evidence when observed trade direction contradicts price-path movement without authorizing release, refill, recapture, opportunity, final-quote edits, or tail-consumer behavior.
+  - Compatibility: parked cross-run best raw anchor for weak LOB event-feasibility validation. It is useful as a one-way uncertainty/feasibility residual that can raise protection evidence when observed trade direction contradicts price-path movement without authorizing release, refill, recapture, opportunity, final-quote edits, or tail-consumer behavior.
   - Collision: do not turn the next round into feasibility-residual coefficient tuning. The productive signal was the mechanical event-path validity owner; local scalar residual weight polish risks replaying firewall / classifier-local floor-drag plateaus.
 
 - `screen_0007` / `QuantileTailRiskSketch`
@@ -92,7 +141,7 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
   - Compatibility: allow exactly one layer-5 exploit slot, ideally paired with an upstream retail-lifting anchor rather than another downstream control.
   - Collision: no new inventory latent, no centering-support magnitude change, no refill/calm-bonus coupling, and no more quiet-state taper clones.
 
-## Support-Only Controls
+## 04 Support-Only Controls
 
 - `ConsumedWidthRefillAmplificationVeto`
   - Signal: near no-op on mean edge, but slight `low_decile_mean_edge`, `low_retail_mean_edge`, and `low_volatility_mean_edge` lift.
@@ -108,6 +157,23 @@ Append only durable positive anchors, compatibility/collision notes, and saturat
   - Signal: tiny support-only positive at `+0.010387304826565469` mean edge vs incumbent, with slight improvements in leakage/selectivity and all tracked floor slices.
   - Use: a narrow shared-rebate safety control when another branch supplies the primary upside.
   - Avoid: stacking it with OOB, burst admission, inventory overlays, or other weak positive anchors before a larger upstream anchor exists.
+
+## 05 Failure Basin Query Table
+
+Use this table before reading the detailed basin entries. If a proposal matches the symptom and source vocabulary, reject it unless it names a mechanical boundary that prevents the listed failure.
+
+| Fast grep token | Likely basin | Reject or require |
+| --- | --- | --- |
+| `release`, `relief`, `discount`, `opportunity`, `calm` | Hidden-release / over-open basins | Hard no-release proof before any consumer can lower protection. |
+| `fee`, `rent`, `surcharge`, `overcharge`, `worst-slice` | Over-tightening / overcharge basins | Benign-capture and floor preservation proof before shared spread changes. |
+| `codec`, `geometry`, `divergence`, `path`, `residual` | Upstream geometry-codec plateau | Named downstream owner that changes protection-vs-benign allocation. |
+| `classifier`, `certificate`, `quorum`, `trust`, `abstention` | Classifier-local floor-drag or estimator over-open | One-way boundary and kill signature versus live `best_raw`. |
+| `allocation`, `account`, `escrow`, `symmetry`, `surplus` | Layer-4 allocation-release basin | Hard floor-preservation invariant before width-release authority. |
+| `tail`, `pickoff`, `stop`, `bucket` | Tail-consumer over-open collapse | Proof that tail evidence cannot widen release or starve floors. |
+| `queue`, `depth`, `latency`, `fill`, `resilient` | Queue/depth open-release collapse | Read-only diagnostic or hard no-release proof before any consumer sees it. |
+| `causal`, `directional`, `mass`, `convexity`, `rank`, `continuity` | Label hidden-release basins | Independent floor invariant; labels alone are not novelty. |
+| `service`, `capacity`, `slope`, `isoquant`, `elasticity` | Service-capacity no-op / floor-loss frame | Different seed or non-service primary owner before more source work. |
+| `process-control`, `Lyapunov`, `barrier`, `CUSUM`, `insurance` | Current floor-seed add-only control failures | New downstream consumer contract, not another label into existing hazard/side-risk consumers. |
 
 ## Saturated Failure Modes
 
@@ -246,27 +312,52 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
   - Repeated sources: `OneWayWidthMonotonicityAssembler`, `ProtectedPathConsumerIsolation`.
   - Use: do not spend another worker on mechanical lower envelopes or private lanes unless the design also proves benign floor preservation and avoids the existing downstream interaction path entirely.
 
-## Immediate Combination Rules
+## 06 Immediate Combination Rules
 
 - Draft around one primary anchor and at most one secondary adjunct.
 - Keep `OrthogonalObservationBasis` optional, not mandatory infrastructure for every probe.
 - Treat `InformationLiquiditySplitBusHardGuard` as the leading upstream anchor; follow-ups must explain how they preserve its leakage/selectivity improvement instead of merely increasing hazard or fees.
-- Treat `screen_0008` / `WeakConsistencyEventFeasibilityMask` as the current best raw anchor for measurement, but require the next batch to add a different primary topology instead of locally polishing event-feasibility residual weights. Keep `screen_0007` as the prior bounded tail-state reference, `screen_0006` as the prior one-way firewall reference, and `screen_0005` as the prior floor-preserving selector reference.
+- Treat active-run `screen_0001` / `RegimeSelectorStrongerFloor` as a floor-seed frame, not a selector-polish target. Keep the retired QTRS `screen_0004` / `MajorizationRiskVectorFilter` and May08/Apr21 `screen_0008` / `WeakConsistencyEventFeasibilityMask` as parked comparison anchors, but require the next batch to add a different primary topology instead of locally polishing selector thresholds, fee-band coefficients, event-feasibility residual weights, flow-share entropy, acceleration pulse coefficients, or bid/ask vector-order filters. Keep `screen_0007` as the prior bounded tail-state reference, `screen_0006` as the prior one-way firewall reference, and `screen_0005` as the active floor-preserving selector seed reference.
 - If `burst-pivot` is reused, pair it only with a floor-preserving partner and keep the burst admission narrow.
 - Layer 5/6 is not categorically banned, but it is no longer an in-distribution exploit-polish surface. Admit at most one layer-5/6 diagnostic slot when it comes from an out-of-distribution mechanism vocabulary, names a new evidence owner, and proves a hard boundary against broad release, refill, recapture, opportunity, inventory-overlay replay, final quote, and fee compression.
 - Pause OOB plus inventory and OOB plus short-gap combinations until a new non-OOB upstream anchor exists.
 - Reject any draft that broadens safe-side opportunity, lowers fees across the board, or stacks several small safe signals with weak attribution.
+- Reject any draft whose only novelty is outside vocabulary. `physical reservoir`, `danger`, `Lyapunov`, `barrier`, `service`, `causal`, `queue`, or similar labels do not count unless the proposal changes which consumer owns the resulting signal.
+- When the current ban set leaves no four-design batch, do not pad the round with weak variants. Record a `search-frame-change`: switch seed/anchor frame, deliberately relax one banned family with tight kill thresholds, or import a new external mechanism class with a new consumer contract.
 
-## Productivity Rules For Future Rounds
+## 07 Productivity Rules For Future Rounds
+
+### Meta Search Lessons
+
+- The hit-rate bottleneck is admission quality, not scratch execution. Workers have repeatedly implemented critic-accepted contracts correctly, but the accepted contracts often allowed hidden release, overcharge, or floor starvation once measured.
+- OOD vocabulary is useful only as a candidate generator. It is not evidence of novelty after many failures from process control, runtime assurance, danger theory, physical reservoirs, queue/depth, service capacity, causal labels, robust demand, and market-design terms.
+- Seed changes can unlock a few weak lifts, but local repair around the new seed saturates quickly. May09 QTRS advanced best raw in tiny steps while giving back floor slices; the floor-seed lane then rejected add-only controls and upstream OOD labels outright.
+- Positive anchors should be treated as interface evidence, not coefficient surfaces. `WeakConsistencyEventFeasibilityMask`, `QuantileTailRiskSketch`, `MonotoneEvidenceFirewallStrict`, and `RegimeSelectorStrongerFloor` are useful because of their owner contracts, not because their local scalar thresholds deserve polishing.
+- The strongest early reject signal is a missing `consumer-contract`. If the proposal cannot name allowed readers, forbidden readers, and a mechanical proof that forbidden readers cannot indirectly act, it is likely to replay a hidden-release or overcharge basin.
+- The second strongest early reject signal is an unpriced floor tradeoff. Proposals that improve leakage/selectivity while raising fees or lowering low-decile / low-retail slices need a floor-repair owner before they deserve another worker.
+- Saturation gates are productive. Rounds 44, 48, May08 Round 3, and May09 QTRS Round 5 were better outcomes than padded batches because they forced a seed or search-frame decision instead of adding more weak names.
 
 ### Proposal Admission
 
 - Use the optional proposer / critic / worker subagent pattern for probe-heavy batches only when parallel help is explicitly requested. Treat it as operator guidance, not harness state; retained eval decisions stay with the main coordinator.
 - In subagent-assisted probe rounds, critic narrowing must not leave fewer than four accepted strategy design improvements. Iterate proposer -> critic -> proposer until at least four distinct topology/layer/vocabulary/design/nonlinearity candidates have positive expected movement in mean edge or a named problem-space metric.
-- Each proposed design must state one primary interface owner, allowed consumers, forbidden consumers, expected metric movement, and a kill signature tied to current best raw `screen_0008`. Reject drafts that describe only a variable, coefficient, or renamed incumbent signal.
+- Each proposed design must state one primary interface owner, allowed consumers, forbidden consumers, expected metric movement, and a kill signature tied to the active run's live `best_raw` plus any explicitly named parked comparison anchor. Reject drafts that describe only a variable, coefficient, or renamed incumbent signal.
 - Require at least one candidate outside incumbent vocabulary before source work if every draft uses only OOB, route/gap hazard, flow ownership, inventory overlay, burst admission, recenter release, quiet-state refill, or scalar hazard damping.
 - Treat public market-design, AMM, and microstructure language as source material, not novelty proof. Prefer deliberately out-of-distribution search vocabulary over more in-distribution AMM/LOB/hazard/refill/recapture/opportunity terms when the current lane is saturated; the proposal still needs a new evidence owner and a protection-preserving boundary.
 - A layer-5/6 proposal is admissible only as a bounded diagnostic when its source vocabulary is out-of-distribution and the interface contract prevents incumbent-local exploit polish. Reject layer-5/6 drafts that merely rename safe-side service, refill, recapture, inventory centering, opportunity, or final-quote behavior.
+
+### Proposal Admission Scorecard
+
+Use this before worker handoff. A candidate with any blank or narrative-only answer should be rejected or sent back to proposer.
+
+| Field | Accept | Reject |
+| --- | --- | --- |
+| `primary_owner` | Names one scaffold interface and its state transition. | Names a family, label, or coefficient without ownership. |
+| `consumer_contract` | Lists allowed readers and exact allowed actions. | Lets existing hazard/protection/release consumers infer behavior implicitly. |
+| `forbidden_consumers` | Mechanically bars release, refill, recapture, opportunity, calm, final quote, direct fee/base spread, inventory overlay, and hidden relief unless one is the explicit owner. | Says "bounded" or "one-way" without proving who cannot read it. |
+| `nearest_negative_example` | Names the closest basin and the profile movement that would distinguish this probe. | Claims novelty because the source vocabulary is new. |
+| `metric_budget` | States expected movement and max tolerated damage for `mean_edge`, `arb_loss_to_retail_gain`, `quote_selectivity_ratio`, `time_weighted_mean_fee`, `low_decile_mean_edge`, `low_retail_mean_edge`, and `low_volatility_mean_edge`. | Optimizes one metric while hand-waving floor slices. |
+| `kill_signature` | Stops on no-op, hidden release, overcharge, or floor-starvation profiles before coefficient polish. | Allows follow-up tweaks after the first result lands in a known basin. |
 
 ### Critic Gates
 
@@ -281,12 +372,14 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
   - keep upstream interpretation changes upstream of shared spread and side-specific protection
   - state allowed consumers and forbidden consumers before writing Solidity
   - prove layer ownership in the plan before source work
+- Reject OOD proposals that fail the same `consumer-contract` check as in-distribution proposals. A new metaphor cannot rescue an old consumer path.
+- If the critic rejects most of a batch for the same reason, update the active run note and this map before requesting another proposer pass. Do not let the next prompt rediscover the same negative examples from scratch.
 
 ### Worker Handoff
 
 - Workers should receive only critic-accepted contracts with a single scratch path, validation command, probe command, and stop rule. They should not open new topology families mid-worker-loop.
 - The first scratch result should be classified against the precise failure-mode vocabulary above before any bounded tweak. If the result lands in `Phenotype-identical no-op plateau`, `Upstream geometry-codec plateau`, `Over-open leak basin`, or `Broad-protection starvation basin`, stop rather than coefficient-polish.
-- A scratch candidate should receive retained-eval consideration only if it beats current best raw `screen_0008` or misses it with a genuinely new floor-risk owner and materially better named floor slices. Near-incumbent safety alone is not enough.
+- A scratch candidate should receive retained-eval consideration only if it beats the active run's live `best_raw` or misses it with a genuinely new floor-risk owner and materially better named floor slices. Near-incumbent safety alone is not enough.
 
 ### Round Lessons To Carry Forward
 
@@ -315,3 +408,29 @@ Keep this section extensible. Add a new failure mode when repeated probes share 
 - Round 46 scratch lesson: the narrow no-floor-loss service-capacity relaxation did not survive measurement. `IsofloorServiceSlopeSplitter` and `ProtectedSideServiceElasticity` were near-incumbent no-ops with floor loss versus `screen_0008`, `RetailFloorFirstServiceOwner` dragged every tracked floor and worsened leakage/selectivity, and `VolatilityIsoquantServiceMap` was incumbent-equivalent. Do not continue service-capacity curves, slope splitters, retail-floor gates, isoquant maps, or protected-side elasticity under the current `screen_0008` anchor; the next round needs either a different seed/anchor frame or a non-service primary owner mechanically distinct from labels, accounts, allocation, fee rights, downstream relief, and service gating.
 - Round 47 scratch lesson: scratch-only retained-snapshot seeding did not break out. `SplitBusFeasibilityUnion` and `FirewallEventPathConjunction` improved leakage/selectivity only by overcharging and losing all tracked floors, while `SelectorFeasibilityCrosscheck` and `QuantileFirewallIngress` collapsed into hidden-release / floor-collapse basins. Do not keep unioning split-bus, feasibility, selector, tail, or firewall evidence across retained snapshots; those seed-frame recombinations are saturated under the current lane.
 - Round 48 saturation gate: under the current ban set, proposer could not defend four genuinely distinct non-service, non-label primary owners without replaying saturated basins. Invariant/geometry holds, floor consensus, benign-capture caps, bandpass adjuncts, monotonicity proofs, and reserve-neutrality checks all map back to known failures. The next operator decision must either retire this retained lane and start a fresh run from a new seed/anchor frame, or explicitly relax one banned family for a tightly bounded diagnostic batch with concrete kill thresholds.
+- May08 Round 1 scratch lesson: after seeding a fresh lane from `screen_0008`, post-WCEF sensor floors did not break out. `WENOShockSensor`, `SyndromeProtectedTripletCode`, `PhasePlaneCurlWitness`, and `BarrierCertificateRiskFloor` all routed new layer-1/2/3 evidence into the existing monotone / hazard / side-risk consumer path and collapsed into lower-fee hidden release with broken low-decile or low-retail floors; `MaxPlusRiskAssembler` was a sub-seed risk-composition reshuffle, and `ElasticEnergyReservoir` was phenotype-identical. Do not propose more WCEF-adjacent sensor floors unless the downstream consumer contract is mechanically changed so the signal cannot indirectly feed release, rebate, opportunity, refill, or calm paths.
+- May08 Round 2 scratch lesson: consumer-contract isolation around WCEF also stayed below seed. `FeasibilityHoldOnlyBus` was nearest but still lowered fees, worsened leakage/selectivity, and missed seed; `DivergenceWriteLock` was a phenotype-identical no-op; `CalmProvenanceSeal` and `TypedSpreadAtomCutCap` overcharged into floor loss / benign-capture starvation; `CommitAfterPricingBarrier` and `KirchhoffCutDiode` collapsed into hidden release. Do not keep rearranging monotone evidence, calm provenance, cut eligibility, latent commit order, spread atoms, or divergence writes as primary owners under this seed.
+- May08 Round 3 blocker: after Rounds 1-2, the proposer could not defend four genuinely distinct positive-expected designs without replaying saturated WCEF-adjacent sensor floors, consumer wiring, geometry-codec plateaus, state-write no-ops, direct fee / relief / spread-atom edits, or banned label families. The next productive move requires a search-frame change: fresh outside mechanism vocabulary or a different seed / anchor frame before more source work.
+- May09 Round 1 scratch lesson: changing seed frame back to `screen_0007` / `QuantileTailRiskSketch` did not make tail consumer-right rewiring productive. `TailCutImmunityInvariant`, `ToxicSideCapFloorDecoupler`, and `CounterflowProofBeforeRelief` all improved or held leakage/selectivity only by over-tightening and losing mean/floors, while `ShortLongTailConsumerSplit` was a near miss below seed with worse leakage/selectivity and lower low-retail / low-volatility floors. Do not keep rearranging QTRS tail reserve, side cap/floor split, long-tail calm suppression, or relief-proof gates unless the proposal introduces a different primary owner outside tail consumer rights.
+- May09 Round 2 scratch lesson: non-tail side-risk probes produced one tiny best-raw discard but did not approach breakout. `FlowShareEntropyRiskGate` advanced best raw to `screen_0002` at `487.57113729193804` but missed promotion margin, slightly worsened leakage/selectivity, and gave back low-decile / low-retail floors. `SlippageElasticityResponseOwner` was sub-seed, `ProtectionMassConservationRouter` collapsed into allocation-release hidden release, and `AdverseBenignOrthogonalBasis` replayed split-bus hidden release. Treat flow-share entropy as a weak measurement anchor only; do not keep polishing flow entropy, fixed-mass protection routing, adverse/benign classifier bases, or response-elasticity side-risk assembly without a new primary owner.
+- May09 Round 3 scratch lesson: `VolatilityAccelerationCircuit` advanced best raw to `screen_0003` at `487.7145544914556`, but the gain is a risky overprotection profile: leakage/selectivity improved sharply while `time_weighted_mean_fee=0.00522064283762958` rose above the warning band and low-decile / low-retail fell versus QTRS. `AdverseDurationOccupancyBox` showed the same protection-vs-floor tradeoff in weaker form, `BenignMicrotradeSafeBand` was phenotype-near no-op, and `CreditStackExclusivityCompiler` over-tightened into floor loss. Future rounds should repair the acceleration anchor's low-decile / low-retail loss with a different primary owner, not polish acceleration pulse coefficients, duration occupancy, microtrade caps, or credit-stack exclusivity.
+- May09 Round 4 scratch lesson: proposer/critic replacement was required before workers because the first batch only yielded two accepted designs. `MajorizationRiskVectorFilter` advanced best raw to `screen_0004` at `487.7232131981818`, but the lift was only `+0.0086587067261803` over `screen_0003` and still failed the floor-repair kill signature with `low_decile_mean_edge=371.5332084297802`, `low_retail_mean_edge=417.61900522444324`, and `time_weighted_mean_fee=0.005220196739061503`. `RiskMemoryAntiWindupIntegrator` was phenotype-identical to `screen_0003`, while `FalsePositiveProtectionScorecard` and `ShadowPriceConsensusBand` collapsed into hidden-release / overcharge floor failure. Future rounds should not continue false-positive scorecards, shadow consensus bands, vector-order side filters, or anti-windup memory writes without a new floor-preserving owner.
+- May09 Round 5 saturation gate: QTRS-local search could not defend six non-replay candidates after excluding Round 1-4 families. Size/impact efficiency, counterflow proofs, hazard write backpressure, fee envelopes, reserve/service envelopes, and proper-score trust owners all mapped back to saturated response-elasticity, signed-impact, anti-windup/calm-barrier, direct-fee/final-compiler, geometry/service, or scorecard/consensus/robust-estimator families. The successor lane intentionally pivots to `screen_0005` as a floor-preserving seed frame; do not reopen QTRS-local source work unless the banned-family set is explicitly relaxed.
+- May09 floor-seed Round 1 scratch lesson: new add-only control/safety evidence did not help the `screen_0005` seed. `KnockInSideInsurance` was exact phenotype replay, while `CUSUMInnovationSentinel`, `LyapunovDriftFloorOwner`, and `BarrierCertificateFloorOwner` collapsed into leakage/selectivity and floor failures. Continue to ban robust-demand / median-of-means and execution-price residual families, and do not route more process-control, Lyapunov, barrier-certificate, or side-insurance labels into the current hazard/side-risk consumers without a new downstream consumer contract.
+- May09 floor-seed Round 2 scratch lesson: after a user-triggered entropy correction, OOD upstream/protection-sizing imports still failed under the `screen_0005` seed. `FixedReservoirObservationReadout`, `RecoveryHalfLifeHazardDecay`, `DangerTensorRiskDecomposition`, and `DangerSafeMemoryWriteMux` all collapsed into low-fee hidden release with high selectivity and broken floor slices; `SlowManifoldLatentProjector` improved only low-volatility while still missing seed mean and damaging low-decile / low-retail. Do not continue physical-reservoir readouts, recovery-half-life memory persistence, slow-manifold latent catch-up, danger-tensor decomposition, or danger/safe write-routing into the current hazard/protection path unless a future search-frame change supplies a new downstream owner that cannot become hidden release.
+
+## 08 Entry Format
+
+When adding durable evidence, keep entries queryable:
+
+```md
+- `CandidateOrBasinName`
+  - Tag: `positive-anchor` | `support-only` | `failure-basin` | `round-lesson`
+  - Source: run id, round, and scratch or retained eval id.
+  - Signal: metric movement versus live `best_raw` or named parked anchor.
+  - Compatibility: when this evidence can be reused.
+  - Collision: what proposal shape it should reject early.
+  - Kill signature: concrete profile movement that ends follow-up.
+```
+
+Do not add round narration here unless the lesson remains useful after the round closes. Keep reusable critic questions in `docs/hill_climb.md`; keep this file focused on anchors, basin vocabulary, and decision routing.

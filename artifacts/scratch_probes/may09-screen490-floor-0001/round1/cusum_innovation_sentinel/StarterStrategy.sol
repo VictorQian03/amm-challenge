@@ -4,8 +4,8 @@ pragma solidity ^0.8.24;
 import {AMMStrategyBase} from "./AMMStrategyBase.sol";
 import {TradeInfo} from "./IAMMStrategy.sol";
 
-/// @title Latent State Quote Engine
-/// @notice Estimate fair value and market state first, then map state into spread, side risk, and side opportunity.
+/// @title CUSUM Innovation Sentinel
+/// @notice Add a local sequential innovation sentinel to volatility and hazard estimation.
 contract Strategy is AMMStrategyBase {
     uint256 internal constant BASE_FEE = 16 * BPS;
 
@@ -130,15 +130,30 @@ contract Strategy is AMMStrategyBase {
                 WAD
             );
         }
-        uint256 volObservation = _max(liquidityDemand, informationStress);
         uint256 clusterObservation = wmul(
             informationStress,
             _oneMinus(wmul(gapShort, _oneMinus(wmul(calmSmallTradeGate, 4200 * BPS))))
         );
+        // Local positive-innovation accumulator; no new persistent state is written.
+        uint256 cusumInnovation = 0;
+        uint256 innovationBaseline = _max(volMemory, hazardMemory);
+        if (informationStress > innovationBaseline) {
+            cusumInnovation = informationStress - innovationBaseline;
+        }
+        if (liquidityDemand > volMemory) {
+            cusumInnovation += wmul(liquidityDemand - volMemory, 3600 * BPS);
+        }
+        cusumInnovation = wmul(cusumInnovation, _oneMinus(wmul(gapShort, 2600 * BPS)));
+        if (clusterObservation > 0) {
+            cusumInnovation += wmul(clusterObservation, 2400 * BPS);
+        }
+        uint256 volObservation = _max(liquidityDemand, informationStress);
+        volObservation += wmul(cusumInnovation, 850 * BPS);
         uint256 hazardObservation = _max(
             divergenceVol,
             informationStress + wmul(clusterObservation, 8200 * BPS)
         );
+        hazardObservation += wmul(cusumInnovation, 1450 * BPS);
         uint256 calmObservation = wmul(
             gapLong,
             _oneMinus(clamp(hazardObservation * 6, 0, WAD))
@@ -472,7 +487,7 @@ contract Strategy is AMMStrategyBase {
     }
 
     function getName() external pure override returns (string memory) {
-        return "LatentStateQuoteEngine";
+        return "CUSUMInnovationSentinel";
     }
 
     function _blend(uint256 prev, uint256 sample, uint256 alpha) internal pure returns (uint256) {

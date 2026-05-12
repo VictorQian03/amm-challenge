@@ -4,8 +4,8 @@ pragma solidity ^0.8.24;
 import {AMMStrategyBase} from "./AMMStrategyBase.sol";
 import {TradeInfo} from "./IAMMStrategy.sol";
 
-/// @title Latent State Quote Engine
-/// @notice Estimate fair value and market state first, then map state into spread, side risk, and side opportunity.
+/// @title Knock-In Side Insurance
+/// @notice Estimate fair value and market state first, then add bounded side insurance only after adverse excursion knocks in.
 contract Strategy is AMMStrategyBase {
     uint256 internal constant BASE_FEE = 16 * BPS;
 
@@ -306,6 +306,25 @@ contract Strategy is AMMStrategyBase {
             wmul(buyShare, sideHazard) +
             wmul(cheapSignal, 8500 * BPS) +
             askFlowRisk;
+        uint256 adverseExcursion = _max(divergenceMemory, divergence);
+        if (adverseExcursion > 14 * BPS && hazardMemory > 450 * BPS) {
+            uint256 knockInExcess = adverseExcursion - 14 * BPS;
+            uint256 knockInSideInsurance = wmul(
+                clamp(
+                    knockInExcess +
+                        wmul(flowPressure, 900 * BPS) +
+                        wmul(oneSidedFlow, 1200 * BPS),
+                    0,
+                    1800 * BPS
+                ),
+                3200 * BPS
+            );
+            if (toxicBidSide) {
+                bidRiskSignal += knockInSideInsurance;
+            } else {
+                askRiskSignal += knockInSideInsurance;
+            }
+        }
 
         uint256 opportunityGate = wmul(
             calmMemory,
@@ -472,7 +491,7 @@ contract Strategy is AMMStrategyBase {
     }
 
     function getName() external pure override returns (string memory) {
-        return "LatentStateQuoteEngine";
+        return "KnockInSideInsurance";
     }
 
     function _blend(uint256 prev, uint256 sample, uint256 alpha) internal pure returns (uint256) {

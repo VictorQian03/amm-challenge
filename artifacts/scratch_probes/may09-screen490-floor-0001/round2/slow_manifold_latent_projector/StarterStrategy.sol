@@ -222,6 +222,21 @@ contract Strategy is AMMStrategyBase {
             }
             latentSpot = _blend(latentSpot, currentSpot, quietRecenter);
         }
+        if (gap >= 2) {
+            uint256 slowProjectorStress = clamp(
+                wmul(hazardMemory, 2600 * BPS) +
+                    wmul(flowPressure, 2200 * BPS) +
+                    wmul(informationStress, 5200 * BPS),
+                0,
+                WAD
+            );
+            uint256 slowProjector = wmul(quietGate, _oneMinus(slowProjectorStress));
+            slowProjector = wmul(slowProjector, gap >= 5 ? 190 * BPS : 80 * BPS);
+            if (continuationVeto > 0) {
+                slowProjector = wmul(slowProjector, _oneMinus(continuationVeto));
+            }
+            latentSpot = _blend(latentSpot, currentSpot, slowProjector);
+        }
         if (gap >= 4) {
             uint256 postRecenterDivergence =
                 latentSpot == 0 ? 0 : wdiv(absDiff(currentSpot, latentSpot), latentSpot);
@@ -472,7 +487,7 @@ contract Strategy is AMMStrategyBase {
     }
 
     function getName() external pure override returns (string memory) {
-        return "LatentStateQuoteEngine";
+        return "SlowManifoldLatentProjector";
     }
 
     function _blend(uint256 prev, uint256 sample, uint256 alpha) internal pure returns (uint256) {

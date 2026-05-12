@@ -630,6 +630,7 @@ def test_stable_hill_climb_docs_do_not_reference_removed_queue_surfaces():
     assert "docs/plans/active/" in docs_text
     assert "artifacts/scratch_probes/<run_id>/" in docs_text
     assert "primary checkout" in docs_text
+    assert "Do not deduplicate snapshots across run directories" in docs_text
     assert "<run_id>.md" in docs_text
     assert "<run_id>-round01-05.md" in docs_text
     assert "5-round" in docs_text
@@ -693,23 +694,45 @@ def test_stable_hill_climb_docs_do_not_reference_removed_queue_surfaces():
 
 
 def test_screen490_plan_lifecycle_points_active_and_completed_runs_correctly():
-    active_index = Path("docs/plans/active/may08-screen490-0001.md")
+    active_index = Path("docs/plans/active/may09-screen490-floor-0001.md")
+    parked_index = Path("docs/plans/completed/may08-screen490-0001.md")
     completed_index = Path("docs/plans/completed/apr21-screen490-1431.md")
+    qtrs_completed_index = Path("docs/plans/completed/may09-screen490-qtrs-0001.md")
 
     assert active_index.exists()
+    assert parked_index.exists()
+    assert not Path("docs/plans/active/may08-screen490-0001.md").exists()
     assert completed_index.exists()
+    assert qtrs_completed_index.exists()
 
     index_text = active_index.read_text()
 
     assert "active index" in index_text
+    assert "Global hill-climb index status: `active`" in index_text
     assert "Rounds 01-05" in index_text
     assert "current latest span" in index_text
     assert "Current write target" in index_text
-    assert "may08-screen490-0001-round01-05.md" in index_text
+    assert "may09-screen490-floor-0001-round01-05.md" in index_text
     assert "Latest populated span: `round01-05`" in index_text
-    assert "Current write target: `may08-screen490-0001-round01-05.md`" in index_text
+    assert (
+        "Current write target: `may09-screen490-floor-0001-round01-05.md`" in index_text
+    )
     assert "zero-padded inclusive 5-round span" in index_text
-    assert "create the next 5-round span only after the current one closes" in index_text
+    assert (
+        "create the next 5-round span only after the current one closes" in index_text
+    )
+
+    parked_text = parked_index.read_text()
+    assert "parked index" in parked_text
+    assert "Retained lane status: `parked`" in parked_text
+    assert "Global hill-climb index status: `historical`" in parked_text
+    assert "Current write target: none; this lane is parked." in parked_text
+    assert "use the active May09 floor-seed run note instead" in parked_text
+    assert "docs/plans/completed/may08-screen490-0001.md" in parked_text
+    assert (
+        "Current active lane: `docs/plans/active/may09-screen490-floor-0001.md`"
+        in parked_text
+    )
 
     completed_text = completed_index.read_text()
     assert "completed index" in completed_text
@@ -717,7 +740,28 @@ def test_screen490_plan_lifecycle_points_active_and_completed_runs_correctly():
     assert "Rounds 46-50" in completed_text
     assert "Latest populated span: `round46-50`" in completed_text
     assert "Current write target: none; this run is closed." in completed_text
-    assert "Follow-up active retained lane: `docs/plans/active/may08-screen490-0001.md`" in completed_text
+    assert (
+        "Immediate follow-up retained lane: `docs/plans/completed/may08-screen490-0001.md`"
+        in completed_text
+    )
+    assert (
+        "Current active retained successor: `docs/plans/active/may09-screen490-qtrs-0001.md`"
+        not in completed_text
+    )
+    assert (
+        "Current active retained successor: `docs/plans/active/may09-screen490-floor-0001.md`"
+        in completed_text
+    )
+
+    qtrs_text = qtrs_completed_index.read_text()
+    assert "completed index" in qtrs_text
+    assert "Global hill-climb index status: `historical`" in qtrs_text
+    assert (
+        "Successor active lane: `docs/plans/active/may09-screen490-floor-0001.md`"
+        in qtrs_text
+    )
+    assert "Round 5 recorded QTRS-local saturation" in qtrs_text
+    assert "RegimeSelectorStrongerFloor" in active_index.read_text()
 
 
 def test_failure_signature_uses_guidance_basins_and_keeps_max_fee_jump_neutral(tmp_path):

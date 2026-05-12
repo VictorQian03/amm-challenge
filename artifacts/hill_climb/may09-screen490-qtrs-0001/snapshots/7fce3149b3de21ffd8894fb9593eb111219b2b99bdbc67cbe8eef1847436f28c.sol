@@ -4,8 +4,8 @@ pragma solidity ^0.8.24;
 import {AMMStrategyBase} from "./AMMStrategyBase.sol";
 import {TradeInfo} from "./IAMMStrategy.sol";
 
-/// @title Latent State Quote Engine
-/// @notice Estimate fair value and market state first, then map state into spread, side risk, and side opportunity.
+/// @title Quantile Tail Risk Sketch
+/// @notice Tests coarse tail buckets as classifier/firewall inputs without turning them into a geometry codec.
 contract Strategy is AMMStrategyBase {
     uint256 internal constant BASE_FEE = 16 * BPS;
 
@@ -96,49 +96,35 @@ contract Strategy is AMMStrategyBase {
         if (divergence > 6 * BPS) {
             divergenceVol += wmul(divergence - 6 * BPS, divergence);
         }
-        uint256 liquidityDemand = tradeSize;
-        if (tradeSize > 4 * BPS) {
-            liquidityDemand = clamp(
-                liquidityDemand + wmul(tradeSize - 4 * BPS, 2200 * BPS),
-                0,
-                WAD
-            );
+        uint256 volObservation = _max(tradeSize, _max(spotJumpVol, divergenceVol));
+        uint256 clusterObservation = wmul(volObservation, _oneMinus(gapShort));
+        uint256 hazardObservation = _max(divergenceVol, volObservation + wmul(clusterObservation, 7000 * BPS));
+        uint256 tailSignal = _max(tradeSize, _max(spotJumpVol, divergenceVol));
+        uint256 tailBucket = 0;
+        if (tailSignal > 22 * BPS) {
+            tailBucket = 3;
+        } else if (tailSignal > 13 * BPS) {
+            tailBucket = 2;
+        } else if (tailSignal > 8 * BPS) {
+            tailBucket = 1;
         }
-        uint256 informationStress = _max(spotJumpVol, divergenceVol);
-        uint256 calmSmallTradeGate = wmul(
-            gapLong,
-            _oneMinus(
-                clamp(
-                    wmul(liquidityDemand, 4700 * BPS) +
-                        wmul(informationStress, 8400 * BPS),
-                    0,
-                    WAD
-                )
-            )
-        );
-        if (liquidityDemand > informationStress) {
-            uint256 demandStressWeight = 3200 * BPS;
-            if (calmSmallTradeGate > 0) {
-                demandStressWeight = wmul(
-                    demandStressWeight,
-                    _oneMinus(clamp(wmul(calmSmallTradeGate, 6400 * BPS), 0, 2800 * BPS))
-                );
-            }
-            informationStress = clamp(
-                informationStress + wmul(liquidityDemand - informationStress, demandStressWeight),
-                0,
-                WAD
-            );
-        }
-        uint256 volObservation = _max(liquidityDemand, informationStress);
-        uint256 clusterObservation = wmul(
-            informationStress,
-            _oneMinus(wmul(gapShort, _oneMinus(wmul(calmSmallTradeGate, 4200 * BPS))))
-        );
-        uint256 hazardObservation = _max(
+        uint256 tailBucketFloor = tailBucket == 0
+            ? 0
+            : tailBucket == 1
+                ? 4 * BPS
+                : tailBucket == 2
+                    ? 8 * BPS
+                    : 13 * BPS;
+        uint256 monotoneEvidenceFloor = _max(
             divergenceVol,
-            informationStress + wmul(clusterObservation, 8200 * BPS)
+            wmul(clusterObservation, 5400 * BPS)
         );
+        if (monotoneEvidenceFloor < tailBucketFloor) {
+            monotoneEvidenceFloor = tailBucketFloor;
+        }
+        if (hazardObservation < monotoneEvidenceFloor) {
+            hazardObservation = monotoneEvidenceFloor;
+        }
         uint256 calmObservation = wmul(
             gapLong,
             _oneMinus(clamp(hazardObservation * 6, 0, WAD))
@@ -149,7 +135,7 @@ contract Strategy is AMMStrategyBase {
         calmMemory = _blend(calmMemory, calmObservation, ALPHA_CALM);
         divergenceMemory = _blend(divergenceMemory, divergence, ALPHA_DIVERGENCE);
 
-        uint256 flowPulse = liquidityDemand + wmul(volObservation, 4500 * BPS);
+        uint256 flowPulse = tradeSize + wmul(volObservation, 4500 * BPS);
         uint256 crossPulse = wmul(flowPulse, 2200 * BPS);
         if (trade.isBuy) {
             buyFlow = clamp(buyFlow + flowPulse, 0, WAD);
@@ -165,16 +151,6 @@ contract Strategy is AMMStrategyBase {
         uint256 flowImbalance = totalFlow == 0 ? 0 : wdiv(absDiff(buyFlow, sellFlow), totalFlow);
         uint256 flowPressure = _blend(slots[9], flowImbalance, ALPHA_FLOW);
         uint256 oneSidedFlow = wmul(flowImbalance, _max(volMemory, hazardMemory));
-        uint256 adverseSelectionComponent = wmul(
-            hazardMemory,
-            clamp(
-                wmul(flowPressure, 2200 * BPS) +
-                    wmul(informationStress, 5200 * BPS) +
-                    wmul(divergenceMemory, 3800 * BPS),
-                0,
-                WAD
-            )
-        );
         bool toxicBidSide = currentSpot >= latentSpot;
         bool continuationAligned =
             toxicBidSide ? buyFlow >= sellFlow : sellFlow > buyFlow;
@@ -183,7 +159,8 @@ contract Strategy is AMMStrategyBase {
             continuationVeto = clamp(
                 wmul(flowPressure, 2800 * BPS) +
                     wmul(oneSidedFlow, 2200 * BPS) +
-                    wmul(_max(divergenceMemory, spotJump), 1400 * BPS),
+                    wmul(_max(divergenceMemory, spotJump), 1400 * BPS) +
+                    tailBucket * 90 * BPS,
                 0,
                 4500 * BPS
             );
@@ -245,6 +222,7 @@ contract Strategy is AMMStrategyBase {
         }
 
         uint256 sideHazard = hazardMemory + wmul(flowImbalance, _max(volMemory, divergenceMemory));
+        sideHazard += wmul(monotoneEvidenceFloor, 950 * BPS);
         if (sideHazard > WAD) {
             sideHazard = WAD;
         }
@@ -343,6 +321,19 @@ contract Strategy is AMMStrategyBase {
         sharedSpread = sharedSpread > sharedRebate ? sharedSpread - sharedRebate : MIN_FEE;
         uint256 bidProtection = wmul(bidRiskSignal, 5400 * BPS);
         uint256 askProtection = wmul(askRiskSignal, 5400 * BPS);
+        uint256 tailProtectionCap = tailBucket == 0
+            ? 11 * BPS
+            : tailBucket == 1
+                ? 17 * BPS
+                : tailBucket == 2
+                    ? 26 * BPS
+                    : 38 * BPS;
+        if (bidProtection > tailProtectionCap) {
+            bidProtection = tailProtectionCap;
+        }
+        if (askProtection > tailProtectionCap) {
+            askProtection = tailProtectionCap;
+        }
         uint256 oneSidedProtection = wmul(oneSidedFlow, 2800 * BPS);
         uint256 healingRebate = wmul(directionalBurstFee, 2800 * BPS);
         uint256 inventoryGate = wmul(
@@ -369,17 +360,9 @@ contract Strategy is AMMStrategyBase {
             inventoryCenteringOffset = centerCap;
         }
         if (currentSpot >= latentSpot) {
-            bidProtection +=
-                directionalBurstFee +
-                oneSidedProtection +
-                inventoryCenteringOffset +
-                wmul(adverseSelectionComponent, 1350 * BPS);
+            bidProtection += directionalBurstFee + oneSidedProtection + inventoryCenteringOffset;
         } else {
-            askProtection +=
-                directionalBurstFee +
-                oneSidedProtection +
-                inventoryCenteringOffset +
-                wmul(adverseSelectionComponent, 1350 * BPS);
+            askProtection += directionalBurstFee + oneSidedProtection + inventoryCenteringOffset;
         }
 
         uint256 bidOpportunityCut = wmul(bidOpportunitySignal, 8200 * BPS);
@@ -472,7 +455,7 @@ contract Strategy is AMMStrategyBase {
     }
 
     function getName() external pure override returns (string memory) {
-        return "LatentStateQuoteEngine";
+        return "QuantileTailRiskSketch";
     }
 
     function _blend(uint256 prev, uint256 sample, uint256 alpha) internal pure returns (uint256) {

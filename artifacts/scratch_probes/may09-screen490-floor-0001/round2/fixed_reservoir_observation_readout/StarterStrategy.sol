@@ -143,6 +143,33 @@ contract Strategy is AMMStrategyBase {
             gapLong,
             _oneMinus(clamp(hazardObservation * 6, 0, WAD))
         );
+        uint256 reservoirImmediacy = _max(liquidityDemand, clusterObservation);
+        uint256 reservoirCurvature = _max(
+            wmul(reservoirImmediacy, reservoirImmediacy),
+            wmul(informationStress, hazardObservation)
+        );
+        uint256 reservoirPersistence = wmul(
+            _oneMinus(gapShort),
+            _max(spotJumpVol, divergenceVol)
+        );
+        uint256 reservoirReadout = clamp(
+            wmul(reservoirCurvature, 4200 * BPS) +
+                wmul(reservoirPersistence, 900 * BPS),
+            0,
+            14 * BPS
+        );
+        if (reservoirReadout > 0) {
+            volObservation = clamp(
+                volObservation + wmul(reservoirReadout, 3500 * BPS),
+                0,
+                WAD
+            );
+            hazardObservation = clamp(
+                hazardObservation + reservoirReadout,
+                0,
+                WAD
+            );
+        }
 
         volMemory = _blend(volMemory, volObservation, ALPHA_VOL);
         hazardMemory = _blend(hazardMemory, hazardObservation, ALPHA_HAZARD);
@@ -472,7 +499,7 @@ contract Strategy is AMMStrategyBase {
     }
 
     function getName() external pure override returns (string memory) {
-        return "LatentStateQuoteEngine";
+        return "FixedReservoirObservationReadout";
     }
 
     function _blend(uint256 prev, uint256 sample, uint256 alpha) internal pure returns (uint256) {

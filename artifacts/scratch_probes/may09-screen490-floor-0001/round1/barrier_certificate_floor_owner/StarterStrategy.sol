@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {AMMStrategyBase} from "./AMMStrategyBase.sol";
 import {TradeInfo} from "./IAMMStrategy.sol";
 
-/// @title Latent State Quote Engine
+/// @title Barrier Certificate Floor Owner
 /// @notice Estimate fair value and market state first, then map state into spread, side risk, and side opportunity.
 contract Strategy is AMMStrategyBase {
     uint256 internal constant BASE_FEE = 16 * BPS;
@@ -165,8 +165,11 @@ contract Strategy is AMMStrategyBase {
         uint256 flowImbalance = totalFlow == 0 ? 0 : wdiv(absDiff(buyFlow, sellFlow), totalFlow);
         uint256 flowPressure = _blend(slots[9], flowImbalance, ALPHA_FLOW);
         uint256 oneSidedFlow = wmul(flowImbalance, _max(volMemory, hazardMemory));
+        uint256 barrierHazardEvidence =
+            _barrierCertificateFloor(volMemory, divergenceMemory, flowPressure, spotJump);
+        uint256 hazardEvidence = _max(hazardMemory, barrierHazardEvidence);
         uint256 adverseSelectionComponent = wmul(
-            hazardMemory,
+            hazardEvidence,
             clamp(
                 wmul(flowPressure, 2200 * BPS) +
                     wmul(informationStress, 5200 * BPS) +
@@ -244,7 +247,7 @@ contract Strategy is AMMStrategyBase {
             cheapSignal = divergenceMemory;
         }
 
-        uint256 sideHazard = hazardMemory + wmul(flowImbalance, _max(volMemory, divergenceMemory));
+        uint256 sideHazard = hazardEvidence + wmul(flowImbalance, _max(volMemory, divergenceMemory));
         if (sideHazard > WAD) {
             sideHazard = WAD;
         }
@@ -472,7 +475,7 @@ contract Strategy is AMMStrategyBase {
     }
 
     function getName() external pure override returns (string memory) {
-        return "LatentStateQuoteEngine";
+        return "BarrierCertificateFloorOwner";
     }
 
     function _blend(uint256 prev, uint256 sample, uint256 alpha) internal pure returns (uint256) {
@@ -507,5 +510,33 @@ contract Strategy is AMMStrategyBase {
             return WAD / 2;
         }
         return wdiv(part, total);
+    }
+
+    function _barrierCertificateFloor(
+        uint256 volatility,
+        uint256 divergence,
+        uint256 flow,
+        uint256 jump
+    ) internal pure returns (uint256) {
+        uint256 marketDistance = _max(
+            _floorDistance(volatility, 9 * BPS),
+            _floorDistance(divergence, 5 * BPS)
+        );
+        uint256 pathDistance = _max(
+            _floorDistance(flow, 450 * BPS),
+            _floorDistance(jump, 3 * BPS)
+        );
+        if (marketDistance == 0 || pathDistance == 0) {
+            return 0;
+        }
+        return clamp(
+            wmul(marketDistance, 6200 * BPS) + wmul(pathDistance, 3800 * BPS),
+            0,
+            WAD
+        );
+    }
+
+    function _floorDistance(uint256 value, uint256 floor) internal pure returns (uint256) {
+        return value > floor ? value - floor : 0;
     }
 }
