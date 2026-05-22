@@ -112,7 +112,8 @@ The May09 QTRS-local lane advanced best raw to `screen_0004` / `MajorizationRisk
 
 - No Round 1 scratch candidate earned a canonical retained eval.
 - Retained lane remains unchanged:
-  - incumbent: `screen_0001` / `RegimeSelectorStrongerFloor`
+  - incumbent: `screen_0001` / `seed-from-apr21-screen0005` / `LatentStateQuoteEngine`
+  - source frame: `RegimeSelectorStrongerFloor`
   - best raw in the May09 floor-seed lane: `screen_0001`
   - best raw mean edge: `487.01236396243195`
   - gap to breakout target: `2.98763603756805`
@@ -322,7 +323,8 @@ Return:
 
 - No Round 2 scratch candidate earned a canonical retained eval.
 - Retained lane remains unchanged:
-  - incumbent: `screen_0001` / `RegimeSelectorStrongerFloor`
+  - incumbent: `screen_0001` / `seed-from-apr21-screen0005` / `LatentStateQuoteEngine`
+  - source frame: `RegimeSelectorStrongerFloor`
   - best raw in the May09 floor-seed lane: `screen_0001`
   - best raw mean edge: `487.01236396243195`
   - gap to breakout target: `2.98763603756805`
@@ -343,7 +345,215 @@ Return:
 
 ## Round 3 Readiness
 
-- Retained state is unchanged after Round 2: active incumbent and best raw are both `screen_0001` / `RegimeSelectorStrongerFloor` at `487.01236396243195`.
+- Retained state is unchanged after Round 2: active incumbent and best raw are both `screen_0001` / `seed-from-apr21-screen0005` / `LatentStateQuoteEngine` at `487.01236396243195`, with source frame `RegimeSelectorStrongerFloor`.
 - `contracts/src/StarterStrategy.sol` should remain byte-for-byte aligned with snapshot `3f4bb9e4883515bf62bce866f36815402f6299c9e03b099e1f15f159acec4d9a.sol` before any new scratch work.
 - Start Round 3 with the proposal scorecard in `docs/hill_climb.md` and `docs/combination_anchor_map.md`; do not accept another OOD label unless it names the new consumer contract, forbidden readers, nearest negative example, metric budget, and kill signature.
 - If no four-design batch survives those checks, record floor-seed saturation or explicitly choose a search-frame change instead of padding the batch with more upstream labels.
+
+## Round 3: Cut Boundary And Recenter Permission Batch
+
+### Starting State
+
+- Active retained lane: `may09-screen490-floor-0001`.
+- Retained incumbent and best raw: `screen_0001` / `seed-from-apr21-screen0005` at `487.01236396243195`.
+- Breakout target: `490`.
+- Gap to target: `2.98763603756805`.
+- Source alignment verified before source work: `contracts/src/StarterStrategy.sol` matched retained snapshot `3f4bb9e4883515bf62bce866f36815402f6299c9e03b099e1f15f159acec4d9a`.
+
+### Web Search And Meta-Search Inputs
+
+- OOD sources used as mechanism imports rather than AMM-local naming: AMM LVR (`https://arxiv.org/abs/2208.06046`), frequent batch auctions (`https://www.nber.org/papers/w26341`), tube robust MPC (`https://oamonitor.ireland.openaire.eu/national/search/publication?pid=10.1016%2Fj.automatica.2003.08.009` and `https://arxiv.org/abs/2604.15252`), control barrier functions (`https://arxiv.org/abs/1612.01554`), leaky/token bucket admission control (`https://www.researchgate.net/publication/224228277_Leaky_buckets_sizing_and_admission_control`), and CPPI/TIPP-style floor protection (`https://www.pfolio.io/academy/portfolio-insurance-cppi`).
+- Round 3 deliberately avoided another upstream label into the same floor-seed hazard path. The accepted batch focused on cut-consumer solvency, read-only drawdown sealing, neutral-time cut admission, and pre-recenter floor permission.
+
+### Subagent Workflow
+
+- Topology proposer produced ten candidates spanning state commit timing, bounded state projection, cut solvency, LVR drawdown sealing, floor-ratchet budgeting, leaky cut admission, invariant write seals, tube cut limiting, epoch-local toxicity quarantine, and recenter permission.
+- Saturation/entropy critic accepted exactly four and rejected six:
+  - Accepted `CutSolvencyFloorBudget`, `LVRReadOnlyDrawdownSeal`, `LeakyCutAdmissionMeter`, and `FloorBufferBeforeRecenter`.
+  - Rejected `QuoteEpochCommitBuffer` as temporal-clearing / commit-order replay.
+  - Rejected `TubeBoundStateProjection` as `SlowManifoldLatentProjector` / upstream geometry-codec replay.
+  - Rejected `TIPPHighWaterFloorRatchet` and `WorstCaseCutTubeLimiter` as duplicate cut-budget cap families.
+  - Rejected `PreTradeInvariantSnapshotSeal` as invariant / geometry-codec replay.
+  - Rejected `EpochLocalToxicityQuarantine` as toxicity/write-routing replay.
+- Enforced entropy constraints:
+  - no worker edits before four critic-accepted designs survived
+  - scratch-only worker paths under `artifacts/scratch_probes/may09-screen490-floor-0001/round3/`
+  - no retained-ledger writes by workers
+  - no edits to `contracts/src/StarterStrategy.sol`
+
+### Probe Sources
+
+- Round 3 scratch sources and raw `result.json` files were cleanup-only artifacts under `artifacts/scratch_probes/may09-screen490-floor-0001/round3/`.
+- They were removed after the measured results and failure signatures below were captured in this note and `docs/combination_anchor_map.md`.
+
+### Probe Results
+
+- `CutSolvencyFloorBudget`
+  - Mean edge: `438.83948981546695`
+  - Delta vs seed: `-48.172874146965`
+  - Key profile: `arb_loss_to_retail_gain=0.18652651563155237`, `quote_selectivity_ratio=43.10063927624445`, `time_weighted_mean_fee=0.004327697193446483`
+  - Floor slices: `low_decile_mean_edge=246.9351071363096`, `low_retail_mean_edge=398.9452975926646`, `low_volatility_mean_edge=415.82102211736924`
+  - Outcome: killed as cut-solvency over-withholding / low-decile collapse.
+- `LVRReadOnlyDrawdownSeal`
+  - Mean edge: `486.9674266287185`
+  - Delta vs seed: `-0.04493733371344888`
+  - Key profile: `arb_loss_to_retail_gain=0.09196422334831307`, `quote_selectivity_ratio=18.8680214256107`, `time_weighted_mean_fee=0.004874078806349271`
+  - Floor slices: `low_decile_mean_edge=371.51917174961983`, `low_retail_mean_edge=416.75512172051043`, `low_volatility_mean_edge=464.0531926433659`
+  - Outcome: killed as read-only drawdown cut-seal floor drag; tiny leakage/selectivity improvement did not compensate for mean and floor-slice losses.
+- `LeakyCutAdmissionMeter`
+  - Mean edge: `419.2018742903992`
+  - Delta vs seed: `-67.81048967203276`
+  - Key profile: `arb_loss_to_retail_gain=0.21742367478220762`, `quote_selectivity_ratio=48.98037720054234`, `time_weighted_mean_fee=0.004438995516347313`
+  - Floor slices: `low_decile_mean_edge=232.9341606821613`, `low_retail_mean_edge=372.3643910294339`, `low_volatility_mean_edge=410.1168643136838`
+  - Outcome: killed as cut-budget starvation / arb-leak reopening.
+- `FloorBufferBeforeRecenter`
+  - Mean edge: `408.13163244003016`
+  - Delta vs seed: `-78.88073152240179`
+  - Key profile: `arb_loss_to_retail_gain=0.25057737909646266`, `quote_selectivity_ratio=66.94286923731195`, `time_weighted_mean_fee=0.0037431526606391454`
+  - Floor slices: `low_decile_mean_edge=213.53482106574324`, `low_retail_mean_edge=362.0807296937435`, `low_volatility_mean_edge=415.80695986683446`
+  - Outcome: killed as recenter starvation despite lower fee jump.
+
+### Decision
+
+- No Round 3 scratch candidate earned a canonical retained eval.
+- Retained lane remains unchanged:
+  - incumbent: `screen_0001` / `seed-from-apr21-screen0005` / `LatentStateQuoteEngine`
+  - source frame: `RegimeSelectorStrongerFloor`
+  - best raw in the May09 floor-seed lane: `screen_0001`
+  - best raw mean edge: `487.01236396243195`
+  - gap to breakout target: `2.98763603756805`
+
+### Historical Validation And Commands
+
+- Before cleanup, validated all four accepted scratch sources with `rtk proxy sh -c 'for f in artifacts/scratch_probes/may09-screen490-floor-0001/round3/*/StarterStrategy.sol; do UV_CACHE_DIR=.uv-cache uv run amm-match validate "$f" >/dev/null || exit 1; done'`.
+- Before cleanup, ran each scratch probe with `rtk proxy sh -c 'UV_CACHE_DIR=.uv-cache uv run amm-match hill-climb probe --stage screen --json <source> > <result.json>'`.
+- Reran `FloorBufferBeforeRecenter` after fixing its scratch-only `getName()` label so `result.json` matches the final source hash and strategy identity.
+- Verified retained state remained unchanged with `rtk uv run amm-match hill-climb status --run-id may09-screen490-floor-0001`.
+- Verified seed source remained aligned with retained snapshot using `shasum -a 256 contracts/src/StarterStrategy.sol artifacts/hill_climb/may09-screen490-floor-0001/snapshots/3f4bb9e4883515bf62bce866f36815402f6299c9e03b099e1f15f159acec4d9a.sol`.
+
+### Updated Entropy Discipline
+
+- The floor-seed frame now has three failed mechanism families in a row: add-only control labels, upstream OOD transforms, and cut/recenter boundary controls.
+- Do not continue cut-solvency budgets, leaky cut meters, aggregate cut caps, drawdown cut seals, or pre-recenter floor buffers under this seed unless the next proposal changes the primary seed/search frame or proves a consumer that neither starves safe-side cuts nor routes into hidden release.
+- `LVRReadOnlyDrawdownSeal` is a near-frontier negative, not a support anchor: it improved leakage/selectivity by tiny amounts but lost mean and all tracked floor slices.
+- Round 4 should start by deciding whether to retire the floor seed, pivot to a parked comparison frame, or import a new non-cut/non-upstream mechanism class. Padding another four-design batch around cut gating would be entropy collapse.
+
+## Round 4: Entropy-Gated Planning Blocker
+
+### Starting State
+
+- Active retained lane: `may09-screen490-floor-0001`.
+- Retained incumbent and best raw: `screen_0001` / `seed-from-apr21-screen0005` at `487.01236396243195`.
+- Breakout target: `490`.
+- Gap to target: `2.98763603756805`.
+- Source alignment verified before planning work: `contracts/src/StarterStrategy.sol` matched retained snapshot `3f4bb9e4883515bf62bce866f36815402f6299c9e03b099e1f15f159acec4d9a`.
+
+### Web Search And Meta-Search Inputs
+
+- OOD sources reviewed for mechanism diversity, not as novelty proof:
+  - Conformal risk control: `https://arxiv.org/abs/2208.02814`
+  - Safe RL with hard instantaneous constraints: `https://arxiv.org/abs/2312.14470`
+  - Safety-constrained MDP permissive strategies: `https://arxiv.org/abs/1510.05880`
+  - Sleeping experts / abstention with feedback graphs: `https://cs.nyu.edu/~mohri/pub/saps.pdf`
+  - Online convex optimization with long-term constraints: `https://arxiv.org/abs/2210.16735`
+  - Conservative contextual bandits: `https://arxiv.org/abs/1611.06426`
+  - Budget-constrained contextual bandits: `https://arxiv.org/abs/2605.06190`
+  - No-regret learning under adversarial resource constraints: `https://arxiv.org/abs/2506.13244`
+- The active anchor-map lessons from May09 floor-seed Rounds 1-3 were treated as hard exclusions: no add-only process-control/safety labels, no upstream OOD transforms into existing hazard/protection consumers, and no cut/recenter boundary controls.
+
+### Subagent Workflow
+
+- Proposer pass 1 produced nine public-evidence-motivated candidates:
+  - `ConformalSliceAdmissionMap`
+  - `AwakeExpertQuoteModeRouter`
+  - `SafePermissiveModeEnvelope`
+  - `InstantConstraintExplorationArm`
+  - `PredictiveConstraintSlackAllocator`
+  - `FeedbackGraphLossAttributor`
+  - `DisagreementQuarantineMirror`
+  - `RetailOutcomeFeedbackGraph`
+  - `SeedModeDominanceSampler`
+- Critic pass 1 accepted only two:
+  - Accepted `InstantConstraintExplorationArm` as a layer 2/3 shadow exploration owner, only if its alternate state publishes through hard instantaneous slice checks and cannot reach release, refill, recapture, opportunity, calm, final quote, fee/base-spread, inventory, cut, or recenter paths.
+  - Accepted `RetailOutcomeFeedbackGraph` as layer 1/2 estimator-memory write eligibility, only if the raw graph is not quote-readable and downstream output stays seed-shaped estimator state rather than a new hazard, fee, or mode signal.
+  - Rejected the remaining seven as classifier/trust gates, quote-mode selector polish, layer-4 allocation-release, attribution-state hidden release, quorum/conjunction replay, or selector dominance replay.
+- Proposer pass 2 tried to compose six adjuncts around the two accepted owners:
+  - `SelectiveLabelMaturityLedger`
+  - `ComponentRegretAttributionLedger`
+  - `SleepingConstraintWitnessSet`
+  - `BaselineDominancePublicationTest`
+  - `OutcomeGraphEdgeCreditPublisher`
+  - `AdversarialContextMinimaxAttributor`
+- Critic pass 2 accepted only one composite:
+  - Accepted `InstantConstraintExplorationArm + BaselineDominancePublicationTest + SleepingConstraintWitnessSet` as `instant_constraint_publication_witness`, with the allowed consumer limited to a bounded side-specific protection residual.
+  - Rejected delayed-label, graph-credit, component-regret, and adversarial-context composites as attribution/source-label replays into existing hazard/divergence/flow side-risk consumers.
+- Final proposer pass declared hard floor-seed saturation under the current ban set instead of padding more names.
+
+### Entropy Verdict
+
+- No worker source edits were opened because the prescribed four-design floor was not met.
+- Repeated consumer path:
+  - `new evidence/constraint/label -> existing hazard / side-risk / protection / cut or fee-assembly path -> hidden release, overprotection, or benign-floor starvation`
+- The only accepted shape was a narrow witness-publication boundary. More variants of that shape would be same-owner padding, not a distinct topology batch.
+
+### Decision
+
+- No Round 4 scratch probe was run.
+- No retained eval was spent.
+- Retained lane remains unchanged:
+  - incumbent: `screen_0001` / `seed-from-apr21-screen0005` / `LatentStateQuoteEngine`
+  - source frame: `RegimeSelectorStrongerFloor`
+  - best raw in the May09 floor-seed lane: `screen_0001`
+  - best raw mean edge: `487.01236396243195`
+  - gap to breakout target: `2.98763603756805`
+
+### Validation And Commands
+
+- Verified live retained state with `rtk run "uv run amm-match hill-climb status --run-id may09-screen490-floor-0001"`.
+- Verified source alignment with `rtk run "shasum -a 256 contracts/src/StarterStrategy.sol artifacts/hill_climb/may09-screen490-floor-0001/snapshots/3f4bb9e4883515bf62bce866f36815402f6299c9e03b099e1f15f159acec4d9a.sol"`.
+- Reviewed the active run index, active chunk note, and combination anchor map before each proposer/critic pass.
+
+### Updated Entropy Discipline
+
+- Round 4 confirms this floor-seed frame is saturated under the current ban set.
+- Do not request another floor-seed proposer batch that only imports trust, quote-mode selection, graph/label attribution, source-credit, component-regret, or protected-mode dominance vocabulary.
+- The next productive move is an explicit operator-level search-frame change:
+  - retire or pivot the seed frame,
+  - or relax exactly one banned family as a tightly bounded diagnostic with concrete kill thresholds,
+  - or authorize a new external mechanism class with a consumer contract mechanically distinct from hazard, side-risk, protection, cut, release, opportunity, refill, recapture, calm, inventory, final quote, direct fee, and shared-spread paths.
+
+## Round 5: Scratch-Only WCEF Diagnostic
+
+### Starting State
+
+- Active retained lane: `may09-screen490-floor-0001`.
+- Retained incumbent and best raw: `screen_0001` / `seed-from-apr21-screen0005` / `LatentStateQuoteEngine` at `487.01236396243195`, with source frame `RegimeSelectorStrongerFloor`.
+- Breakout target: `490`.
+- Gap to target: `2.98763603756805`.
+
+### Diagnostic
+
+- Scratch source: cleanup-only WCEF diagnostic under `artifacts/scratch_probes/may09-screen490-floor-0001/round5/diagnostic_seed_pivot/StarterStrategy.sol`, removed after capture.
+- Strategy label: `WeakConsistencyEventFeasibilityMask`
+- Probe result: cleanup-only `result.json`, removed after capture.
+- Mean edge: `488.03274719863765`
+- Delta vs active floor seed: `+1.0203832362057`
+- Profile: `arb_loss_to_retail_gain=0.08680487844146438`, `quote_selectivity_ratio=17.3749619948117`, `time_weighted_mean_fee=0.004995975154787965`
+- Floor slices: `low_decile_mean_edge=372.41891117598567`, `low_retail_mean_edge=417.8656683116062`, `low_volatility_mean_edge=465.1871007698987`
+
+### Decision
+
+- No retained eval was opened; this was a diagnostic comparison against a parked stronger frame.
+- The active retained lane remains unchanged:
+  - incumbent: `screen_0001` / `seed-from-apr21-screen0005` / `LatentStateQuoteEngine`
+  - source frame: `RegimeSelectorStrongerFloor`
+  - best raw in the May09 floor-seed lane: `screen_0001`
+  - best raw mean edge: `487.01236396243195`
+  - gap to breakout target: `2.98763603756805`
+- If WCEF becomes the implementation seed, start a fresh explicit WCEF-framed run instead of hiding that pivot inside `may09-screen490-floor-0001`.
+
+### Updated Entropy Discipline
+
+- The floor-seed frame is saturated under the current ban set after Rounds 1-4 and the Round 5 parked-anchor diagnostic.
+- Round 6 should not begin as another floor-seed proposer pass. It should choose one operator-level path first: retire the lane, start a fresh WCEF-framed run, relax exactly one banned family with concrete kill thresholds, or import a new consumer contract mechanically distinct from the current downstream paths.
+- Create `docs/plans/active/may09-screen490-floor-0001-round06-10.md` only if the active floor-seed lane is intentionally continued.

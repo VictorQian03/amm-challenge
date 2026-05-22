@@ -714,12 +714,11 @@ def test_screen490_plan_lifecycle_points_active_and_completed_runs_correctly():
     assert "Current write target" in index_text
     assert "may09-screen490-floor-0001-round01-05.md" in index_text
     assert "Latest populated span: `round01-05`" in index_text
-    assert (
-        "Current write target: `may09-screen490-floor-0001-round01-05.md`" in index_text
-    )
+    assert "Current write target: none pending search-frame decision" in index_text
     assert "zero-padded inclusive 5-round span" in index_text
     assert (
-        "create the next 5-round span only after the current one closes" in index_text
+        "create the next 5-round span only after the current one closes and this lane is intentionally continued"
+        in index_text
     )
 
     parked_text = parked_index.read_text()

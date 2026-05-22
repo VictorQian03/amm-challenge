@@ -52,6 +52,8 @@ htmlcov/
 
 # Strategies
 strategies/
+artifacts/local_oracles/
+artifacts/scratch_probes/**/oracle_ablation/
 
 # Misc
 *.log
