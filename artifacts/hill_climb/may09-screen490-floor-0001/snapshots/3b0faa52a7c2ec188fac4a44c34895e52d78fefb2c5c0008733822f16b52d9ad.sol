@@ -133,7 +133,7 @@ contract Strategy is AMMStrategyBase {
         uint256 volObservation = _max(liquidityDemand, informationStress);
         uint256 clusterObservation = wmul(
             informationStress,
-            _oneMinus(wmul(gapShort, _oneMinus(wmul(calmSmallTradeGate, 6500 * BPS))))
+            _oneMinus(wmul(gapShort, _oneMinus(wmul(calmSmallTradeGate, 4200 * BPS))))
         );
         uint256 hazardObservation = _max(
             divergenceVol,
@@ -254,7 +254,7 @@ contract Strategy is AMMStrategyBase {
             uint256 extensionSignal = _max(divergenceMemory, spotJump);
             if (extensionSignal > 3 * BPS) {
                 uint256 toxicFlowSignal = flowPressure + wmul(extensionSignal, 2200 * BPS);
-                flowDirectionalRisk = wmul(toxicFlowSignal, 280 * BPS);
+                flowDirectionalRisk = wmul(toxicFlowSignal, 320 * BPS);
             }
         }
         uint256 bidFlowRisk = 0;
@@ -384,7 +384,7 @@ contract Strategy is AMMStrategyBase {
         bool tradeAlignedToxicity =
             (trade.isBuy && currentSpot >= latentSpot) || (!trade.isBuy && currentSpot < latentSpot);
         if (tradeAlignedToxicity) {
-            uint256 tradeBoost = wmul(clamp(tradeSize, 0, WAD / 5), 6500 * BPS);
+            uint256 tradeBoost = wmul(clamp(tradeSize, 0, WAD / 5), 4200 * BPS);
             if (trade.isBuy) {
                 bidProtection += tradeBoost;
             } else {
@@ -482,7 +482,7 @@ contract Strategy is AMMStrategyBase {
     }
 
     function getName() external pure override returns (string memory) {
-        return "FlowDirectionalRisk280";
+        return "OracleTradeToxCoef4200";
     }
 
     function _blend(uint256 prev, uint256 sample, uint256 alpha) internal pure returns (uint256) {

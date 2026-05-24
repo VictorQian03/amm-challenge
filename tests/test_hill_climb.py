@@ -710,10 +710,14 @@ def test_screen490_plan_lifecycle_points_active_and_completed_runs_correctly():
     assert "active index" in index_text
     assert "Global hill-climb index status: `active`" in index_text
     assert "Rounds 01-05" in index_text
+    assert "Rounds 06-10" in index_text
+    assert "Rounds 11-15" in index_text
     assert "current latest span" in index_text
     assert "Current write target" in index_text
     assert "may09-screen490-floor-0001-round01-05.md" in index_text
-    assert "Latest populated span: `round01-05`" in index_text
+    assert "may09-screen490-floor-0001-round06-10.md" in index_text
+    assert "may09-screen490-floor-0001-round11-15.md" in index_text
+    assert "Latest populated span: `round11-15`" in index_text
     assert "Current write target: none pending search-frame decision" in index_text
     assert "zero-padded inclusive 5-round span" in index_text
     assert (

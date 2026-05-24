@@ -254,7 +254,7 @@ contract Strategy is AMMStrategyBase {
             uint256 extensionSignal = _max(divergenceMemory, spotJump);
             if (extensionSignal > 3 * BPS) {
                 uint256 toxicFlowSignal = flowPressure + wmul(extensionSignal, 2200 * BPS);
-                flowDirectionalRisk = wmul(toxicFlowSignal, 280 * BPS);
+                flowDirectionalRisk = wmul(toxicFlowSignal, 320 * BPS);
             }
         }
         uint256 bidFlowRisk = 0;
@@ -482,7 +482,7 @@ contract Strategy is AMMStrategyBase {
     }
 
     function getName() external pure override returns (string memory) {
-        return "FlowDirectionalRisk280";
+        return "OracleTradeToxCoef6500";
     }
 
     function _blend(uint256 prev, uint256 sample, uint256 alpha) internal pure returns (uint256) {

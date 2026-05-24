@@ -1,29 +1,29 @@
 {
   "artifact_version": "hill_climb.index.v1",
-  "generated_at": "2026-05-13T05:26:56.366042+00:00",
+  "generated_at": "2026-05-24T14:42:58.126716+00:00",
   "runs": [
     {
       "artifact_dir": "artifacts/hill_climb/may09-screen490-floor-0001",
       "best_by_stage": {
         "screen": {
-          "eval_id": "screen_0001",
+          "eval_id": "screen_0005",
           "failure_tags": [],
-          "label": "seed-from-apr21-screen0005",
-          "mean_edge": 487.01236396243195,
-          "status": "seed",
-          "strategy_name": "LatentStateQuoteEngine"
+          "label": "flow-dir-risk-280",
+          "mean_edge": 490.75833078204124,
+          "status": "discard",
+          "strategy_name": "FlowDirectionalRisk280"
         }
       },
       "created_at": "2026-05-09T01:10:00.807424+00:00",
-      "eval_count": 1,
-      "latest_eval_id": "screen_0001",
+      "eval_count": 5,
+      "latest_eval_id": "screen_0005",
       "latest_stage": "screen",
-      "latest_status": "seed",
+      "latest_status": "discard",
       "notes": [],
       "run_id": "may09-screen490-floor-0001",
-      "snapshot_count": 1,
+      "snapshot_count": 5,
       "status": "active",
-      "updated_at": "2026-05-09T01:10:06.524843+00:00"
+      "updated_at": "2026-05-24T14:42:58.109061+00:00"
     },
     {
       "artifact_dir": "artifacts/hill_climb/may09-screen490-qtrs-0001",

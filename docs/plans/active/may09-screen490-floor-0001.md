@@ -17,15 +17,18 @@ This root note is the active index for the fresh retained screen490 lane seeded 
 
 ## Round Index
 
-- [Rounds 01-05](may09-screen490-floor-0001-round01-05.md): current latest span; receives Rounds 1-5
+- [Rounds 01-05](may09-screen490-floor-0001-round01-05.md): closed span; receives Rounds 1-5
+- [Rounds 06-10](may09-screen490-floor-0001-round06-10.md): closed span; receives Rounds 6-10
+- [Rounds 11-15](may09-screen490-floor-0001-round11-15.md): current latest span; receives Rounds 11-15
 - [Reference-layer oracle ablation memo](may09-screen490-floor-0001-oracle-ablation-memo.md): compact pointer to the authorized Reference.sol study
 - [Reference oracle evidence cards](../../reference_oracle_evidence_cards.md): reusable oracle-transplant structure and distilled design rules
 
 ## Current Batch Discovery
 
-- Latest populated span: `round01-05`
+- Latest populated span: `round11-15`
 - Current write target: none pending search-frame decision
-- Next span to create if this lane continues: `may09-screen490-floor-0001-round06-10.md`
+- Current oracle boundary: default back to no oracle implementation access unless explicitly authorized; Rounds 7-9 were a closed, explicitly authorized study.
+- Next span to create after Round 15 if this lane continues: `may09-screen490-floor-0001-round16-20.md`
 
 ## Continuation Convention
 
@@ -39,15 +42,15 @@ This root note is the active index for the fresh retained screen490 lane seeded 
 - Active retained lane: `may09-screen490-floor-0001`
 - Current incumbent: `screen_0001`
 - Current incumbent mean edge: `487.01236396243195`
-- Best raw non-promoted branch: none; seed is current best raw.
-- Gap to breakout target from best raw: `2.98763603756805`
-- Latest round: Round 5 used a scratch-only `WeakConsistencyEventFeasibilityMask` diagnostic seed pivot. It confirmed the parked WCEF frame remains stronger than the active floor seed on `screen`, but no retained eval was opened and any real WCEF-framed work should start as an explicit fresh run.
+- Best raw non-promoted branch: `screen_0005` / `flow-dir-risk-280` / `FlowDirectionalRisk280`
+- Best raw mean edge: `490.75833078204124`
+- Breakout margin from best raw: `+0.7583307820412446`
+- Latest round: Round 11 ran a 100-variant scratch hyperparameter sweep from `screen_0004` plus near-frontier bases. `FlowDirectionalRisk280` survived smoke, screen, climb, and confirm with better mean and named floor slices, then received canonical retained eval as `screen_0005`.
 
 ## Ready For Next Round
 
-- Next round number: Round 6.
-- Next write target: create `docs/plans/active/may09-screen490-floor-0001-round06-10.md` if this lane continues.
-- Strategy source is reset to the retained seed snapshot `3f4bb9e4883515bf62bce866f36815402f6299c9e03b099e1f15f159acec4d9a`.
-- Start with an explicit search-frame decision before worker source edits; Rounds 1-4 showed that new labels, upstream transforms, cut budgets, recenter gates, quote-mode selectors, trust gates, graph-credit labels, and attribution ledgers still fail when they flow through or starve the current hazard/protection/cut/fee consumer path.
-- Do not request another floor-seed proposer pass unless it either changes seed/search frame, relaxes exactly one banned family with concrete kill thresholds, or introduces a consumer contract mechanically distinct from the current downstream paths. If WCEF becomes the implementation seed, start a fresh explicit WCEF-framed run instead of hiding the pivot inside `may09-screen490-floor-0001`.
-- Retained eval should remain reserved for a scratch candidate that beats `screen_0001` or introduces a genuinely new floor-preserving consumer contract with materially better floor slices.
+- Next round number: Round 12.
+- Next write target: append to `docs/plans/active/may09-screen490-floor-0001-round11-15.md` if this lane intentionally continues.
+- Strategy source is intentionally set to the retained best-raw branch `FlowDirectionalRisk280` for continuation from `screen_0005`.
+- Do not spend another pure flow-directional-risk coefficient polish, trade-tox local tweak, no-cut sidecar owner, admission-gating branch, tail-slope branch, lambda release-veto branch, escrow branch, stale-side/null-routing branch, telemetry-owner rewrite, or add-only OOD hold on this base unless the user explicitly relaxes that banned family with kill thresholds.
+- Retained eval should remain reserved for a scratch candidate that beats live best raw `screen_0005` or introduces a genuinely new floor-risk owner with materially better named floor slices.
