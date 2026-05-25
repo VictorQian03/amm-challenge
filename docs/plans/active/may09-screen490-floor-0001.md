@@ -42,15 +42,17 @@ This root note is the active index for the fresh retained screen490 lane seeded 
 - Active retained lane: `may09-screen490-floor-0001`
 - Current incumbent: `screen_0001`
 - Current incumbent mean edge: `487.01236396243195`
-- Best raw non-promoted branch: `screen_0005` / `flow-dir-risk-280` / `FlowDirectionalRisk280`
-- Best raw mean edge: `490.75833078204124`
-- Breakout margin from best raw: `+0.7583307820412446`
-- Latest round: Round 11 ran a 100-variant scratch hyperparameter sweep from `screen_0004` plus near-frontier bases. `FlowDirectionalRisk280` survived smoke, screen, climb, and confirm with better mean and named floor slices, then received canonical retained eval as `screen_0005`.
+- Best raw non-promoted branch: `screen_0006` / `event140-recapture` / `Event140Recapture`
+- Best raw mean edge: `491.910339497031`
+- Breakout margin above target `490`: `+1.9103394970309914`
+- Latest round: Round 13 used the user-authorized relaxed search discipline to smoke-test 108 broad coefficient/interaction candidates, screen 25 leaders, then screen 14 focused stacks. `Event140Recapture` cleared the stated stop rule as retained `screen_0006`, beating prior best raw `screen_0005` by `+1.1520087149897336`.
 
 ## Ready For Next Round
 
-- Next round number: Round 12.
+- Next round number: Round 14.
 - Next write target: append to `docs/plans/active/may09-screen490-floor-0001-round11-15.md` if this lane intentionally continues.
-- Strategy source is intentionally set to the retained best-raw branch `FlowDirectionalRisk280` for continuation from `screen_0005`.
+- Strategy source is intentionally set to retained best raw `Event140Recapture` for any continuation from `screen_0006`.
 - Do not spend another pure flow-directional-risk coefficient polish, trade-tox local tweak, no-cut sidecar owner, admission-gating branch, tail-slope branch, lambda release-veto branch, escrow branch, stale-side/null-routing branch, telemetry-owner rewrite, or add-only OOD hold on this base unless the user explicitly relaxes that banned family with kill thresholds.
-- Retained eval should remain reserved for a scratch candidate that beats live best raw `screen_0005` or introduces a genuinely new floor-risk owner with materially better named floor slices.
+- Do not spend another flow-protection reserve, aligned-flow healing/refill gate, or tail-only extension surcharge pass: Round 12 measured those paths as cut-starvation collapse or near-frontier floor tradeoff.
+- Round 13 stopped at the requested `screen` threshold; it did not claim `climb` or `confirm` durability for `Event140Recapture`.
+- Retained eval should remain reserved for a scratch candidate that beats live best raw `screen_0006` or introduces a genuinely new floor-risk owner with materially better named floor slices.

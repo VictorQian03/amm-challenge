@@ -1,0 +1,338 @@
+[
+  {
+    "name": "stack_event140_recapture",
+    "family": "interaction",
+    "values": {
+      "event_carry": 140,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "stage": "smoke",
+    "mean_edge": 501.95279820342455,
+    "delta_vs_best_raw": 11.194467421383308,
+    "meets_target": true,
+    "arb_loss_to_retail_gain": 0.08177465018808892,
+    "quote_selectivity_ratio": 16.648342081530032,
+    "time_weighted_mean_fee": 0.004911879500530637,
+    "low_decile_mean_edge": 368.57568469759417,
+    "low_retail_mean_edge": 415.1796393785268,
+    "low_volatility_mean_edge": 473.01963752707417
+  },
+  {
+    "name": "stack_event160_recapture",
+    "family": "interaction",
+    "values": {
+      "event_carry": 160,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "stage": "smoke",
+    "mean_edge": 501.8927622766233,
+    "delta_vs_best_raw": 11.134431494582032,
+    "meets_target": true,
+    "arb_loss_to_retail_gain": 0.08031064648462415,
+    "quote_selectivity_ratio": 16.159562271788058,
+    "time_weighted_mean_fee": 0.004969852842167225,
+    "low_decile_mean_edge": 368.1133041838999,
+    "low_retail_mean_edge": 414.8052520809235,
+    "low_volatility_mean_edge": 472.86416179549565
+  },
+  {
+    "name": "stack_event140_flow220",
+    "family": "interaction",
+    "values": {
+      "event_carry": 140,
+      "flow_risk": 220
+    },
+    "stage": "smoke",
+    "mean_edge": 501.8266427634967,
+    "delta_vs_best_raw": 11.068311981455452,
+    "meets_target": true,
+    "arb_loss_to_retail_gain": 0.08258277827109613,
+    "quote_selectivity_ratio": 16.881535789216283,
+    "time_weighted_mean_fee": 0.004891899605712947,
+    "low_decile_mean_edge": 368.59757282452875,
+    "low_retail_mean_edge": 415.195616247225,
+    "low_volatility_mean_edge": 473.1076423571947
+  },
+  {
+    "name": "stack_event140_flow220_recapture",
+    "family": "interaction",
+    "values": {
+      "event_carry": 140,
+      "flow_risk": 220,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "stage": "smoke",
+    "mean_edge": 501.7748033100654,
+    "delta_vs_best_raw": 11.016472528024167,
+    "meets_target": true,
+    "arb_loss_to_retail_gain": 0.0823771338432851,
+    "quote_selectivity_ratio": 16.84343685183908,
+    "time_weighted_mean_fee": 0.0048907556437503795,
+    "low_decile_mean_edge": 368.3307773410005,
+    "low_retail_mean_edge": 415.0299954662075,
+    "low_volatility_mean_edge": 473.0784462211598
+  },
+  {
+    "name": "stack_event160_flow220",
+    "family": "interaction",
+    "values": {
+      "event_carry": 160,
+      "flow_risk": 220
+    },
+    "stage": "smoke",
+    "mean_edge": 501.72902357277655,
+    "delta_vs_best_raw": 10.970692790735313,
+    "meets_target": true,
+    "arb_loss_to_retail_gain": 0.08102113941538895,
+    "quote_selectivity_ratio": 16.37645216979866,
+    "time_weighted_mean_fee": 0.0049474170946993985,
+    "low_decile_mean_edge": 367.95884108908115,
+    "low_retail_mean_edge": 414.7141783473457,
+    "low_volatility_mean_edge": 472.7712353825553
+  },
+  {
+    "name": "stack_event160_flow220_recap_strong",
+    "family": "interaction",
+    "values": {
+      "event_carry": 160,
+      "flow_risk": 220,
+      "alpha_passive": 24,
+      "passive_cut": 1750,
+      "center_offset": 900,
+      "center_cap": 1700
+    },
+    "stage": "smoke",
+    "mean_edge": 501.62200419290815,
+    "delta_vs_best_raw": 10.863673410866909,
+    "meets_target": true,
+    "arb_loss_to_retail_gain": 0.08035099014172513,
+    "quote_selectivity_ratio": 16.194749570166294,
+    "time_weighted_mean_fee": 0.00496154570304356,
+    "low_decile_mean_edge": 367.8461505093826,
+    "low_retail_mean_edge": 414.5757726025304,
+    "low_volatility_mean_edge": 472.55777019651674
+  },
+  {
+    "name": "stack_event180_flow220",
+    "family": "interaction",
+    "values": {
+      "event_carry": 180,
+      "flow_risk": 220
+    },
+    "stage": "smoke",
+    "mean_edge": 501.60978018286517,
+    "delta_vs_best_raw": 10.851449400823924,
+    "meets_target": true,
+    "arb_loss_to_retail_gain": 0.07961753513060874,
+    "quote_selectivity_ratio": 15.918438884955911,
+    "time_weighted_mean_fee": 0.005001591908981296,
+    "low_decile_mean_edge": 367.9161738550972,
+    "low_retail_mean_edge": 414.5808000718084,
+    "low_volatility_mean_edge": 472.49513531757856
+  },
+  {
+    "name": "stack_event180_recapture",
+    "family": "interaction",
+    "values": {
+      "event_carry": 180,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "stage": "smoke",
+    "mean_edge": 501.56712779253115,
+    "delta_vs_best_raw": 10.808797010489911,
+    "meets_target": true,
+    "arb_loss_to_retail_gain": 0.07879466355973751,
+    "quote_selectivity_ratio": 15.665273164751987,
+    "time_weighted_mean_fee": 0.00502989400382952,
+    "low_decile_mean_edge": 367.77382758174025,
+    "low_retail_mean_edge": 414.6349498666091,
+    "low_volatility_mean_edge": 472.59910092400395
+  },
+  {
+    "name": "stack_event160_flow220_recapture",
+    "family": "interaction",
+    "values": {
+      "event_carry": 160,
+      "flow_risk": 220,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "stage": "smoke",
+    "mean_edge": 501.546447070961,
+    "delta_vs_best_raw": 10.788116288919753,
+    "meets_target": true,
+    "arb_loss_to_retail_gain": 0.08072239793725652,
+    "quote_selectivity_ratio": 16.301699104078338,
+    "time_weighted_mean_fee": 0.00495177818102786,
+    "low_decile_mean_edge": 368.03860977256136,
+    "low_retail_mean_edge": 414.5733397689464,
+    "low_volatility_mean_edge": 472.5992178755201
+  },
+  {
+    "name": "stack_event180_flow220_recapture",
+    "family": "interaction",
+    "values": {
+      "event_carry": 180,
+      "flow_risk": 220,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "stage": "smoke",
+    "mean_edge": 501.45104835522835,
+    "delta_vs_best_raw": 10.69271757318711,
+    "meets_target": true,
+    "arb_loss_to_retail_gain": 0.07913177091738086,
+    "quote_selectivity_ratio": 15.809261545923665,
+    "time_weighted_mean_fee": 0.00500540589372339,
+    "low_decile_mean_edge": 368.46522822744066,
+    "low_retail_mean_edge": 414.7083830541358,
+    "low_volatility_mean_edge": 472.2344600033587
+  },
+  {
+    "name": "stack_event160_flow200_recapture",
+    "family": "interaction",
+    "values": {
+      "event_carry": 160,
+      "flow_risk": 200,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "stage": "smoke",
+    "mean_edge": 501.4507448412303,
+    "delta_vs_best_raw": 10.692414059189048,
+    "meets_target": true,
+    "arb_loss_to_retail_gain": 0.08077624613688603,
+    "quote_selectivity_ratio": 16.31196450427255,
+    "time_weighted_mean_fee": 0.004951963089162468,
+    "low_decile_mean_edge": 367.94001544316404,
+    "low_retail_mean_edge": 414.53076227125894,
+    "low_volatility_mean_edge": 472.449310163073
+  },
+  {
+    "name": "stack_flow220_recapture",
+    "family": "interaction",
+    "values": {
+      "flow_risk": 220,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "stage": "smoke",
+    "mean_edge": 501.09152836220846,
+    "delta_vs_best_raw": 10.333197580167223,
+    "meets_target": true,
+    "arb_loss_to_retail_gain": 0.07565686927856578,
+    "quote_selectivity_ratio": 14.74154291547016,
+    "time_weighted_mean_fee": 0.005132221892402422,
+    "low_decile_mean_edge": 368.5422690834624,
+    "low_retail_mean_edge": 414.6486461101137,
+    "low_volatility_mean_edge": 471.5635684177441
+  },
+  {
+    "name": "stack_flow200_recapture",
+    "family": "interaction",
+    "values": {
+      "flow_risk": 200,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "stage": "smoke",
+    "mean_edge": 501.0506097916974,
+    "delta_vs_best_raw": 10.29227900965617,
+    "meets_target": true,
+    "arb_loss_to_retail_gain": 0.07572140336644567,
+    "quote_selectivity_ratio": 14.766731633596216,
+    "time_weighted_mean_fee": 0.0051278377128605585,
+    "low_decile_mean_edge": 368.44732886761324,
+    "low_retail_mean_edge": 414.58466544013226,
+    "low_volatility_mean_edge": 471.55387062338195
+  },
+  {
+    "name": "stack_flow180_recapture",
+    "family": "interaction",
+    "values": {
+      "flow_risk": 180,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "stage": "smoke",
+    "mean_edge": 501.0193952240591,
+    "delta_vs_best_raw": 10.261064442017869,
+    "meets_target": true,
+    "arb_loss_to_retail_gain": 0.07573770957989945,
+    "quote_selectivity_ratio": 14.772332759793205,
+    "time_weighted_mean_fee": 0.005126997259771969,
+    "low_decile_mean_edge": 368.411590297757,
+    "low_retail_mean_edge": 414.5354340750909,
+    "low_volatility_mean_edge": 471.5096385253202
+  },
+  {
+    "name": "stack_event160_flow220_open",
+    "family": "interaction",
+    "values": {
+      "event_carry": 160,
+      "flow_risk": 220,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600,
+      "risk_protection": 5200,
+      "opportunity_cut": 8500
+    },
+    "stage": "smoke",
+    "mean_edge": 476.1833947944363,
+    "delta_vs_best_raw": -14.574935987604931,
+    "meets_target": false,
+    "arb_loss_to_retail_gain": 0.1312644119889848,
+    "quote_selectivity_ratio": 28.800772807906753,
+    "time_weighted_mean_fee": 0.004557669784227055,
+    "low_decile_mean_edge": 222.85894799910943,
+    "low_retail_mean_edge": 414.562431165775,
+    "low_volatility_mean_edge": 405.01181708448934
+  },
+  {
+    "name": "stack_event160_flow220_recap_soft",
+    "family": "interaction",
+    "values": {
+      "event_carry": 160,
+      "flow_risk": 220,
+      "alpha_passive": 22,
+      "passive_cut": 1700,
+      "center_offset": 800,
+      "center_cap": 1500
+    },
+    "stage": "smoke",
+    "mean_edge": 476.16936022948926,
+    "delta_vs_best_raw": -14.588970552551984,
+    "meets_target": false,
+    "arb_loss_to_retail_gain": 0.13138567740544568,
+    "quote_selectivity_ratio": 28.853141034789548,
+    "time_weighted_mean_fee": 0.0045536004987127045,
+    "low_decile_mean_edge": 222.85894799910943,
+    "low_retail_mean_edge": 414.51809618334096,
+    "low_volatility_mean_edge": 404.9667599811714
+  }
+]

@@ -1,0 +1,1092 @@
+[
+  {
+    "name": "base_flow_dir_280",
+    "family": "control",
+    "values": {},
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/base_flow_dir_280.sol"
+  },
+  {
+    "name": "alpha_flow_12",
+    "family": "single_alpha_flow",
+    "values": {
+      "alpha_flow": 12
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/alpha_flow_12.sol"
+  },
+  {
+    "name": "alpha_flow_14",
+    "family": "single_alpha_flow",
+    "values": {
+      "alpha_flow": 14
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/alpha_flow_14.sol"
+  },
+  {
+    "name": "alpha_flow_16",
+    "family": "single_alpha_flow",
+    "values": {
+      "alpha_flow": 16
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/alpha_flow_16.sol"
+  },
+  {
+    "name": "alpha_flow_20",
+    "family": "single_alpha_flow",
+    "values": {
+      "alpha_flow": 20
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/alpha_flow_20.sol"
+  },
+  {
+    "name": "alpha_flow_22",
+    "family": "single_alpha_flow",
+    "values": {
+      "alpha_flow": 22
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/alpha_flow_22.sol"
+  },
+  {
+    "name": "alpha_flow_24",
+    "family": "single_alpha_flow",
+    "values": {
+      "alpha_flow": 24
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/alpha_flow_24.sol"
+  },
+  {
+    "name": "alpha_passive_12",
+    "family": "single_alpha_passive",
+    "values": {
+      "alpha_passive": 12
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/alpha_passive_12.sol"
+  },
+  {
+    "name": "alpha_passive_14",
+    "family": "single_alpha_passive",
+    "values": {
+      "alpha_passive": 14
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/alpha_passive_14.sol"
+  },
+  {
+    "name": "alpha_passive_16",
+    "family": "single_alpha_passive",
+    "values": {
+      "alpha_passive": 16
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/alpha_passive_16.sol"
+  },
+  {
+    "name": "alpha_passive_20",
+    "family": "single_alpha_passive",
+    "values": {
+      "alpha_passive": 20
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/alpha_passive_20.sol"
+  },
+  {
+    "name": "alpha_passive_22",
+    "family": "single_alpha_passive",
+    "values": {
+      "alpha_passive": 22
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/alpha_passive_22.sol"
+  },
+  {
+    "name": "alpha_passive_24",
+    "family": "single_alpha_passive",
+    "values": {
+      "alpha_passive": 24
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/alpha_passive_24.sol"
+  },
+  {
+    "name": "flow_threshold_300",
+    "family": "single_flow_threshold",
+    "values": {
+      "flow_threshold": 300
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_threshold_300.sol"
+  },
+  {
+    "name": "flow_threshold_350",
+    "family": "single_flow_threshold",
+    "values": {
+      "flow_threshold": 350
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_threshold_350.sol"
+  },
+  {
+    "name": "flow_threshold_400",
+    "family": "single_flow_threshold",
+    "values": {
+      "flow_threshold": 400
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_threshold_400.sol"
+  },
+  {
+    "name": "flow_threshold_450",
+    "family": "single_flow_threshold",
+    "values": {
+      "flow_threshold": 450
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_threshold_450.sol"
+  },
+  {
+    "name": "flow_threshold_550",
+    "family": "single_flow_threshold",
+    "values": {
+      "flow_threshold": 550
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_threshold_550.sol"
+  },
+  {
+    "name": "flow_threshold_600",
+    "family": "single_flow_threshold",
+    "values": {
+      "flow_threshold": 600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_threshold_600.sol"
+  },
+  {
+    "name": "flow_threshold_700",
+    "family": "single_flow_threshold",
+    "values": {
+      "flow_threshold": 700
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_threshold_700.sol"
+  },
+  {
+    "name": "extension_threshold_1",
+    "family": "single_extension_threshold",
+    "values": {
+      "extension_threshold": 1
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/extension_threshold_1.sol"
+  },
+  {
+    "name": "extension_threshold_2",
+    "family": "single_extension_threshold",
+    "values": {
+      "extension_threshold": 2
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/extension_threshold_2.sol"
+  },
+  {
+    "name": "extension_threshold_4",
+    "family": "single_extension_threshold",
+    "values": {
+      "extension_threshold": 4
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/extension_threshold_4.sol"
+  },
+  {
+    "name": "extension_threshold_5",
+    "family": "single_extension_threshold",
+    "values": {
+      "extension_threshold": 5
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/extension_threshold_5.sol"
+  },
+  {
+    "name": "extension_threshold_6",
+    "family": "single_extension_threshold",
+    "values": {
+      "extension_threshold": 6
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/extension_threshold_6.sol"
+  },
+  {
+    "name": "extension_weight_1200",
+    "family": "single_extension_weight",
+    "values": {
+      "extension_weight": 1200
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/extension_weight_1200.sol"
+  },
+  {
+    "name": "extension_weight_1600",
+    "family": "single_extension_weight",
+    "values": {
+      "extension_weight": 1600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/extension_weight_1600.sol"
+  },
+  {
+    "name": "extension_weight_1900",
+    "family": "single_extension_weight",
+    "values": {
+      "extension_weight": 1900
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/extension_weight_1900.sol"
+  },
+  {
+    "name": "extension_weight_2500",
+    "family": "single_extension_weight",
+    "values": {
+      "extension_weight": 2500
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/extension_weight_2500.sol"
+  },
+  {
+    "name": "extension_weight_2800",
+    "family": "single_extension_weight",
+    "values": {
+      "extension_weight": 2800
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/extension_weight_2800.sol"
+  },
+  {
+    "name": "extension_weight_3200",
+    "family": "single_extension_weight",
+    "values": {
+      "extension_weight": 3200
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/extension_weight_3200.sol"
+  },
+  {
+    "name": "flow_risk_180",
+    "family": "single_flow_risk",
+    "values": {
+      "flow_risk": 180
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_risk_180.sol"
+  },
+  {
+    "name": "flow_risk_220",
+    "family": "single_flow_risk",
+    "values": {
+      "flow_risk": 220
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_risk_220.sol"
+  },
+  {
+    "name": "flow_risk_240",
+    "family": "single_flow_risk",
+    "values": {
+      "flow_risk": 240
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_risk_240.sol"
+  },
+  {
+    "name": "flow_risk_260",
+    "family": "single_flow_risk",
+    "values": {
+      "flow_risk": 260
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_risk_260.sol"
+  },
+  {
+    "name": "flow_risk_300",
+    "family": "single_flow_risk",
+    "values": {
+      "flow_risk": 300
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_risk_300.sol"
+  },
+  {
+    "name": "flow_risk_320",
+    "family": "single_flow_risk",
+    "values": {
+      "flow_risk": 320
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_risk_320.sol"
+  },
+  {
+    "name": "flow_risk_360",
+    "family": "single_flow_risk",
+    "values": {
+      "flow_risk": 360
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_risk_360.sol"
+  },
+  {
+    "name": "shared_vol_1500",
+    "family": "single_shared_vol",
+    "values": {
+      "shared_vol": 1500
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/shared_vol_1500.sol"
+  },
+  {
+    "name": "shared_vol_1650",
+    "family": "single_shared_vol",
+    "values": {
+      "shared_vol": 1650
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/shared_vol_1650.sol"
+  },
+  {
+    "name": "shared_vol_1950",
+    "family": "single_shared_vol",
+    "values": {
+      "shared_vol": 1950
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/shared_vol_1950.sol"
+  },
+  {
+    "name": "shared_vol_2100",
+    "family": "single_shared_vol",
+    "values": {
+      "shared_vol": 2100
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/shared_vol_2100.sol"
+  },
+  {
+    "name": "shared_hazard_1600",
+    "family": "single_shared_hazard",
+    "values": {
+      "shared_hazard": 1600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/shared_hazard_1600.sol"
+  },
+  {
+    "name": "shared_hazard_1750",
+    "family": "single_shared_hazard",
+    "values": {
+      "shared_hazard": 1750
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/shared_hazard_1750.sol"
+  },
+  {
+    "name": "shared_hazard_2050",
+    "family": "single_shared_hazard",
+    "values": {
+      "shared_hazard": 2050
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/shared_hazard_2050.sol"
+  },
+  {
+    "name": "shared_hazard_2200",
+    "family": "single_shared_hazard",
+    "values": {
+      "shared_hazard": 2200
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/shared_hazard_2200.sol"
+  },
+  {
+    "name": "event_carry_160",
+    "family": "single_event_carry",
+    "values": {
+      "event_carry": 160
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/event_carry_160.sol"
+  },
+  {
+    "name": "event_carry_190",
+    "family": "single_event_carry",
+    "values": {
+      "event_carry": 190
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/event_carry_190.sol"
+  },
+  {
+    "name": "event_carry_250",
+    "family": "single_event_carry",
+    "values": {
+      "event_carry": 250
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/event_carry_250.sol"
+  },
+  {
+    "name": "event_carry_280",
+    "family": "single_event_carry",
+    "values": {
+      "event_carry": 280
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/event_carry_280.sol"
+  },
+  {
+    "name": "burst_fee_1500",
+    "family": "single_burst_fee",
+    "values": {
+      "burst_fee": 1500
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/burst_fee_1500.sol"
+  },
+  {
+    "name": "burst_fee_1650",
+    "family": "single_burst_fee",
+    "values": {
+      "burst_fee": 1650
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/burst_fee_1650.sol"
+  },
+  {
+    "name": "burst_fee_2050",
+    "family": "single_burst_fee",
+    "values": {
+      "burst_fee": 2050
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/burst_fee_2050.sol"
+  },
+  {
+    "name": "burst_fee_2200",
+    "family": "single_burst_fee",
+    "values": {
+      "burst_fee": 2200
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/burst_fee_2200.sol"
+  },
+  {
+    "name": "risk_protection_4800",
+    "family": "single_risk_protection",
+    "values": {
+      "risk_protection": 4800
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/risk_protection_4800.sol"
+  },
+  {
+    "name": "risk_protection_5000",
+    "family": "single_risk_protection",
+    "values": {
+      "risk_protection": 5000
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/risk_protection_5000.sol"
+  },
+  {
+    "name": "risk_protection_5200",
+    "family": "single_risk_protection",
+    "values": {
+      "risk_protection": 5200
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/risk_protection_5200.sol"
+  },
+  {
+    "name": "risk_protection_5600",
+    "family": "single_risk_protection",
+    "values": {
+      "risk_protection": 5600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/risk_protection_5600.sol"
+  },
+  {
+    "name": "risk_protection_5800",
+    "family": "single_risk_protection",
+    "values": {
+      "risk_protection": 5800
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/risk_protection_5800.sol"
+  },
+  {
+    "name": "risk_protection_6000",
+    "family": "single_risk_protection",
+    "values": {
+      "risk_protection": 6000
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/risk_protection_6000.sol"
+  },
+  {
+    "name": "one_sided_2200",
+    "family": "single_one_sided",
+    "values": {
+      "one_sided": 2200
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/one_sided_2200.sol"
+  },
+  {
+    "name": "one_sided_2500",
+    "family": "single_one_sided",
+    "values": {
+      "one_sided": 2500
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/one_sided_2500.sol"
+  },
+  {
+    "name": "one_sided_3100",
+    "family": "single_one_sided",
+    "values": {
+      "one_sided": 3100
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/one_sided_3100.sol"
+  },
+  {
+    "name": "one_sided_3400",
+    "family": "single_one_sided",
+    "values": {
+      "one_sided": 3400
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/one_sided_3400.sol"
+  },
+  {
+    "name": "trade_boost_5600",
+    "family": "single_trade_boost",
+    "values": {
+      "trade_boost": 5600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/trade_boost_5600.sol"
+  },
+  {
+    "name": "trade_boost_6000",
+    "family": "single_trade_boost",
+    "values": {
+      "trade_boost": 6000
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/trade_boost_6000.sol"
+  },
+  {
+    "name": "trade_boost_7000",
+    "family": "single_trade_boost",
+    "values": {
+      "trade_boost": 7000
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/trade_boost_7000.sol"
+  },
+  {
+    "name": "trade_boost_7400",
+    "family": "single_trade_boost",
+    "values": {
+      "trade_boost": 7400
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/trade_boost_7400.sol"
+  },
+  {
+    "name": "opportunity_cut_7000",
+    "family": "single_opportunity_cut",
+    "values": {
+      "opportunity_cut": 7000
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/opportunity_cut_7000.sol"
+  },
+  {
+    "name": "opportunity_cut_7600",
+    "family": "single_opportunity_cut",
+    "values": {
+      "opportunity_cut": 7600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/opportunity_cut_7600.sol"
+  },
+  {
+    "name": "opportunity_cut_7900",
+    "family": "single_opportunity_cut",
+    "values": {
+      "opportunity_cut": 7900
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/opportunity_cut_7900.sol"
+  },
+  {
+    "name": "opportunity_cut_8500",
+    "family": "single_opportunity_cut",
+    "values": {
+      "opportunity_cut": 8500
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/opportunity_cut_8500.sol"
+  },
+  {
+    "name": "opportunity_cut_8800",
+    "family": "single_opportunity_cut",
+    "values": {
+      "opportunity_cut": 8800
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/opportunity_cut_8800.sol"
+  },
+  {
+    "name": "opportunity_cut_9200",
+    "family": "single_opportunity_cut",
+    "values": {
+      "opportunity_cut": 9200
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/opportunity_cut_9200.sol"
+  },
+  {
+    "name": "passive_cut_1200",
+    "family": "single_passive_cut",
+    "values": {
+      "passive_cut": 1200
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/passive_cut_1200.sol"
+  },
+  {
+    "name": "passive_cut_1350",
+    "family": "single_passive_cut",
+    "values": {
+      "passive_cut": 1350
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/passive_cut_1350.sol"
+  },
+  {
+    "name": "passive_cut_1450",
+    "family": "single_passive_cut",
+    "values": {
+      "passive_cut": 1450
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/passive_cut_1450.sol"
+  },
+  {
+    "name": "passive_cut_1650",
+    "family": "single_passive_cut",
+    "values": {
+      "passive_cut": 1650
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/passive_cut_1650.sol"
+  },
+  {
+    "name": "passive_cut_1750",
+    "family": "single_passive_cut",
+    "values": {
+      "passive_cut": 1750
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/passive_cut_1750.sol"
+  },
+  {
+    "name": "passive_cut_1900",
+    "family": "single_passive_cut",
+    "values": {
+      "passive_cut": 1900
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/passive_cut_1900.sol"
+  },
+  {
+    "name": "center_offset_450",
+    "family": "single_center_offset",
+    "values": {
+      "center_offset": 450
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/center_offset_450.sol"
+  },
+  {
+    "name": "center_offset_550",
+    "family": "single_center_offset",
+    "values": {
+      "center_offset": 550
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/center_offset_550.sol"
+  },
+  {
+    "name": "center_offset_850",
+    "family": "single_center_offset",
+    "values": {
+      "center_offset": 850
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/center_offset_850.sol"
+  },
+  {
+    "name": "center_offset_1000",
+    "family": "single_center_offset",
+    "values": {
+      "center_offset": 1000
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/center_offset_1000.sol"
+  },
+  {
+    "name": "center_cap_1000",
+    "family": "single_center_cap",
+    "values": {
+      "center_cap": 1000
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/center_cap_1000.sol"
+  },
+  {
+    "name": "center_cap_1200",
+    "family": "single_center_cap",
+    "values": {
+      "center_cap": 1200
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/center_cap_1200.sol"
+  },
+  {
+    "name": "center_cap_1600",
+    "family": "single_center_cap",
+    "values": {
+      "center_cap": 1600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/center_cap_1600.sol"
+  },
+  {
+    "name": "center_cap_1800",
+    "family": "single_center_cap",
+    "values": {
+      "center_cap": 1800
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/center_cap_1800.sol"
+  },
+  {
+    "name": "flex_cut_800",
+    "family": "single_flex_cut",
+    "values": {
+      "flex_cut": 800
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flex_cut_800.sol"
+  },
+  {
+    "name": "flex_cut_1000",
+    "family": "single_flex_cut",
+    "values": {
+      "flex_cut": 1000
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flex_cut_1000.sol"
+  },
+  {
+    "name": "flex_cut_1400",
+    "family": "single_flex_cut",
+    "values": {
+      "flex_cut": 1400
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flex_cut_1400.sol"
+  },
+  {
+    "name": "flex_cut_1600",
+    "family": "single_flex_cut",
+    "values": {
+      "flex_cut": 1600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flex_cut_1600.sol"
+  },
+  {
+    "name": "flow_fast_light",
+    "family": "interaction",
+    "values": {
+      "alpha_flow": 22,
+      "flow_threshold": 400,
+      "flow_risk": 240
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_fast_light.sol"
+  },
+  {
+    "name": "flow_fast_strong",
+    "family": "interaction",
+    "values": {
+      "alpha_flow": 22,
+      "flow_threshold": 400,
+      "flow_risk": 320
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_fast_strong.sol"
+  },
+  {
+    "name": "flow_slow_light",
+    "family": "interaction",
+    "values": {
+      "alpha_flow": 14,
+      "flow_threshold": 600,
+      "flow_risk": 240
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_slow_light.sol"
+  },
+  {
+    "name": "flow_ext_early_light",
+    "family": "interaction",
+    "values": {
+      "extension_threshold": 2,
+      "extension_weight": 1600,
+      "flow_risk": 240
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_ext_early_light.sol"
+  },
+  {
+    "name": "flow_ext_early_strong",
+    "family": "interaction",
+    "values": {
+      "extension_threshold": 2,
+      "extension_weight": 2500,
+      "flow_risk": 300
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_ext_early_strong.sol"
+  },
+  {
+    "name": "flow_ext_late_strong",
+    "family": "interaction",
+    "values": {
+      "extension_threshold": 5,
+      "extension_weight": 2800,
+      "flow_risk": 320
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_ext_late_strong.sol"
+  },
+  {
+    "name": "protect_open",
+    "family": "interaction",
+    "values": {
+      "risk_protection": 5200,
+      "opportunity_cut": 8500,
+      "passive_cut": 1650
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/protect_open.sol"
+  },
+  {
+    "name": "protect_tight",
+    "family": "interaction",
+    "values": {
+      "risk_protection": 5600,
+      "opportunity_cut": 7900,
+      "passive_cut": 1450
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/protect_tight.sol"
+  },
+  {
+    "name": "spread_open",
+    "family": "interaction",
+    "values": {
+      "shared_vol": 1650,
+      "shared_hazard": 1750,
+      "event_carry": 190
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/spread_open.sol"
+  },
+  {
+    "name": "spread_tight",
+    "family": "interaction",
+    "values": {
+      "shared_vol": 1950,
+      "shared_hazard": 2050,
+      "event_carry": 250
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/spread_tight.sol"
+  },
+  {
+    "name": "burst_trade_open",
+    "family": "interaction",
+    "values": {
+      "burst_fee": 1650,
+      "trade_boost": 6000,
+      "opportunity_cut": 8500
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/burst_trade_open.sol"
+  },
+  {
+    "name": "burst_trade_tight",
+    "family": "interaction",
+    "values": {
+      "burst_fee": 2050,
+      "trade_boost": 7000,
+      "opportunity_cut": 7900
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/burst_trade_tight.sol"
+  },
+  {
+    "name": "recapture_more",
+    "family": "interaction",
+    "values": {
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/recapture_more.sol"
+  },
+  {
+    "name": "recapture_less",
+    "family": "interaction",
+    "values": {
+      "alpha_passive": 14,
+      "passive_cut": 1350,
+      "center_offset": 550,
+      "center_cap": 1200
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/recapture_less.sol"
+  },
+  {
+    "name": "flow_open_combo",
+    "family": "interaction",
+    "values": {
+      "alpha_flow": 20,
+      "flow_risk": 240,
+      "risk_protection": 5200,
+      "opportunity_cut": 8500
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_open_combo.sol"
+  },
+  {
+    "name": "flow_tight_combo",
+    "family": "interaction",
+    "values": {
+      "alpha_flow": 20,
+      "flow_risk": 320,
+      "risk_protection": 5600,
+      "opportunity_cut": 7900
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/flow_tight_combo.sol"
+  },
+  {
+    "name": "stack_flow220_recapture",
+    "family": "interaction",
+    "values": {
+      "flow_risk": 220,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/stack_flow220_recapture.sol"
+  },
+  {
+    "name": "stack_flow200_recapture",
+    "family": "interaction",
+    "values": {
+      "flow_risk": 200,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/stack_flow200_recapture.sol"
+  },
+  {
+    "name": "stack_flow180_recapture",
+    "family": "interaction",
+    "values": {
+      "flow_risk": 180,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/stack_flow180_recapture.sol"
+  },
+  {
+    "name": "stack_event160_flow220",
+    "family": "interaction",
+    "values": {
+      "event_carry": 160,
+      "flow_risk": 220
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/stack_event160_flow220.sol"
+  },
+  {
+    "name": "stack_event140_flow220",
+    "family": "interaction",
+    "values": {
+      "event_carry": 140,
+      "flow_risk": 220
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/stack_event140_flow220.sol"
+  },
+  {
+    "name": "stack_event180_flow220",
+    "family": "interaction",
+    "values": {
+      "event_carry": 180,
+      "flow_risk": 220
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/stack_event180_flow220.sol"
+  },
+  {
+    "name": "stack_event160_recapture",
+    "family": "interaction",
+    "values": {
+      "event_carry": 160,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/stack_event160_recapture.sol"
+  },
+  {
+    "name": "stack_event140_recapture",
+    "family": "interaction",
+    "values": {
+      "event_carry": 140,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/stack_event140_recapture.sol"
+  },
+  {
+    "name": "stack_event180_recapture",
+    "family": "interaction",
+    "values": {
+      "event_carry": 180,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/stack_event180_recapture.sol"
+  },
+  {
+    "name": "stack_event160_flow220_recapture",
+    "family": "interaction",
+    "values": {
+      "event_carry": 160,
+      "flow_risk": 220,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/stack_event160_flow220_recapture.sol"
+  },
+  {
+    "name": "stack_event140_flow220_recapture",
+    "family": "interaction",
+    "values": {
+      "event_carry": 140,
+      "flow_risk": 220,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/stack_event140_flow220_recapture.sol"
+  },
+  {
+    "name": "stack_event180_flow220_recapture",
+    "family": "interaction",
+    "values": {
+      "event_carry": 180,
+      "flow_risk": 220,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/stack_event180_flow220_recapture.sol"
+  },
+  {
+    "name": "stack_event160_flow200_recapture",
+    "family": "interaction",
+    "values": {
+      "event_carry": 160,
+      "flow_risk": 200,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/stack_event160_flow200_recapture.sol"
+  },
+  {
+    "name": "stack_event160_flow220_recap_soft",
+    "family": "interaction",
+    "values": {
+      "event_carry": 160,
+      "flow_risk": 220,
+      "alpha_passive": 22,
+      "passive_cut": 1700,
+      "center_offset": 800,
+      "center_cap": 1500
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/stack_event160_flow220_recap_soft.sol"
+  },
+  {
+    "name": "stack_event160_flow220_recap_strong",
+    "family": "interaction",
+    "values": {
+      "event_carry": 160,
+      "flow_risk": 220,
+      "alpha_passive": 24,
+      "passive_cut": 1750,
+      "center_offset": 900,
+      "center_cap": 1700
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/stack_event160_flow220_recap_strong.sol"
+  },
+  {
+    "name": "stack_event160_flow220_open",
+    "family": "interaction",
+    "values": {
+      "event_carry": 160,
+      "flow_risk": 220,
+      "alpha_passive": 22,
+      "passive_cut": 1750,
+      "center_offset": 850,
+      "center_cap": 1600,
+      "risk_protection": 5200,
+      "opportunity_cut": 8500
+    },
+    "source": "artifacts/scratch_probes/may09-screen490-floor-0001/round13_direct_screen_search/sources/stack_event160_flow220_open.sol"
+  }
+]

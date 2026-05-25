@@ -1,0 +1,50 @@
+[
+  {
+    "name": "base_flow_dir_280",
+    "family": "control",
+    "stage": "screen",
+    "mean_edge": 490.75833078204124,
+    "arb_loss_to_retail_gain": 0.08145165671864718,
+    "quote_selectivity_ratio": 16.081423731296287,
+    "time_weighted_mean_fee": 0.005064953083733063,
+    "low_decile_mean_edge": 373.26220761175455,
+    "low_retail_mean_edge": 419.66061812759995,
+    "low_volatility_mean_edge": 468.12817603246094
+  },
+  {
+    "name": "extension_tail_surcharge_20",
+    "family": "extension_tail_risk",
+    "stage": "screen",
+    "mean_edge": 490.73980570811455,
+    "arb_loss_to_retail_gain": 0.08143921270207718,
+    "quote_selectivity_ratio": 16.0766307919886,
+    "time_weighted_mean_fee": 0.005065689058596808,
+    "low_decile_mean_edge": 373.22938542111814,
+    "low_retail_mean_edge": 419.66278595746263,
+    "low_volatility_mean_edge": 468.1105747240885
+  },
+  {
+    "name": "extension_tail_surcharge_40",
+    "family": "extension_tail_risk",
+    "stage": "screen",
+    "mean_edge": 490.7375193830867,
+    "arb_loss_to_retail_gain": 0.08143833641691384,
+    "quote_selectivity_ratio": 16.07600002022147,
+    "time_weighted_mean_fee": 0.005065833311425431,
+    "low_decile_mean_edge": 373.22766979867606,
+    "low_retail_mean_edge": 419.66455554665396,
+    "low_volatility_mean_edge": 468.1030454745762
+  },
+  {
+    "name": "extension_tail_surcharge_60",
+    "family": "extension_tail_risk",
+    "stage": "screen",
+    "mean_edge": 490.7257966551642,
+    "arb_loss_to_retail_gain": 0.08143826980625818,
+    "quote_selectivity_ratio": 16.073603110599493,
+    "time_weighted_mean_fee": 0.005066584588775553,
+    "low_decile_mean_edge": 373.23862993548386,
+    "low_retail_mean_edge": 419.6585104015657,
+    "low_volatility_mean_edge": 468.0940061344402
+  }
+]

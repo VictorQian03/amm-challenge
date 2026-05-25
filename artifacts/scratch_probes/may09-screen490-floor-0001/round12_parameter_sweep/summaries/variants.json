@@ -1,0 +1,30 @@
+[
+  {
+    "name": "base_flow_dir_280",
+    "family": "control",
+    "base": "contracts/src/StarterStrategy.sol",
+    "path": "artifacts/scratch_probes/may09-screen490-floor-0001/round12_parameter_sweep/sources/base_flow_dir_280.sol",
+    "rationale": "Current retained screen_0005 baseline."
+  },
+  {
+    "name": "extension_tail_surcharge_20",
+    "family": "extension_tail_risk",
+    "base": "contracts/src/StarterStrategy.sol",
+    "path": "artifacts/scratch_probes/may09-screen490-floor-0001/round12_parameter_sweep/sources/extension_tail_surcharge_20.sol",
+    "rationale": "Restore protection only beyond an extreme extension tail while leaving the winning base regime fixed."
+  },
+  {
+    "name": "extension_tail_surcharge_40",
+    "family": "extension_tail_risk",
+    "base": "contracts/src/StarterStrategy.sol",
+    "path": "artifacts/scratch_probes/may09-screen490-floor-0001/round12_parameter_sweep/sources/extension_tail_surcharge_40.sol",
+    "rationale": "Restore protection only beyond an extreme extension tail while leaving the winning base regime fixed."
+  },
+  {
+    "name": "extension_tail_surcharge_60",
+    "family": "extension_tail_risk",
+    "base": "contracts/src/StarterStrategy.sol",
+    "path": "artifacts/scratch_probes/may09-screen490-floor-0001/round12_parameter_sweep/sources/extension_tail_surcharge_60.sol",
+    "rationale": "Restore protection only beyond an extreme extension tail while leaving the winning base regime fixed."
+  }
+]
